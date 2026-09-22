@@ -214,3 +214,27 @@ fn tao_suan_yi_ci_huolong() {
     let small = has(w, "喜相逢") as u8 + has(w, "老少副") as u8;
     assert_eq!(small, 1, "只可套算一次: {:?}", names(w));
 }
+
+#[test]
+fn jiu_gao_bu_jiu_di() {
+    // 门清 555666777p 5556s 自摸 7s
+    // 拆分A: 567p567p567p 567s 55s → 一色三同顺24+全带五16+平和2+喜相逢1+缺一门1 +不求人4 = 48
+    // 拆分B: 555p666p777p 567s 55s → 一色三节高24+三暗刻16+断幺2+缺一门1 +不求人4 = 47
+    let c = parse_hand("555p666p777p 555s 6s");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 15); // 7条
+    assert_eq!(w.tsumo, 48, "就高不就低应取 48: {:?}", names(w));
+}
+
+#[test]
+fn zuhe_long_with_meld() {
+    // 副露 吃 123m；暗牌 147m 258s 369p 5p，和 5p → 组合龙 + 平和
+    let melds = vec![Meld::chi(0)];
+    let c = parse_hand("147m 258s 369p 5p");
+    assert_eq!(total(&c), 10);
+    let an = analyze(&c, &melds, 27, 27);
+    let w = find(&an, 18 + 4); // 5筒
+    assert!(has(w, "组合龙"), "{:?}", names(w));
+    assert!(has(w, "平和"), "{:?}", names(w));
+}

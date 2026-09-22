@@ -9,9 +9,13 @@ use crate::model::*;
 use crate::tiles::*;
 
 /// 检测组合龙：9 张 147/258/369 + 1 面子 + 将
-pub fn detect_zuhelong(c: &Counts) -> Vec<Decomp> {
+/// m 为副露数：m=0 时第四副面子在暗牌里；m=1 时第四副面子即那副副露
+pub fn detect_zuhelong(c: &Counts, m: usize) -> Vec<Decomp> {
     let mut out = Vec::new();
-    if total(c) != 14 {
+    if m > 1 {
+        return out;
+    }
+    if total(c) != (14 - 3 * m) as u32 {
         return out;
     }
     for perm in PERMS.iter() {
@@ -26,6 +30,19 @@ pub fn detect_zuhelong(c: &Counts) -> Vec<Decomp> {
             cc[t] -= 1;
         }
         if !ok {
+            continue;
+        }
+        if m == 1 {
+            // 余下 2 张即将
+            for p in 0..34usize {
+                if cc[p] == 2 {
+                    out.push(Decomp {
+                        pair: Some(p),
+                        sets: vec![],
+                        special: Some(Special::Zuhelong),
+                    });
+                }
+            }
             continue;
         }
         for p in 0..34usize {
@@ -130,9 +147,11 @@ pub fn winning_decomps(c: &Counts, melds: &[Meld]) -> Vec<Decomp> {
         } else if is_bu_kao(c) {
             out.push(Decomp::special(Special::BuKao));
         }
-        for d in detect_zuhelong(c) {
-            out.push(d);
-        }
+    }
+
+    // 组合龙可带 1 副副露（m<=1）
+    for d in detect_zuhelong(c, m) {
+        out.push(d);
     }
 
     out

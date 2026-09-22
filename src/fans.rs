@@ -96,8 +96,16 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
         Special::Zuhelong => {
             v.push(f("组合龙", 12));
             let d = ctx.decomp;
-            if let Some(p) = d.pair {
-                if d.sets.len() == 1 && d.sets[0].is_run() && is_suited(p) {
+            // 第四副面子：m=0 在暗牌里；m=1 即那副副露
+            let fourth: Option<Set> = if d.sets.len() == 1 {
+                Some(d.sets[0])
+            } else if ctx.melds.len() == 1 {
+                Some(ctx.melds[0].to_set())
+            } else {
+                None
+            };
+            if let Some(s) = fourth {
+                if s.is_run() && d.pair.map(is_suited).unwrap_or(false) {
                     v.push(f("平和", 2));
                 }
             }
