@@ -32,6 +32,7 @@ pub enum WinMode {
     TsumoLast,
 }
 
+#[derive(Clone, Copy)]
 pub struct WinCtx<'a> {
     pub all: &'a Counts,
     pub melds: &'a [Meld],
@@ -41,6 +42,8 @@ pub struct WinCtx<'a> {
     pub win_tile: usize,
     pub menqing: bool,
     pub single_wait: bool,
+    /// 是否自摸（影响：荣和补成的刻子算明刻）
+    pub tsumo: bool,
 }
 
 fn suits_present(all: &Counts) -> [bool; 3] {
@@ -272,11 +275,23 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         v.push(f("碰碰和", 6));
     }
 
-    // 暗刻统计（门清的刻子 + 暗杠）
+    // 暗刻统计（手中的刻子 + 暗杠）；荣和补成的刻子算明刻
     let concealed_trips = d
         .sets
         .iter()
-        .filter(|s| s.is_triplet() && (!s.open || (s.is_kan && !s.open)))
+        .filter(|s| {
+            if !s.is_triplet() {
+                return false;
+            }
+            let is_conc = !s.open || (s.is_kan && !s.open);
+            if !is_conc {
+                return false;
+            }
+            if !ctx.tsumo && !s.is_kan && s.tile == ctx.win_tile {
+                return false; // 荣和补成的刻子→明刻
+            }
+            true
+        })
         .count();
     if concealed_trips == 4 {
         v.push(f("四暗刻", 64));
@@ -361,8 +376,6 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         } else if best == 3 {
             v.push(f("一色三同顺", 24));
             used_run_fan = true;
-        } else if best == 2 {
-            v.push(f("一般高", 1));
         }
     }
 
@@ -520,49 +533,75 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
     }
 
-    // 连六 / 老少副 / 喜相逢
+    // 一般高 / 喜相逢 / 连六 / 老少副（可复计）
     {
-        let mut lianliu = false;
-        let mut laoshao = false;
+        use std::collections::HashMap;
+        let mut by_suit: [HashMap<usize, usize>; 3] = [HashMap::new(), HashMap::new(), HashMap::new()];
+        for &t in runs.iter() {
+            *by_suit[suit(t)].entry(num(t)).or_insert(0) += 1;
+        }
+        // 一般高：同花色相同顺子成对
+        let mut yiban = 0;
         for s in 0..3usize {
-            let st: std::collections::HashSet<usize> =
-                runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
-            if (st.contains(&1) && st.contains(&4)) || (st.contains(&4) && st.contains(&7)) {
-                lianliu = true;
-            }
-            if st.contains(&1) && st.contains(&7) {
-                laoshao = true;
-            }
-        }
-        if lianliu {
-            v.push(f("连六", 1));
-        }
-        if laoshao {
-            v.push(f("老少副", 1));
-        }
-        let mut xixiang = false;
-        for n in 1..=7usize {
-            let mut cnt = 0;
-            for s in 0..3usize {
-                if runs.iter().any(|&t| suit(t) == s && num(t) == n) {
-                    cnt += 1;
+            for &c in by_suit[s].values() {
+                if c == 2 {
+                    yiban += 1;
                 }
             }
-            if cnt == 2 {
-                xixiang = true;
+        }
+        if yiban > 0 {
+            v.push(f("一般高", yiban as u32));
+        }
+        // 喜相逢：不同花色同数字顺子成对
+        let mut xixiang = 0;
+        for n in 1..=7usize {
+            let cnt = (0..3usize)
+                .filter(|&s| by_suit[s].get(&n).copied().unwrap_or(0) > 0)
+                .count();
+            xixiang += cnt / 2;
+        }
+        if xixiang > 0 {
+            v.push(f("喜相逢", xixiang as u32));
+        }
+        // 连六：同花色相邻（相差 3）两组顺子，互不相交
+        let mut lianliu = 0;
+        for s in 0..3usize {
+            let mut used: std::collections::HashSet<usize> = std::collections::HashSet::new();
+            for n in 1..=4usize {
+                if used.contains(&n) {
+                    continue;
+                }
+                let a = by_suit[s].get(&n).copied().unwrap_or(0);
+                let b = by_suit[s].get(&(n + 3)).copied().unwrap_or(0);
+                if a > 0 && b > 0 && !used.contains(&(n + 3)) {
+                    lianliu += 1;
+                    used.insert(n);
+                    used.insert(n + 3);
+                }
             }
         }
-        if xixiang {
-            v.push(f("喜相逢", 1));
+        if lianliu > 0 {
+            v.push(f("连六", lianliu as u32));
+        }
+        // 老少副：同花色 123 与 789 成对
+        let mut laoshao = 0;
+        for s in 0..3usize {
+            let a = by_suit[s].get(&1).copied().unwrap_or(0);
+            let b = by_suit[s].get(&7).copied().unwrap_or(0);
+            laoshao += a.min(b);
+        }
+        if laoshao > 0 {
+            v.push(f("老少副", laoshao as u32));
         }
     }
 
     // ---------- 特殊全带 ----------
     // 全带五
     let all_with_five = d.sets.iter().all(|s| match s.kind {
-        SetKind::Run => s.tile <= 22 && (num(s.tile) <= 5 && num(s.tile) + 2 >= 5),
-        SetKind::Triplet => num(s.tile) == 5,
-    }) && num(pair) == 5;
+        SetKind::Run => num(s.tile) >= 3 && num(s.tile) <= 5,
+        SetKind::Triplet => is_suited(s.tile) && num(s.tile) == 5,
+    }) && is_suited(pair)
+        && num(pair) == 5;
     if all_with_five {
         v.push(f("全带五", 16));
     }
@@ -827,7 +866,9 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
 
 /// 计算某种和法下的总分：牌型番 + 和法番
 pub fn score(ctx: &WinCtx, mode: WinMode) -> (u32, Vec<Fan>) {
-    let mut fans = collect(ctx);
+    let mut c2 = *ctx;
+    c2.tsumo = matches!(mode, WinMode::Tsumo | WinMode::TsumoLast);
+    let mut fans = collect(&c2);
 
     let mut extra: Vec<Fan> = Vec::new();
     let menqing = ctx.menqing;

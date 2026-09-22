@@ -176,3 +176,17 @@ fn zuhe_long() {
     assert!(has(w, "组合龙"), "{:?}", names(w));
     assert!(has(w, "平和"), "{:?}", names(w));
 }
+
+#[test]
+fn ankou_differs_by_win_method() {
+    // 555m 66s 777p 123m 东东，双碰听 6s / 东
+    let c = parse_hand("555m 66s 777p 123m 东东");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 9 + 5); // 6条
+    // 三色三节高(8) 固定；差异在暗刻：
+    // 自摸：666s 算暗刻 → 三暗刻 16 + 不求人 4 → 8+16+4 = 28
+    assert_eq!(w.tsumo, 28, "自摸：三色三节高+三暗刻+不求人");
+    // 点炮：666s 算明刻 → 双暗刻 2 + 门前清 2 → 8+2+2 = 12
+    assert_eq!(w.normal, 12, "点炮：三色三节高+双暗刻+门前清");
+}

@@ -182,6 +182,7 @@ pub fn analyze(
                 win_tile: t,
                 menqing,
                 single_wait,
+                tsumo: false,
             };
             let (n, _) = score(&ctx, WinMode::Normal);
             let (ts, _) = score(&ctx, WinMode::Tsumo);
