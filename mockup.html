@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>国标算番器 · 界面示意</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f3f4f6; color: #1f2937;
+    margin: 0; padding: 20px;
+    display: flex; justify-content: center;
+  }
+  .app { width: 700px; background: #fff; border-radius: 12px;
+         box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 18px; }
+  .sec-title { font-size: 12px; color: #9ca3af; letter-spacing: 2px; margin: 4px 0 8px; }
+  .row { display: flex; gap: 14px; }
+  .panel { flex: 1; background: #fafafa; border: 1px solid #eceff3;
+           border-radius: 8px; padding: 10px 12px; min-height: 92px; }
+  .panel h3 { margin: 0 0 8px; font-size: 13px; color: #6b7280; font-weight: 600; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tile {
+    width: 38px; height: 50px; border-radius: 6px; background: #fff;
+    border: 1px solid #d7dbe0; border-bottom-width: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; user-select: none; flex: none;
+  }
+  .tile.w { color: #c0392b; } .tile.t { color: #1e8e4e; } .tile.b { color: #2563eb; }
+  .tile.h { color: #374151; } .tile.z { color: #b91c1c; } .tile.white { color: #2563eb; }
+
+  .meld-btns { display: flex; gap: 6px; margin-bottom: 22px; }
+  .mbtn { font-family: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px;
+          border: 1px solid #d7dbe0; background: #fff; color: #6b7280; cursor: pointer; }
+  .mbtn.on { background: #111827; color: #fff; border-color: #111827; font-weight: 700; }
+  .meld { display: inline-flex; gap: 3px; margin-right: 10px; position: relative; }
+  .meld .tag { position: absolute; top: -14px; left: 0; font-size: 10px; color: #9ca3af; }
+  .hint { font-size: 11px; color: #b0b6bd; margin-top: 6px; }
+
+  .palette-wrap { margin-top: 16px; display: flex; gap: 16px; align-items: flex-start; }
+  .palette { flex: 1; }
+  .pal-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .pal-label { width: 24px; font-size: 12px; color: #9ca3af; text-align: center; }
+  .ptile { width: 34px; height: 44px; border-radius: 6px; border: 1px solid #d7dbe0;
+           border-bottom-width: 3px; background: #fff; position: relative;
+           display: flex; align-items: center; justify-content: center;
+           font-size: 14px; font-weight: 700; cursor: pointer; }
+  .ptile .cnt { position: absolute; right: 2px; bottom: 1px; font-size: 9px; color: #9ca3af; font-weight: 400; }
+  .ptile.off { background: #eef0f2; color: #c2c7cd !important; border-color: #e3e6ea; cursor: not-allowed; }
+  .ptile.off .cnt { color: #b6bbc1; }
+  .suit-w { color: #c0392b; } .suit-t { color: #1e8e4e; } .suit-b { color: #2563eb; }
+  .suit-h { color: #374151; } .suit-z { color: #b91c1c; } .suit-white { color: #2563eb; }
+
+  .winds { width: 158px; background: #fafafa; border: 1px solid #eceff3;
+           border-radius: 8px; padding: 10px 12px; }
+  .wind-group { margin-bottom: 12px; }
+  .wind-group:last-child { margin-bottom: 0; }
+  .wind-group h3 { margin: 0 0 7px; font-size: 12px; color: #6b7280; font-weight: 600; }
+  .wind-opts { display: flex; gap: 6px; }
+  .wopt { width: 30px; height: 30px; border-radius: 6px; border: 1px solid #d7dbe0;
+          background: #fff; display: flex; align-items: center; justify-content: center;
+          font-size: 13px; color: #374151; cursor: pointer; }
+  .wopt.on { background: #e11d48; color: #fff; border-color: #e11d48; font-weight: 700; }
+
+  .results { margin-top: 16px; }
+  .res-head { display: flex; align-items: center; gap: 8px; padding: 0 9px 6px;
+              font-size: 12px; color: #9ca3af; }
+  .res-head .sp { width: 34px; flex: none; }
+  .res-head .vals { display: flex; flex: 1; gap: 8px; }
+  .res-head .vals span { flex: 1; }
+  .res-row { padding: 7px 8px; border-radius: 8px; background: #fafafa;
+             margin-bottom: 6px; border: 1px solid #eef0f2; }
+  .res-main { display: flex; align-items: center; gap: 8px; }
+  .res-main .tile { width: 34px; height: 44px; font-size: 13px; }
+  .vals { display: flex; flex: 1; gap: 8px; }
+  .val { flex: 1; font-size: 14px; color: #6b7280; }
+  .val b { font-size: 16px; }
+  .val.on { color: #111827; } .val.on b { color: #e11d48; }
+  .val.dim b { color: #9ca3af; }
+  .res-fans { margin: 5px 0 0 42px; font-size: 11px; color: #9ca3af; }
+  .res-fans .f { color: #6b7280; }
+  .note { margin-top: 14px; font-size: 12px; color: #9ca3af; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="sec-title">① 已选手牌</div>
+  <div class="row">
+    <div class="panel">
+      <h3>副露区（左）</h3>
+      <div class="meld-btns">
+        <button class="mbtn on">吃</button>
+        <button class="mbtn">碰</button>
+        <button class="mbtn">明杠</button>
+        <button class="mbtn">暗杠</button>
+      </div>
+      <div>
+        <span class="meld"><span class="tag">碰</span>
+          <div class="tile t">5条</div><div class="tile t">5条</div><div class="tile t">5条</div></span>
+        <span class="meld"><span class="tag">吃</span>
+          <div class="tile w">2万</div><div class="tile w">3万</div><div class="tile w">4万</div></span>
+      </div>
+      <div class="hint">选类型 → 点右侧牌库的牌加入副露</div>
+    </div>
+    <div class="panel">
+      <h3>手牌区（右）</h3>
+      <div class="tiles">
+        <div class="tile w">1万</div><div class="tile w">2万</div><div class="tile w">3万</div>
+        <div class="tile w">4万</div><div class="tile w">5万</div><div class="tile w">6万</div>
+        <div class="tile b">7筒</div><div class="tile b">8筒</div><div class="tile b">9筒</div>
+        <div class="tile h">东</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title" style="margin-top:18px;">② 牌库点击区（34 种 · 上限 4） ／ 圈门设定</div>
+  <div class="palette-wrap">
+    <div class="palette">
+      <div class="pal-row"><span class="pal-label">万</span>
+        <div class="ptile suit-w">1<span class="cnt">1/4</span></div>
+        <div class="ptile suit-w">2<span class="cnt">2/4</span></div>
+        <div class="ptile suit-w">3<span class="cnt">2/4</span></div>
+        <div class="ptile suit-w">4<span class="cnt">2/4</span></div>
+        <div class="ptile suit-w">5<span class="cnt">2/4</span></div>
+        <div class="ptile suit-w">6<span class="cnt">1/4</span></div>
+        <div class="ptile suit-w">7<span class="cnt">0/4</span></div>
+        <div class="ptile suit-w">8<span class="cnt">0/4</span></div>
+        <div class="ptile suit-w">9<span class="cnt">0/4</span></div>
+      </div>
+      <div class="pal-row"><span class="pal-label">条</span>
+        <div class="ptile suit-t">1<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">2<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">3<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">4<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t off">5<span class="cnt">4/4</span></div>
+        <div class="ptile suit-t">6<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">7<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">8<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">9<span class="cnt">0/4</span></div>
+      </div>
+      <div class="pal-row"><span class="pal-label">筒</span>
+        <div class="ptile suit-b">1<span class="cnt">0/4</span></div>
+        <div class="ptile suit-b">2<span class="cnt">0/4</span></div>
+        <div class="ptile suit-b">3<span class="cnt">0/4</span></div>
+        <div class="ptile suit-b">4<span class="cnt">0/4</span></div>
+        <div class="ptile suit-b">5<span class="cnt">0/4</span></div>
+        <div class="ptile suit-b">6<span class="cnt">0/4</span></div>
+        <div class="ptile suit-b">7<span class="cnt">1/4</span></div>
+        <div class="ptile suit-b">8<span class="cnt">1/4</span></div>
+        <div class="ptile suit-b">9<span class="cnt">1/4</span></div>
+      </div>
+      <div class="pal-row"><span class="pal-label">字</span>
+        <div class="ptile suit-h">东<span class="cnt">1/4</span></div>
+        <div class="ptile suit-h">南<span class="cnt">0/4</span></div>
+        <div class="ptile suit-h">西<span class="cnt">0/4</span></div>
+        <div class="ptile suit-h">北<span class="cnt">0/4</span></div>
+        <div class="ptile suit-z">中<span class="cnt">0/4</span></div>
+        <div class="ptile suit-t">发<span class="cnt">0/4</span></div>
+        <div class="ptile suit-white">白<span class="cnt">0/4</span></div>
+      </div>
+    </div>
+
+    <div class="winds">
+      <div class="wind-group">
+        <h3>圈风</h3>
+        <div class="wind-opts">
+          <div class="wopt on">东</div><div class="wopt">南</div>
+          <div class="wopt">西</div><div class="wopt">北</div>
+        </div>
+      </div>
+      <div class="wind-group">
+        <h3>门风</h3>
+        <div class="wind-opts">
+          <div class="wopt">东</div><div class="wopt on">南</div>
+          <div class="wopt">西</div><div class="wopt">北</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title" style="margin-top:18px;">③ 可以和什么 · 各和法番数（示例）</div>
+  <div class="results">
+    <div class="res-head">
+      <div class="sp"></div>
+      <div class="vals">
+        <span>点和</span><span>自摸</span><span>点和绝张</span><span>自摸绝张</span>
+      </div>
+    </div>
+
+    <div class="res-row">
+      <div class="res-main">
+        <div class="tile h">东</div>
+        <div class="vals">
+          <div class="val dim">6<b>番</b></div>
+          <div class="val on">8<b>番</b></div>
+          <div class="val on">10<b>番</b></div>
+          <div class="val on">12<b>番</b></div>
+        </div>
+      </div>
+      <div class="res-fans"><span class="f">清龙 · 断幺 · 一般高</span></div>
+    </div>
+
+    <div class="res-row">
+      <div class="res-main">
+        <div class="tile b">5筒</div>
+        <div class="vals">
+          <div class="val dim">4<b>番</b></div>
+          <div class="val dim">5<b>番</b></div>
+          <div class="val on">8<b>番</b></div>
+          <div class="val on">9<b>番</b></div>
+        </div>
+      </div>
+      <div class="res-fans"><span class="f">全带五 · 双同刻</span></div>
+    </div>
+
+    <div class="res-row">
+      <div class="res-main">
+        <div class="tile w">7万</div>
+        <div class="vals">
+          <div class="val dim">2<b>番</b></div>
+          <div class="val dim">3<b>番</b></div>
+          <div class="val dim">6<b>番</b></div>
+          <div class="val dim">7<b>番</b></div>
+        </div>
+      </div>
+      <div class="res-fans"><span class="f">断幺</span></div>
+    </div>
+
+    <div class="res-row">
+      <div class="res-main">
+        <div class="tile h">南</div>
+        <div class="vals">
+          <div class="val on">8<b>番</b></div>
+          <div class="val dim">1<b>番</b></div>
+          <div class="val dim">4<b>番</b></div>
+          <div class="val dim">5<b>番</b></div>
+        </div>
+      </div>
+      <div class="res-fans"><span class="f">无番和</span></div>
+    </div>
+  </div>
+
+  <div class="note">
+    红字 = ≥8 番可和；灰字 = 不够起和。全部展示不做过滤。<br>
+    明细只列牌型番（和牌方式类——门前清/不求人/自摸/和绝张——已并入右侧四栏，不重复）；无番和只显示"无番和"。<br>
+    数字仅为布局示意。
+  </div>
+
+</div>
+</body>
+</html>
