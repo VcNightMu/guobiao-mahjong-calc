@@ -190,3 +190,27 @@ fn ankou_differs_by_win_method() {
     // 点炮：666s 算明刻 → 双暗刻 2 + 门前清 2 → 8+2+2 = 12
     assert_eq!(w.normal, 12, "点炮：三色三节高+双暗刻+门前清");
 }
+
+#[test]
+fn bu_chai_yi_qinglong() {
+    // 123456789m 55p 78s，和 6s → 清龙，不计连六/老少副（不拆移）
+    let c = parse_hand("123456789m 55p 78s");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 9 + 5); // 6条
+    assert!(has(w, "清龙"), "{:?}", names(w));
+    assert!(!has(w, "连六"), "{:?}", names(w));
+    assert!(!has(w, "老少副"), "{:?}", names(w));
+}
+
+#[test]
+fn tao_suan_yi_ci_huolong() {
+    // 123m 456p 789s 123s 5m，和 5m → 花龙 + 只能套算一次（喜相逢或老少副）
+    let c = parse_hand("123m 456p 789s 123s 5m");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 4); // 5万
+    assert!(has(w, "花龙"), "{:?}", names(w));
+    let small = has(w, "喜相逢") as u8 + has(w, "老少副") as u8;
+    assert_eq!(small, 1, "只可套算一次: {:?}", names(w));
+}

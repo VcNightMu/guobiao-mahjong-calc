@@ -533,65 +533,76 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
     }
 
-    // 一般高 / 喜相逢 / 连六 / 老少副（可复计）
+    // 一般高 / 喜相逢 / 连六 / 老少副：同一副顺子只能用一次（对顺子做最大匹配）
     {
-        use std::collections::HashMap;
-        let mut by_suit: [HashMap<usize, usize>; 3] = [HashMap::new(), HashMap::new(), HashMap::new()];
-        for &t in runs.iter() {
-            *by_suit[suit(t)].entry(num(t)).or_insert(0) += 1;
-        }
-        // 一般高：同花色相同顺子成对
-        let mut yiban = 0;
-        for s in 0..3usize {
-            for &c in by_suit[s].values() {
-                if c == 2 {
-                    yiban += 1;
-                }
+        fn fan_between(a: usize, b: usize) -> Option<&'static str> {
+            let (sa, na) = (suit(a), num(a));
+            let (sb, nb) = (suit(b), num(b));
+            if sa == sb && na == nb {
+                Some("一般高")
+            } else if sa != sb && na == nb {
+                Some("喜相逢")
+            } else if sa == sb && (na as i32 - nb as i32).abs() == 3 {
+                Some("连六")
+            } else if sa == sb && ((na == 1 && nb == 7) || (na == 7 && nb == 1)) {
+                Some("老少副")
+            } else {
+                None
             }
         }
-        if yiban > 0 {
-            v.push(f("一般高", yiban as u32));
-        }
-        // 喜相逢：不同花色同数字顺子成对
-        let mut xixiang = 0;
-        for n in 1..=7usize {
-            let cnt = (0..3usize)
-                .filter(|&s| by_suit[s].get(&n).copied().unwrap_or(0) > 0)
-                .count();
-            xixiang += cnt / 2;
-        }
-        if xixiang > 0 {
-            v.push(f("喜相逢", xixiang as u32));
-        }
-        // 连六：同花色相邻（相差 3）两组顺子，互不相交
-        let mut lianliu = 0;
-        for s in 0..3usize {
-            let mut used: std::collections::HashSet<usize> = std::collections::HashSet::new();
-            for n in 1..=4usize {
-                if used.contains(&n) {
+        fn rec(
+            start: usize,
+            used: &mut [bool],
+            pairs: &mut Vec<(usize, usize)>,
+            runs: &[usize],
+            best: &mut usize,
+            best_pairs: &mut Vec<(usize, usize)>,
+        ) {
+            let mut i = start;
+            while i < runs.len() && used[i] {
+                i += 1;
+            }
+            if i >= runs.len() {
+                if pairs.len() > *best {
+                    *best = pairs.len();
+                    *best_pairs = pairs.clone();
+                }
+                return;
+            }
+            used[i] = true;
+            rec(i + 1, used, pairs, runs, best, best_pairs);
+            used[i] = false;
+            for j in (i + 1)..runs.len() {
+                if used[j] {
                     continue;
                 }
-                let a = by_suit[s].get(&n).copied().unwrap_or(0);
-                let b = by_suit[s].get(&(n + 3)).copied().unwrap_or(0);
-                if a > 0 && b > 0 && !used.contains(&(n + 3)) {
-                    lianliu += 1;
-                    used.insert(n);
-                    used.insert(n + 3);
+                if fan_between(runs[i], runs[j]).is_some() {
+                    used[i] = true;
+                    used[j] = true;
+                    pairs.push((i, j));
+                    rec(i + 1, used, pairs, runs, best, best_pairs);
+                    pairs.pop();
+                    used[i] = false;
+                    used[j] = false;
                 }
             }
         }
-        if lianliu > 0 {
-            v.push(f("连六", lianliu as u32));
+        let mut used = vec![false; runs.len()];
+        let mut best = 0usize;
+        let mut best_pairs: Vec<(usize, usize)> = Vec::new();
+        let mut pairs: Vec<(usize, usize)> = Vec::new();
+        rec(0, &mut used, &mut pairs, &runs, &mut best, &mut best_pairs);
+
+        let mut counts: std::collections::HashMap<&'static str, u32> = std::collections::HashMap::new();
+        for (i, j) in best_pairs.iter() {
+            if let Some(n) = fan_between(runs[*i], runs[*j]) {
+                *counts.entry(n).or_insert(0) += 1;
+            }
         }
-        // 老少副：同花色 123 与 789 成对
-        let mut laoshao = 0;
-        for s in 0..3usize {
-            let a = by_suit[s].get(&1).copied().unwrap_or(0);
-            let b = by_suit[s].get(&7).copied().unwrap_or(0);
-            laoshao += a.min(b);
-        }
-        if laoshao > 0 {
-            v.push(f("老少副", laoshao as u32));
+        for name in ["一般高", "喜相逢", "连六", "老少副"].iter() {
+            if let Some(&c) = counts.get(name) {
+                v.push(f(name, c));
+            }
         }
     }
 
@@ -808,6 +819,9 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
     }
     if has(v, "一色四节高") {
         drop.extend(["一色三同顺", "碰碰和"]);
+    }
+    if has(v, "清龙") {
+        drop.extend(["连六", "老少副"]);
     }
     if has(v, "一色四步高") {
         drop.extend(["连六", "老少副"]);
