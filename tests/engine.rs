@@ -107,3 +107,72 @@ fn seven_pairs_recognized() {
     assert!(has(w, "七对"), "{:?}", names(w));
     assert_eq!(w.normal, 24 + 1 + 1, "七对 24 + 缺一门 1 + 无字 1");
 }
+
+#[test]
+fn da_san_yuan() {
+    // 中中中 发发发 白白白 456m 5m，和 5m
+    let c = parse_hand("中中中发发发白白白 456m 5m");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 4); // 5万
+    assert!(has(w, "大三元"), "{:?}", names(w));
+    assert!(w.normal >= 88);
+}
+
+#[test]
+fn da_si_xi_exclusions() {
+    // 东东东 南南南 西西西 北北北 5m，和 5m
+    let c = parse_hand("东东东南南南西西西北北北 5m");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 4);
+    assert!(has(w, "大四喜"), "{:?}", names(w));
+    assert!(!has(w, "三风刻"), "{:?}", names(w));
+    assert!(!has(w, "碰碰和"), "{:?}", names(w));
+}
+
+#[test]
+fn tui_bu_dao() {
+    // 112233p 456s 888p 白，和 白
+    let c = parse_hand("112233p 456s 888p 白");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 33); // 白
+    assert!(has(w, "推不倒"), "{:?}", names(w));
+    assert!(!has(w, "缺一门"), "推不倒不计缺一门: {:?}", names(w));
+}
+
+#[test]
+fn yi_se_shuang_long_hui() {
+    // 112233m 778899m 5m，和 5m
+    let c = parse_hand("112233m 778899m 5m");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 4);
+    assert!(has(w, "一色双龙会"), "{:?}", names(w));
+    assert!(!has(w, "清一色"), "{:?}", names(w));
+    assert!(!has(w, "一般高"), "{:?}", names(w));
+}
+
+#[test]
+fn san_se_shuang_long_hui() {
+    // 123789m 123789p 5s，和 5s
+    let c = parse_hand("123789m 123789p 5s");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 9 + 4); // 5条
+    assert!(has(w, "三色双龙会"), "{:?}", names(w));
+    assert!(!has(w, "喜相逢"), "{:?}", names(w));
+    assert!(!has(w, "老少副"), "{:?}", names(w));
+}
+
+#[test]
+fn zuhe_long() {
+    // 147m 258s 369p 456m 9m，和 9m
+    let c = parse_hand("147m 258s 369p 456m 9m");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 8); // 9万
+    assert!(has(w, "组合龙"), "{:?}", names(w));
+    assert!(has(w, "平和"), "{:?}", names(w));
+}

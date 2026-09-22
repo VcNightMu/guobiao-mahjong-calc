@@ -8,6 +8,55 @@ use crate::fans::*;
 use crate::model::*;
 use crate::tiles::*;
 
+/// 检测组合龙：9 张 147/258/369 + 1 面子 + 将
+pub fn detect_zuhelong(c: &Counts) -> Vec<Decomp> {
+    let mut out = Vec::new();
+    if total(c) != 14 {
+        return out;
+    }
+    for perm in PERMS.iter() {
+        let nine = knit_tiles(*perm);
+        let mut cc = *c;
+        let mut ok = true;
+        for &t in nine.iter() {
+            if cc[t] == 0 {
+                ok = false;
+                break;
+            }
+            cc[t] -= 1;
+        }
+        if !ok {
+            continue;
+        }
+        for p in 0..34usize {
+            if cc[p] < 2 {
+                continue;
+            }
+            let mut c2 = cc;
+            c2[p] -= 2;
+            for t in 0..27usize {
+                if t % 9 <= 6 && c2[t] > 0 && c2[t + 1] > 0 && c2[t + 2] > 0 {
+                    out.push(Decomp {
+                        pair: Some(p),
+                        sets: vec![Set::run(t)],
+                        special: Some(Special::Zuhelong),
+                    });
+                }
+            }
+            for t in 0..34usize {
+                if c2[t] >= 3 {
+                    out.push(Decomp {
+                        pair: Some(p),
+                        sets: vec![Set::triplet(t)],
+                        special: Some(Special::Zuhelong),
+                    });
+                }
+            }
+        }
+    }
+    out
+}
+
 #[derive(Clone, Debug)]
 pub struct WaitResult {
     pub tile: usize,
@@ -80,6 +129,9 @@ pub fn winning_decomps(c: &Counts, melds: &[Meld]) -> Vec<Decomp> {
             out.push(Decomp::special(Special::SevenStars));
         } else if is_bu_kao(c) {
             out.push(Decomp::special(Special::BuKao));
+        }
+        for d in detect_zuhelong(c) {
+            out.push(d);
         }
     }
 

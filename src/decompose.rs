@@ -46,6 +46,8 @@ pub enum Special {
     ThirteenOrphans,
     BuKao,
     SevenStars,
+    /// 组合龙：9 张 147/258/369 + 1 面子 + 将
+    Zuhelong,
 }
 
 #[derive(Clone, Debug)]
@@ -186,8 +188,8 @@ pub fn is_thirteen_orphans(c: &Counts) -> bool {
     true
 }
 
-const KNIT_COLS: [[usize; 3]; 3] = [[1, 4, 7], [2, 5, 8], [3, 6, 9]];
-const PERMS: [[usize; 3]; 6] = [
+pub const KNIT_COLS: [[usize; 3]; 3] = [[1, 4, 7], [2, 5, 8], [3, 6, 9]];
+pub const PERMS: [[usize; 3]; 6] = [
     [0, 1, 2],
     [0, 2, 1],
     [1, 0, 2],
@@ -195,6 +197,17 @@ const PERMS: [[usize; 3]; 6] = [
     [2, 0, 1],
     [2, 1, 0],
 ];
+
+/// 给定列分配（哪门花色取 147/258/369），返回组合龙的 9 张牌
+pub fn knit_tiles(perm: [usize; 3]) -> Vec<usize> {
+    let mut v = Vec::new();
+    for s in 0..3usize {
+        for &n in KNIT_COLS[perm[s]].iter() {
+            v.push(s * 9 + n - 1);
+        }
+    }
+    v
+}
 
 pub fn is_bu_kao(c: &Counts) -> bool {
     if total(c) != 14 {

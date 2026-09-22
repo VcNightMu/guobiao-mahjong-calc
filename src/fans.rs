@@ -90,6 +90,18 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
         Special::ThirteenOrphans => v.push(f("十三幺", 88)),
         Special::SevenStars => v.push(f("七星不靠", 24)),
         Special::BuKao => v.push(f("全不靠", 12)),
+        Special::Zuhelong => {
+            v.push(f("组合龙", 12));
+            let d = ctx.decomp;
+            if let Some(p) = d.pair {
+                if d.sets.len() == 1 && d.sets[0].is_run() && is_suited(p) {
+                    v.push(f("平和", 2));
+                }
+            }
+            if !has_honor(all) {
+                v.push(f("无字", 1));
+            }
+        }
     }
 
     // 颜色类（七对 / 不靠 可叠）
@@ -123,13 +135,33 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
             // 十三幺不计 五门齐 / 门前清 / 单钓将
         }
         Special::BuKao => {
-            // 全不靠
+            // 全不靠：若含完整 147/258/369，加计组合龙
+            for perm in PERMS.iter() {
+                if knit_tiles(*perm).iter().all(|&t| all[t] > 0) {
+                    v.push(f("组合龙", 12));
+                    break;
+                }
+            }
         }
         Special::SevenStars => {
             // 七星不靠 不计 五门齐 / 门前清
         }
+        Special::Zuhelong => {}
     }
 
+    // 五门齐（组合龙手常见）
+    {
+        let suits = suits_present(all);
+        let nsuit = suits.iter().filter(|&&x| x).count();
+        if nsuit == 3
+            && (0..34usize).any(|t| all[t] > 0 && is_wind(t))
+            && (0..34usize).any(|t| all[t] > 0 && is_dragon(t))
+        {
+            v.push(f("五门齐", 6));
+        }
+    }
+
+    apply_exclusions(&mut v, ctx);
     v
 }
 
@@ -215,23 +247,23 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     let ankan = d.sets.iter().filter(|s| s.is_kan && !s.open).count();
     let mingkan = d.sets.iter().filter(|s| s.is_kan && s.open).count();
 
-    if kan_cnt == 4 {
+    if kan_cnt >= 4 {
         v.push(f("四杠", 88));
     } else if kan_cnt == 3 {
         v.push(f("三杠", 32));
-    }
-
-    if ankan >= 2 {
-        v.push(f("双暗杠", 6));
-    }
-    if mingkan >= 2 {
-        v.push(f("双明杠", 4));
-    }
-    for _ in 0..ankan {
-        v.push(f("暗杠", 2));
-    }
-    for _ in 0..mingkan {
-        v.push(f("明杠", 1));
+    } else if kan_cnt == 2 {
+        if ankan == 2 {
+            v.push(f("双暗杠", 6));
+        } else if mingkan == 2 {
+            v.push(f("双明杠", 4));
+        }
+        // 一明一暗杠：98 规则不计
+    } else if kan_cnt == 1 {
+        if ankan == 1 {
+            v.push(f("暗杠", 2));
+        } else {
+            v.push(f("明杠", 1));
+        }
     }
 
     // 碰碰和
@@ -267,10 +299,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             if t == ctx.seat_wind {
                 v.push(f("门风刻", 2));
             }
-            if wind_tri == 1 || (wind_tri == 2) {
-                // 三风刻时不计幺九刻（互斥）；此处只在未构成三风刻时计
-            }
-            if wind_tri < 3 && t != ctx.round_wind && t != ctx.seat_wind {
+            if t != ctx.round_wind && t != ctx.seat_wind {
                 v.push(f("幺九刻", 1));
             }
         } else if is_terminal(t) {
@@ -278,8 +307,6 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
     }
     if wind_tri == 3 && !is_wind(pair) && !big4 {
-        // 三风刻
-        // 已在上面推入小四喜判断，这里补三风刻（小四喜时不计）
         v.push(f("三风刻", 12));
     }
 
@@ -621,6 +648,43 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
     }
 
+    // ---------- 推不倒 ----------
+    {
+        const TBD: [usize; 14] = [10, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 25, 26, 33];
+        if (0..34usize).all(|t| all[t] == 0 || TBD.contains(&t)) {
+            v.push(f("推不倒", 8));
+        }
+    }
+
+    // ---------- 一色双龙会 / 三色双龙会 ----------
+    if d.sets.len() == 4 && d.sets.iter().all(|s| s.is_run()) {
+        if is_suited(pair) && num(pair) == 5 {
+            let ps = suit(pair);
+            // 一色双龙会：同一花色 123,123,789,789 + 5 作将
+            let same = runs.iter().all(|&t| suit(t) == ps);
+            let c1 = runs.iter().filter(|&&t| num(t) == 1).count();
+            let c7 = runs.iter().filter(|&&t| num(t) == 7).count();
+            if same && c1 == 2 && c7 == 2 {
+                v.push(f("一色双龙会", 64));
+            }
+            // 三色双龙会：两花色各一老少副，第三花色 5 作将
+            let mut full = 0;
+            for s in 0..3usize {
+                if s == ps {
+                    continue;
+                }
+                let has1 = runs.iter().any(|&t| suit(t) == s && num(t) == 1);
+                let has7 = runs.iter().any(|&t| suit(t) == s && num(t) == 7);
+                if has1 && has7 {
+                    full += 1;
+                }
+            }
+            if full == 2 && runs.iter().all(|&t| suit(t) != ps) {
+                v.push(f("三色双龙会", 16));
+            }
+        }
+    }
+
     // ---------- 和牌张结构：边张 / 坎张 / 单钓将 ----------
     if ctx.single_wait {
         if pair == ctx.win_tile {
@@ -658,8 +722,17 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
     if has(v, "大三元") {
         drop.extend(["双箭刻", "箭刻"]);
     }
+    if has(v, "绿一色") {
+        drop.extend(["混一色"]);
+    }
     if has(v, "九莲宝灯") {
-        drop.extend(["清一色", "幺九刻", "清龙"]);
+        drop.extend(["清一色", "幺九刻"]);
+    }
+    if has(v, "四杠") {
+        drop.extend(["碰碰和", "单钓将", "三杠", "双暗杠", "双明杠", "暗杠", "明杠"]);
+    }
+    if has(v, "三杠") {
+        drop.extend(["双暗杠", "双明杠", "暗杠", "明杠"]);
     }
     if has(v, "连七对") {
         drop.extend(["清一色", "七对", "单钓将"]);
@@ -668,7 +741,7 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
         drop.extend(["五门齐", "单钓将"]);
     }
     if has(v, "清幺九") {
-        drop.extend(["碰碰和", "全带幺", "幺九刻", "无字"]);
+        drop.extend(["碰碰和", "全带幺", "幺九刻", "无字", "双同刻", "三同刻"]);
     }
     if has(v, "混幺九") {
         drop.extend(["碰碰和", "全带幺", "幺九刻"]);
@@ -688,44 +761,65 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
     if has(v, "三暗刻") {
         drop.extend(["双暗刻"]);
     }
-    if has(v, "四杠") {
-        drop.extend(["三杠"]);
-    }
-    if has(v, "清一色") {
-        drop.extend(["无字"]);
-    }
-    if has(v, "断幺") {
-        drop.extend(["无字"]);
-    }
-    if has(v, "全大") || has(v, "全中") || has(v, "全小") {
-        drop.push("无字");
-    }
-    if has(v, "大于五") || has(v, "小于五") {
-        drop.push("无字");
-    }
-    if has(v, "全带五") {
-        drop.extend(["断幺", "无字"]);
-    }
-    if has(v, "平和") {
-        drop.push("无字");
-    }
-    if has(v, "七对") {
-        drop.extend(["单钓将"]);
+    if has(v, "一色双龙会") {
+        drop.extend(["七对", "清一色", "平和", "一般高", "老少副", "无字"]);
     }
     if has(v, "一色四同顺") {
-        drop.extend(["一色三同顺", "一般高", "四归一"]);
+        drop.extend(["一色三节高", "一色三同顺", "七对", "四归一", "一般高"]);
+    }
+    if has(v, "一色四节高") {
+        drop.extend(["一色三同顺", "碰碰和"]);
+    }
+    if has(v, "一色四步高") {
+        drop.extend(["连六", "老少副"]);
+    }
+    if has(v, "七对") {
+        drop.push("单钓将");
+    }
+    if has(v, "七星不靠") {
+        drop.push("五门齐");
+    }
+    if has(v, "全双刻") {
+        drop.extend(["碰碰和", "断幺"]);
+    }
+    if has(v, "清一色") {
+        drop.push("无字");
     }
     if has(v, "一色三同顺") {
         drop.push("一般高");
     }
-    if has(v, "一色四节高") {
-        drop.push("一色三节高");
+    if has(v, "全大") || has(v, "全小") {
+        drop.push("无字");
     }
-    if has(v, "一色双龙会") {
-        drop.extend(["清一色", "平和", "一般高", "老少副", "七对"]);
+    if has(v, "全中") {
+        drop.extend(["断幺", "无字"]);
     }
-    if has(v, "全双刻") {
-        drop.extend(["碰碰和", "断幺"]);
+    if has(v, "三色双龙会") {
+        drop.extend(["平和", "无字", "喜相逢", "老少副"]);
+    }
+    if has(v, "全带五") {
+        drop.extend(["断幺", "无字"]);
+    }
+    if has(v, "全不靠") {
+        drop.push("五门齐");
+    }
+    if has(v, "推不倒") {
+        drop.push("缺一门");
+    }
+    if has(v, "三色三同顺") {
+        drop.push("喜相逢");
+    }
+    if has(v, "大于五") || has(v, "小于五") {
+        drop.push("无字");
+    }
+    if has(v, "断幺") {
+        drop.push("无字");
+    }
+    if has(v, "平和") {
+        drop.push("无字");
+    }
+    if has(v, "全求人") {
+        drop.push("单钓将");
     }
 
     v.retain(|x| !drop.contains(&x.name));
@@ -738,7 +832,7 @@ pub fn score(ctx: &WinCtx, mode: WinMode) -> (u32, Vec<Fan>) {
     let mut extra: Vec<Fan> = Vec::new();
     let menqing = ctx.menqing;
     // 定死门清的牌型不计「门前清」
-    let no_menqing_fan = ["七对", "连七对", "十三幺", "九莲宝灯", "七星不靠"]
+    let no_menqing_fan = ["七对", "连七对", "十三幺", "九莲宝灯", "七星不靠", "全不靠", "四暗刻"]
         .iter()
         .any(|n| fans.iter().any(|x| x.name == *n));
 
