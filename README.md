@@ -14,9 +14,8 @@ cargo test           # 跑单测
 cargo run -- 123456789m 55p 78p --round 东 --seat 东
 ```
 
-> 目录名含中文时，MinGW 链接器打不开 UTF-8 路径，构建会失败。
-> 本机已用 `.cargo/config.toml`（未提交）把产物指向 ASCII 目录规避；
-> 换机器建议把工程放在纯 ASCII 路径下。
+> 提示：MinGW 工具链在含中文的路径下会链接失败（`ld` 打不开 UTF-8 路径），
+> 请把工程放在纯 ASCII 路径下。
 
 ## 命令行
 
