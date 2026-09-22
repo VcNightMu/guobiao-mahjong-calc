@@ -1,0 +1,16 @@
+[package]
+name = "guobiao-mahjong-calc"
+version = "0.1.0"
+edition = "2021"
+description = "国标麻将算番器（8番起和 · 听牌算番）"
+
+[lib]
+name = "gbmj"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gbmj"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3

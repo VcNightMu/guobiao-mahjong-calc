@@ -4,6 +4,7 @@ node_modules/
 # 构建产物
 dist/
 build/
+/target/
 
 # 预览 / 临时产物
 _preview*.html
@@ -17,3 +18,6 @@ _preview*.html
 .idea/
 .DS_Store
 Thumbs.db
+
+# 本机 cargo 配置（含绝对路径）
+.cargo/config.toml
