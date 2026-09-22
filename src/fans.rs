@@ -267,8 +267,10 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             v.push(f("双暗杠", 6));
         } else if mingkan == 2 {
             v.push(f("双明杠", 4));
+        } else {
+            // 一明一暗杠：98 规则未列，现行网络国标普遍计 5 番
+            v.push(f("一明一暗杠", 5));
         }
-        // 一明一暗杠：98 规则不计
     } else if kan_cnt == 1 {
         if ankan == 1 {
             v.push(f("暗杠", 2));
@@ -787,10 +789,19 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
         drop.extend(["清一色", "幺九刻"]);
     }
     if has(v, "四杠") {
-        drop.extend(["碰碰和", "单钓将", "三杠", "双暗杠", "双明杠", "暗杠", "明杠"]);
+        drop.extend([
+            "碰碰和",
+            "单钓将",
+            "三杠",
+            "双暗杠",
+            "双明杠",
+            "一明一暗杠",
+            "暗杠",
+            "明杠",
+        ]);
     }
     if has(v, "三杠") {
-        drop.extend(["双暗杠", "双明杠", "暗杠", "明杠"]);
+        drop.extend(["双暗杠", "双明杠", "一明一暗杠", "暗杠", "明杠"]);
     }
     if has(v, "连七对") {
         drop.extend(["清一色", "七对", "单钓将"]);

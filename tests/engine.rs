@@ -238,3 +238,19 @@ fn zuhe_long_with_meld() {
     assert!(has(w, "组合龙"), "{:?}", names(w));
     assert!(has(w, "平和"), "{:?}", names(w));
 }
+
+#[test]
+fn yi_ming_yi_an_kan() {
+    // 明杠 3万 + 暗杠 5筒；暗牌 123s456s 7s，和 7s → 一明一暗杠 5 番
+    let melds = vec![Meld::kan(2, true), Meld::kan(22, false)];
+    let c = parse_hand("123s456s 7s");
+    assert_eq!(total(&c), 7);
+    let an = analyze(&c, &melds, 27, 27);
+    let w = find(&an, 9 + 6); // 7条
+    assert!(has(w, "一明一暗杠"), "{:?}", names(w));
+    assert!(
+        !has(w, "明杠") && !has(w, "暗杠"),
+        "不应再另计明杠/暗杠: {:?}",
+        names(w)
+    );
+}
