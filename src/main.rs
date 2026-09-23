@@ -48,6 +48,7 @@ fn main() {
     let mut melds: Vec<Meld> = Vec::new();
     let mut round = 27usize;
     let mut seat = 27usize;
+    let mut plan_mode = false;
 
     let mut i = 0;
     while i < args.len() {
@@ -73,6 +74,9 @@ fn main() {
                 i += 1;
                 round = wind_idx(&args[i]);
             }
+            "--plan" => {
+                plan_mode = true;
+            }
             "--seat" => {
                 i += 1;
                 seat = wind_idx(&args[i]);
@@ -86,6 +90,36 @@ fn main() {
     }
 
     let concealed = parse_hand(&hand);
+
+    if plan_mode {
+        let dirs = gbmj::plan::plan(&concealed, &melds, 2);
+        println!(
+            "暗牌 {} 张 | 副露 {} 副   方向扫描（离某个番种还差几张，最多 2 张）",
+            total(&concealed),
+            melds.len()
+        );
+        if dirs.is_empty() {
+            println!("  没有 2 张以内能凑到的番种方向");
+            return;
+        }
+        for d in dirs.iter() {
+            println!(
+                "  {:<12}{:>3}番  差{}张   补: {:<16}换掉: {}{}",
+                d.name,
+                d.value,
+                d.distance,
+                d.need_str(),
+                d.drop_str(),
+                if d.tag.is_empty() {
+                    String::new()
+                } else {
+                    format!("   【{}】", d.tag)
+                }
+            );
+        }
+        return;
+    }
+
     let an = analyze(&concealed, &melds, round, seat);
 
     let n = total(&concealed);
