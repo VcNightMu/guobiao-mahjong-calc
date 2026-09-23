@@ -377,3 +377,24 @@ fn zuhelong_kan_zhang() {
     assert!(has(w, "组合龙"), "{:?}", names(w));
     assert!(has(w, "坎张"), "{:?}", names(w));
 }
+
+#[test]
+fn shuang_peng_cannot_be_last_tile() {
+    // 双碰听：暗牌里握着该张，永远不成绝张
+    let c = parse_hand("555m66s777p123m东东");
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 9 + 5); // 6条
+    assert!(!w.can_last, "双碰听不应有绝张");
+    assert!(!w.only_last());
+    let w2 = find(&an, 27); // 东
+    assert!(!w2.can_last, "东也是一对在暗牌里");
+}
+
+#[test]
+fn liang_mian_can_be_last_tile() {
+    // 边张听：暗牌里没有 3万，绝张成立
+    let c = parse_hand("147m258s369p12m55p");
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 2); // 3万
+    assert!(w.can_last, "暗牌无 3万，绝张应成立");
+}

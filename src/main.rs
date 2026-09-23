@@ -115,8 +115,12 @@ fn main() {
             tile_name(w.tile),
             w.normal,
             w.tsumo,
-            w.last,
-            w.tsumo_last,
+            if w.can_last { w.last.to_string() } else { "—".to_string() },
+            if w.can_last {
+                w.tsumo_last.to_string()
+            } else {
+                "—".to_string()
+            },
             ok,
             tag
         );

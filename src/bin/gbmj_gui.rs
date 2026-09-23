@@ -376,12 +376,17 @@ impl App {
             ui.horizontal(|ui| {
                 ui.add_sized([52.0, 22.0], egui::Label::new(egui::RichText::new(tile_name(w.tile)).strong()));
                 let cols = [
-                    ("点和", w.normal),
-                    ("自摸", w.tsumo),
-                    ("点和绝张", w.last),
-                    ("自摸绝张", w.tsumo_last),
+                    ("点和", w.normal, true),
+                    ("自摸", w.tsumo, true),
+                    ("点和绝张", w.last, w.can_last),
+                    ("自摸绝张", w.tsumo_last, w.can_last),
                 ];
-                for (name, v) in cols {
+                for (name, v, applicable) in cols {
+                    if !applicable {
+                        // 双碰/单钓等：暗牌里有该张，永远不成绝张
+                        ui.colored_label(egui::Color32::from_gray(115), format!("{name} —"));
+                        continue;
+                    }
                     let ok = v >= WIN_THRESHOLD;
                     let color = if ok {
                         egui::Color32::from_rgb(235, 90, 80)

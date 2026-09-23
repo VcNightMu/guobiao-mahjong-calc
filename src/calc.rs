@@ -81,6 +81,8 @@ pub struct WaitResult {
     pub tsumo: u32,
     pub last: u32,
     pub tsumo_last: u32,
+    /// 是否可能「和绝张」：暗牌里握着该张时绝张不成立（双碰听、单钓听、或听张已在暗牌中）
+    pub can_last: bool,
     /// 点和时的完整番表（含和法番：门前清 / 和绝张 / 无番和 等）
     pub fans: Vec<Fan>,
     /// 自摸时的完整番表（与 fans 可能因暗刻/自摸类番而不同）
@@ -96,7 +98,10 @@ impl WaitResult {
         self.normal < 8 && self.tsumo >= 8
     }
     pub fn only_last(&self) -> bool {
-        self.normal < 8 && self.tsumo < 8 && (self.last >= 8 || self.tsumo_last >= 8)
+        self.can_last
+            && self.normal < 8
+            && self.tsumo < 8
+            && (self.last >= 8 || self.tsumo_last >= 8)
     }
 }
 
@@ -232,6 +237,7 @@ pub fn analyze(
             tsumo: best[1],
             last: best[2],
             tsumo_last: best[3],
+            can_last: concealed[t] == 0,
             fans: best_fans,
             fans_tsumo: best_fans_tsumo,
             special,
