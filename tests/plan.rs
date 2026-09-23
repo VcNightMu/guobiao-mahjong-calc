@@ -143,3 +143,43 @@ fn pungs_block_run_family() {
     assert!(find(&ds, "三色三同顺").is_none(), "{:?}", names);
     assert!(find(&ds, "组合龙").is_none(), "{:?}", names);
 }
+
+#[test]
+fn san_an_ke_zero() {
+    // 111m222m333m + 44m55m：三个暗刻已成形，44m 补成 444m 靠点和是明刻，不影响前三个
+    let h = parse_hand("111m222m333m4455m");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "三暗刻").expect("应有三暗刻");
+    assert_eq!(d.distance, 0, "{:?}", d);
+}
+
+#[test]
+fn si_an_ke_zero() {
+    let h = parse_hand("111m222m333m444m5m");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "四暗刻").expect("应有四暗刻");
+    assert_eq!(d.distance, 0, "{:?}", d);
+}
+
+#[test]
+fn si_an_ke_not_offered_when_only_tsumo() {
+    // 双碰听：点和补出来的第 4 个刻子是明刻，四暗刻只有自摸才算 → 不该出现
+    let h = parse_hand("111m222m333m44m55m");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let names: Vec<&str> = ds.iter().map(|d| d.name.as_str()).collect();
+    assert!(find(&ds, "四暗刻").is_none(), "{:?}", names);
+    assert!(find(&ds, "三暗刻").is_some(), "{:?}", names);
+}
+
+#[test]
+fn da_san_yuan_and_xiao_san_yuan() {
+    // 中中中发发发 + 白白（小三元听白，大三元差一张白）
+    let h = parse_hand("中中中发发发白白123m44m");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    assert!(find(&ds, "小三元").is_some(), "{:?}", ds);
+    assert!(find(&ds, "大三元").is_some(), "{:?}", ds);
+}

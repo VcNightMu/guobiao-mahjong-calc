@@ -736,6 +736,108 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         }
     }
 
+    // ── 刻子系 ──
+    // 暗刻系只做「点和能成」的形态：三/四暗刻的刻子必须已经在暗牌里成形，
+    // 不能靠在和牌张上（点和补出来的刻子算明刻）；只有自摸才成立的那类不列。
+    let ankan = melds
+        .iter()
+        .filter(|m| m.kind == MeldKind::Kan && !m.open)
+        .count();
+    let full: Vec<usize> = (0..NUM_TILES).filter(|&t| hand[t] == 3).collect();
+    if ankan < 3 {
+        let need3 = 3usize.saturating_sub(ankan);
+        if full.len() >= need3 {
+            for c in combos(&full, need3) {
+                let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
+                push_forced(&mut out, hand, melds, "三暗刻".into(), 16, &forced, None, max_dist);
+            }
+        }
+    }
+    if ankan < 4 {
+        let need4 = 4usize.saturating_sub(ankan);
+        if full.len() >= need4 {
+            for c in combos(&full, need4) {
+                let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
+                push_forced(&mut out, hand, melds, "四暗刻".into(), 64, &forced, None, max_dist);
+            }
+        }
+    }
+    // 明暗皆可的刻子系（碰/杠/点和补成都可以）
+    let winds = [1usize, 2, 3, 4];
+    let dragons = [5usize, 6, 7];
+    for n in 1..=9usize {
+        push_forced(
+            &mut out,
+            hand,
+            melds,
+            "三同刻".into(),
+            16,
+            &[trip(0, n), trip(1, n), trip(2, n)],
+            None,
+            max_dist,
+        );
+    }
+    for c in combos(&winds, 3) {
+        let forced: Vec<[usize; 3]> = c.iter().map(|&n| trip(3, n)).collect();
+        push_forced(&mut out, hand, melds, "三风刻".into(), 12, &forced, None, max_dist);
+    }
+    for c in combos(&dragons, 2) {
+        let forced: Vec<[usize; 3]> = c.iter().map(|&n| trip(3, n)).collect();
+        push_forced(&mut out, hand, melds, "双箭刻".into(), 6, &forced, None, max_dist);
+    }
+    push_forced(
+        &mut out,
+        hand,
+        melds,
+        "大三元".into(),
+        88,
+        &[trip(3, 5), trip(3, 6), trip(3, 7)],
+        None,
+        max_dist,
+    );
+    for k in 0..3usize {
+        let forced: Vec<[usize; 3]> = (0..3usize)
+            .filter(|&i| i != k)
+            .map(|i| trip(3, dragons[i]))
+            .collect();
+        push_forced(
+            &mut out,
+            hand,
+            melds,
+            "小三元".into(),
+            64,
+            &forced,
+            Some(26 + dragons[k]),
+            max_dist,
+        );
+    }
+    push_forced(
+        &mut out,
+        hand,
+        melds,
+        "大四喜".into(),
+        88,
+        &[trip(3, 1), trip(3, 2), trip(3, 3), trip(3, 4)],
+        None,
+        max_dist,
+    );
+    for k in 0..4usize {
+        let forced: Vec<[usize; 3]> = (0..4usize)
+            .filter(|&i| i != k)
+            .map(|i| trip(3, winds[i]))
+            .collect();
+        push_forced(
+            &mut out,
+            hand,
+            melds,
+            "小四喜".into(),
+            64,
+            &forced,
+            Some(27 + winds[k] - 1),
+            max_dist,
+        );
+    }
+
     push_dir(&mut out, hand, "七对".into(), 24, seven_pairs(hand, melds), "门清", max_dist);
     push_dir(
         &mut out,
@@ -778,6 +880,32 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     // 同名（同一骨架的不同排列）只留最近的那一条
     let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
     out.retain(|d| seen.insert(d.name.clone()));
+    out
+}
+
+/// 从 v 里取 k 个的组合（用于枚举哪几个刻子/哪几个风箭）
+fn combos(v: &[usize], k: usize) -> Vec<Vec<usize>> {
+    fn go(v: &[usize], k: usize, i: usize, cur: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
+        if cur.len() == k {
+            out.push(cur.clone());
+            return;
+        }
+        if v.len() - i < k - cur.len() {
+            return;
+        }
+        for j in i..v.len() {
+            cur.push(v[j]);
+            go(v, k, j + 1, cur, out);
+            cur.pop();
+        }
+    }
+    let mut out = Vec::new();
+    if k == 0 {
+        out.push(Vec::new());
+        return out;
+    }
+    let mut cur = Vec::new();
+    go(v, k, 0, &mut cur, &mut out);
     out
 }
 
