@@ -81,8 +81,10 @@ pub struct WaitResult {
     pub tsumo: u32,
     pub last: u32,
     pub tsumo_last: u32,
-    /// 牌型番明细（不含和法番）
+    /// 点和时的完整番表（含和法番：门前清 / 和绝张 / 无番和 等）
     pub fans: Vec<Fan>,
+    /// 自摸时的完整番表（与 fans 可能因暗刻/自摸类番而不同）
+    pub fans_tsumo: Vec<Fan>,
     pub special: bool,
 }
 
@@ -188,7 +190,9 @@ pub fn analyze(
 
         let mut best = [0u32; 4]; // normal, tsumo, last, tsumo_last
         let mut best_fans: Vec<Fan> = Vec::new();
+        let mut best_fans_tsumo: Vec<Fan> = Vec::new();
         let mut best_normal = i64::MIN;
+        let mut best_tsumo = i64::MIN;
         let mut special = false;
 
         for d in decomps.iter() {
@@ -203,8 +207,8 @@ pub fn analyze(
                 single_wait,
                 tsumo: false,
             };
-            let (n, _) = score(&ctx, WinMode::Normal);
-            let (ts, _) = score(&ctx, WinMode::Tsumo);
+            let (n, nf) = score(&ctx, WinMode::Normal);
+            let (ts, tf) = score(&ctx, WinMode::Tsumo);
             let (lt, _) = score(&ctx, WinMode::LastTile);
             let (tl, _) = score(&ctx, WinMode::TsumoLast);
             best[0] = best[0].max(n);
@@ -213,14 +217,13 @@ pub fn analyze(
             best[3] = best[3].max(tl);
             if (n as i64) > best_normal {
                 best_normal = n as i64;
-                best_fans = collect(&ctx);
+                best_fans = nf;
                 special = d.special.is_some();
             }
-        }
-
-        // 无番和：结构番为空但按点炮够和，明细补上
-        if best_fans.is_empty() && best[0] == 8 {
-            best_fans.push(Fan { name: "无番和", value: 8 });
+            if (ts as i64) > best_tsumo {
+                best_tsumo = ts as i64;
+                best_fans_tsumo = tf;
+            }
         }
 
         waits.push(WaitResult {
@@ -230,6 +233,7 @@ pub fn analyze(
             last: best[2],
             tsumo_last: best[3],
             fans: best_fans,
+            fans_tsumo: best_fans_tsumo,
             special,
         });
     }

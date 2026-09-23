@@ -293,3 +293,49 @@ fn tao_suan_yi_ci_four_runs_three_pairs() {
         n
     );
 }
+
+#[test]
+fn bi_ran_menqing_tsumo_is_just_one() {
+    // 七对（必然门清）自摸只加「自摸 1」，不计不求人
+    let c = parse_hand("11m22m33m44m55m白白白");
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 33); // 白
+    assert!(has(w, "七对"), "{:?}", names(w));
+    assert_eq!(w.normal, 30, "七对24+混一色6: {:?}", names(w));
+    assert_eq!(w.tsumo, 31, "必然门清自摸只应 +1: {:?}", names(w));
+    assert!(!has(w, "不求人"), "{:?}", names(w));
+}
+
+#[test]
+fn menqing_shows_qianmenqing_in_detail() {
+    // 门清手点炮：完整番表里应含「门前清 2」
+    let c = parse_hand("147m258s369p12m55p");
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 2); // 3万
+    assert!(has(w, "门前清"), "{:?}", names(w));
+    assert_eq!(w.normal, 16, "组合龙12+平和2+门前清2: {:?}", names(w));
+}
+
+#[test]
+fn tsumo_detail_differs_from_normal() {
+    // 双碰听：荣和补的刻子算明刻、自摸才算暗刻 → 点炮与自摸的番表不同（界面需额外显示自摸番）
+    let c = parse_hand("555m66s777p123m东东");
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 9 + 5); // 6条
+    let strip = |v: &[gbmj::fans::Fan]| -> Vec<String> {
+        v.iter()
+            .filter(|f| !matches!(f.name, "门前清" | "不求人" | "自摸" | "和绝张"))
+            .map(|f| f.name.to_string())
+            .collect()
+    };
+    assert_ne!(
+        strip(&w.fans),
+        strip(&w.fans_tsumo),
+        "点和与自摸的番表应不同: {:?} vs {:?}",
+        names(w),
+        w.fans_tsumo
+            .iter()
+            .map(|f| f.name)
+            .collect::<Vec<_>>()
+    );
+}

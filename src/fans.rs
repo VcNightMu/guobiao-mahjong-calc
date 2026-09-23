@@ -953,9 +953,10 @@ pub fn score(ctx: &WinCtx, mode: WinMode) -> (u32, Vec<Fan>) {
             }
         }
         WinMode::Tsumo => {
-            if menqing {
+            if menqing && !no_menqing_fan {
                 extra.push(f("不求人", 4));
             } else {
+                // 必然门清的牌型（七对/不靠/十三幺…）或副露手：只加「自摸 1」
                 extra.push(f("自摸", 1));
             }
         }
@@ -966,7 +967,7 @@ pub fn score(ctx: &WinCtx, mode: WinMode) -> (u32, Vec<Fan>) {
             extra.push(f("和绝张", 4));
         }
         WinMode::TsumoLast => {
-            if menqing {
+            if menqing && !no_menqing_fan {
                 extra.push(f("不求人", 4));
             } else {
                 extra.push(f("自摸", 1));

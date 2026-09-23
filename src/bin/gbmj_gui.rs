@@ -399,21 +399,34 @@ impl App {
                     ui.colored_label(egui::Color32::from_rgb(200, 160, 60), mark);
                 }
             });
-            let detail = if w.special {
-                "无番和".to_string()
-            } else if w.fans.is_empty() {
-                "（无牌型番）".to_string()
-            } else {
-                w.fans
-                    .iter()
-                    .map(|f| format!("{} {}", f.name, f.value))
-                    .collect::<Vec<_>>()
-                    .join("，")
+            let fmt_fans = |list: &[gbmj::fans::Fan]| {
+                if list.is_empty() {
+                    "（无番）".to_string()
+                } else {
+                    list.iter()
+                        .map(|f| format!("{} {}", f.name, f.value))
+                        .collect::<Vec<_>>()
+                        .join("，")
+                }
             };
+            // 去掉和法番后比较：判断自摸是否只是「门前清 2 ↔ 不求人 4」的换算法
+            let structure_of = |list: &[gbmj::fans::Fan]| -> Vec<(String, u32)> {
+                list.iter()
+                    .filter(|f| !matches!(f.name, "门前清" | "不求人" | "自摸" | "和绝张"))
+                    .map(|f| (f.name.to_string(), f.value))
+                    .collect()
+            };
+            let tsumo_differs = structure_of(&w.fans) != structure_of(&w.fans_tsumo);
             ui.horizontal(|ui| {
                 ui.add_space(14.0);
-                ui.weak(detail);
+                ui.weak(fmt_fans(&w.fans));
             });
+            if tsumo_differs {
+                ui.horizontal(|ui| {
+                    ui.add_space(14.0);
+                    ui.weak(format!("自摸：{}", fmt_fans(&w.fans_tsumo)));
+                });
+            }
             ui.add_space(4.0);
         }
     }
