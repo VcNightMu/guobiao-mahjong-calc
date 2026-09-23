@@ -300,23 +300,12 @@ impl App {
                             let t = start + k;
                             let used = self.used(t);
                             let full = used >= 4;
-                            let text = format!("{}\n{}/4", tile_name(t), used);
-                            let color = if full {
-                                egui::Color32::from_gray(115)
-                            } else if used > 0 {
-                                egui::Color32::from_rgb(255, 216, 130)
-                            } else {
-                                egui::Color32::from_gray(210)
-                            };
-                            let mut btn = egui::Button::new(
-                                egui::RichText::new(text).color(color).size(13.0),
-                            )
-                            .min_size(egui::vec2(46.0, 36.0));
-                            if used > 0 && !full {
-                                btn = btn.fill(egui::Color32::from_rgb(64, 54, 30));
-                            }
-                            if ui.add_enabled(!full, btn).clicked() {
+                            let resp = tile_cell(ui, t, used);
+                            if resp.clicked() && !full {
                                 self.click_tile(t);
+                            }
+                            if full {
+                                let _ = resp.on_hover_text("已用满 4 张");
                             }
                         }
                     });
@@ -448,6 +437,63 @@ impl eframe::App for App {
             });
         });
     }
+}
+
+/// 牌库格子：自绘，三态颜色拉开（未用 / 部分用 / 用满）
+fn tile_cell(ui: &mut egui::Ui, t: usize, used: usize) -> egui::Response {
+    let full = used >= 4;
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(46.0, 36.0), egui::Sense::click());
+    if ui.is_rect_visible(rect) {
+        let hovered = resp.hovered();
+        let (bg, fg) = if full {
+            // 用满：深红底 + 淡红字（与浅灰的“未用”反差极大）
+            if hovered {
+                (egui::Color32::from_rgb(74, 32, 32), egui::Color32::from_rgb(255, 200, 200))
+            } else {
+                (egui::Color32::from_rgb(44, 24, 24), egui::Color32::from_rgb(214, 138, 138))
+            }
+        } else if used > 0 {
+            // 已用部分：黄底黑字
+            if hovered {
+                (egui::Color32::from_rgb(232, 188, 78), egui::Color32::from_rgb(24, 18, 6))
+            } else {
+                (egui::Color32::from_rgb(202, 154, 50), egui::Color32::from_rgb(24, 18, 6))
+            }
+        } else if hovered {
+            (
+                ui.visuals().widgets.hovered.bg_fill,
+                ui.visuals().widgets.hovered.text_color(),
+            )
+        } else {
+            (
+                ui.visuals().widgets.inactive.bg_fill,
+                ui.visuals().text_color(),
+            )
+        };
+        ui.painter()
+            .rect_filled(rect, egui::CornerRadius::same(4), bg);
+        let cx = rect.center().x;
+        ui.painter().text(
+            egui::pos2(cx, rect.top() + 11.0),
+            egui::Align2::CENTER_CENTER,
+            tile_name(t),
+            egui::FontId::proportional(13.0),
+            fg,
+        );
+        let sub = if full {
+            "满".to_string()
+        } else {
+            format!("{}/4", used)
+        };
+        ui.painter().text(
+            egui::pos2(cx, rect.bottom() - 9.0),
+            egui::Align2::CENTER_CENTER,
+            sub,
+            egui::FontId::proportional(10.5),
+            fg,
+        );
+    }
+    resp
 }
 
 fn install_fonts(ctx: &egui::Context) {
