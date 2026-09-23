@@ -93,3 +93,53 @@ fn melds_block_menqing_patterns() {
     assert!(find(&ds, "十三幺").is_none(), "{:?}", names);
     assert!(find(&ds, "碰碰和").is_none(), "{:?}", names);
 }
+
+#[test]
+fn qing_long_zero() {
+    // 123456789m + 11m + 22m：清龙已经成形，只差把 11m/22m 补成面子+将
+    let h = parse_hand("123456789m11m22m");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "清龙(万门)").expect("应有清龙(万门)");
+    assert!(d.distance <= 2, "{:?}", d);
+}
+
+#[test]
+fn hua_long_zero() {
+    let h = parse_hand("123m456s789p11m22p");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "花龙").expect("应有花龙");
+    assert_eq!(d.distance, 0, "{:?}", d);
+}
+
+#[test]
+fn san_se_san_bu_gao_zero() {
+    let h = parse_hand("123m234s345p11m22s");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "三色三步高").expect("应有三色三步高");
+    assert_eq!(d.distance, 0, "{:?}", d);
+}
+
+#[test]
+fn zuhe_long_zero() {
+    let h = parse_hand("147m258s369p11m22p");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "组合龙").expect("应有组合龙");
+    assert_eq!(d.distance, 0, "{:?}", d);
+}
+
+#[test]
+fn pungs_block_run_family() {
+    // 已经两副碰（或杠）时，顺子系骨架放不下
+    let h = parse_hand("12345m12345s1p");
+    let melds = vec![Meld::pon(0), Meld::pon(9)]; // 碰1万 + 碰1条
+    let ds = plan(&h, &melds, 2);
+    let names: Vec<&str> = ds.iter().map(|d| d.name.as_str()).collect();
+    assert!(find(&ds, "清龙").is_none(), "{:?}", names);
+    assert!(find(&ds, "花龙").is_none(), "{:?}", names);
+    assert!(find(&ds, "三色三同顺").is_none(), "{:?}", names);
+    assert!(find(&ds, "组合龙").is_none(), "{:?}", names);
+}

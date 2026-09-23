@@ -129,6 +129,7 @@ fn rec(
     five_gates: bool,
     melds: &[Meld],
     opts: &[[usize; 3]],
+    pair_tile: Option<usize>,
     best: &mut Option<(u32, Counts)>,
 ) {
     let ub = cov + 3 * left as u32 + 2;
@@ -138,10 +139,11 @@ fn rec(
         }
     }
     if left == 0 {
-        for p in 0..NUM_TILES {
-            if !f.ok(p) {
-                continue;
-            }
+        let cands: Vec<usize> = match pair_tile {
+            Some(p) => vec![p],
+            None => (0..NUM_TILES).filter(|&p| f.ok(p)).collect(),
+        };
+        for p in cands {
             let mut t = *cur;
             t[p] = t[p].saturating_add(2);
             if five_gates && !has_five_gates(&t, melds) {
@@ -161,7 +163,19 @@ fn rec(
             g += gain(hand, cur, t, 1);
             cur[t] += 1;
         }
-        rec(k, left - 1, cur, cov + g, hand, f, five_gates, melds, opts, best);
+        rec(
+            k,
+            left - 1,
+            cur,
+            cov + g,
+            hand,
+            f,
+            five_gates,
+            melds,
+            opts,
+            pair_tile,
+            best,
+        );
         for &t in s.iter() {
             cur[t] -= 1;
         }
@@ -176,6 +190,32 @@ pub fn best_standard(
     allow_runs: bool,
     five_gates: bool,
 ) -> Option<(u32, Counts)> {
+    best_forced(hand, melds, f, allow_runs, five_gates, &[], None)
+}
+
+// 骨架系用的小工具：run = 同门顺子，trip = 同门刻子
+pub fn run(s: usize, n: usize) -> [usize; 3] {
+    [s * 9 + n - 1, s * 9 + n, s * 9 + n + 1]
+}
+pub fn trip(s: usize, n: usize) -> [usize; 3] {
+    let t = s * 9 + n - 1;
+    [t, t, t]
+}
+fn is_run3(s: &[usize; 3]) -> bool {
+    !(s[0] == s[1] && s[1] == s[2])
+}
+
+/// 同 best_standard，但可以先钉死若干「强制面子」（清龙、一色四步高、双龙会这类骨架番）。
+/// pair_tile 给定时，将牌也被钉死（双龙会必须是 5）。
+pub fn best_forced(
+    hand: &Counts,
+    melds: &[Meld],
+    f: Filter,
+    allow_runs: bool,
+    five_gates: bool,
+    forced: &[[usize; 3]],
+    pair_tile: Option<usize>,
+) -> Option<(u32, Counts)> {
     for m in melds {
         if !allow_runs && m.kind == MeldKind::Chi {
             return None;
@@ -184,7 +224,25 @@ pub fn best_standard(
             return None;
         }
     }
-    let left0 = 4usize.checked_sub(melds.len())?;
+    for s in forced {
+        if s.iter().any(|&t| !f.ok(t)) {
+            return None;
+        }
+        if !allow_runs && is_run3(s) {
+            return None;
+        }
+    }
+    // 副露 + 强制面子 已经占满 4 副 → 连骨架都放不下，直接不可能
+    let used = 4usize.checked_sub(melds.len())?;
+    if forced.len() > used {
+        return None;
+    }
+    let left0 = used - forced.len();
+    if let Some(p) = pair_tile {
+        if !f.ok(p) {
+            return None;
+        }
+    }
 
     let mut opts: Vec<[usize; 3]> = Vec::new();
     for t in 0..NUM_TILES {
@@ -200,7 +258,26 @@ pub fn best_standard(
 
     let mut best: Option<(u32, Counts)> = None;
     let mut cur = counts();
-    rec(0, left0, &mut cur, 0, hand, f, five_gates, melds, &opts, &mut best);
+    let mut cov0 = 0u32;
+    for s in forced {
+        for &t in s.iter() {
+            cov0 += gain(hand, &cur, t, 1);
+            cur[t] += 1;
+        }
+    }
+    rec(
+        0,
+        left0,
+        &mut cur,
+        cov0,
+        hand,
+        f,
+        five_gates,
+        melds,
+        &opts,
+        pair_tile,
+        &mut best,
+    );
     best
 }
 
@@ -396,6 +473,269 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         );
     }
 
+    // ── 骨架系：顺子/刻子被番种钉死 ──
+    // 副露里已经有两个碰/杠时，顺子系骨架一概放不下（4 副面子装不下 3 个强制顺子），直接跳过
+    let pungs = melds.iter().filter(|m| m.kind != MeldKind::Chi).count();
+    if pungs < 2 {
+        let perm3 = [
+            [0, 1, 2],
+            [0, 2, 1],
+            [1, 0, 2],
+            [1, 2, 0],
+            [2, 0, 1],
+            [2, 1, 0],
+        ];
+        for s in 0..3 {
+            push_forced(
+                &mut out,
+                hand,
+                melds,
+                format!("清龙({}门)", SUIT_NAME[s]),
+                16,
+                &[run(s, 1), run(s, 4), run(s, 7)],
+                None,
+                max_dist,
+            );
+        }
+        for p in perm3.iter() {
+            push_forced(
+                &mut out,
+                hand,
+                melds,
+                "花龙".into(),
+                8,
+                &[run(p[0], 1), run(p[1], 4), run(p[2], 7)],
+                None,
+                max_dist,
+            );
+        }
+        for s in 0..3 {
+            for d in 1..=2usize {
+                for n in 1..=(7 - 2 * d) {
+                    push_forced(
+                        &mut out,
+                        hand,
+                        melds,
+                        format!("一色三步高({}门)", SUIT_NAME[s]),
+                        16,
+                        &[run(s, n), run(s, n + d), run(s, n + 2 * d)],
+                        None,
+                        max_dist,
+                    );
+                }
+            }
+        }
+        for p in perm3.iter() {
+            for d in 1..=2usize {
+                for n in 1..=(7 - 2 * d) {
+                    push_forced(
+                        &mut out,
+                        hand,
+                        melds,
+                        "三色三步高".into(),
+                        6,
+                        &[run(p[0], n), run(p[1], n + d), run(p[2], n + 2 * d)],
+                        None,
+                        max_dist,
+                    );
+                }
+            }
+        }
+        for s in 0..3 {
+            for n in 1..=7 {
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    format!("一色三同顺({}门)", SUIT_NAME[s]),
+                    24,
+                    &[run(s, n), run(s, n), run(s, n)],
+                    None,
+                    max_dist,
+                );
+            }
+        }
+        for n in 1..=7 {
+            push_forced(
+                &mut out,
+                hand,
+                melds,
+                "三色三同顺".into(),
+                8,
+                &[run(0, n), run(1, n), run(2, n)],
+                None,
+                max_dist,
+            );
+        }
+        for s in 0..3 {
+            for n in 1..=7 {
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    format!("一色三节高({}门)", SUIT_NAME[s]),
+                    24,
+                    &[trip(s, n), trip(s, n + 1), trip(s, n + 2)],
+                    None,
+                    max_dist,
+                );
+            }
+        }
+        for p in perm3.iter() {
+            for n in 1..=7 {
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    "三色三节高".into(),
+                    8,
+                    &[trip(p[0], n), trip(p[1], n + 1), trip(p[2], n + 2)],
+                    None,
+                    max_dist,
+                );
+            }
+        }
+        for s in 0..3 {
+            for n in 1..=7 {
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    format!("一色四同顺({}门)", SUIT_NAME[s]),
+                    48,
+                    &[run(s, n), run(s, n), run(s, n), run(s, n)],
+                    None,
+                    max_dist,
+                );
+            }
+        }
+        for s in 0..3 {
+            for n in 1..=6 {
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    format!("一色四节高({}门)", SUIT_NAME[s]),
+                    48,
+                    &[trip(s, n), trip(s, n + 1), trip(s, n + 2), trip(s, n + 3)],
+                    None,
+                    max_dist,
+                );
+            }
+        }
+        for s in 0..3 {
+            for d in 1..=2usize {
+                for n in 1..=(7 - 3 * d) {
+                    push_forced(
+                        &mut out,
+                        hand,
+                        melds,
+                        format!("一色四步高({}门)", SUIT_NAME[s]),
+                        32,
+                        &[
+                            run(s, n),
+                            run(s, n + d),
+                            run(s, n + 2 * d),
+                            run(s, n + 3 * d),
+                        ],
+                        None,
+                        max_dist,
+                    );
+                }
+            }
+        }
+        // 双龙会：两个老少副 + 本门 5 作将
+        for s in 0..3 {
+            push_forced(
+                &mut out,
+                hand,
+                melds,
+                format!("一色双龙会({}门)", SUIT_NAME[s]),
+                64,
+                &[run(s, 1), run(s, 1), run(s, 7), run(s, 7)],
+                Some(s * 9 + 4),
+                max_dist,
+            );
+        }
+        for s in 0..3 {
+            let a = (s + 1) % 3;
+            let b = (s + 2) % 3;
+            push_forced(
+                &mut out,
+                hand,
+                melds,
+                format!("三色双龙会({}门将)", SUIT_NAME[s]),
+                16,
+                &[run(a, 1), run(a, 7), run(b, 1), run(b, 7)],
+                Some(s * 9 + 4),
+                max_dist,
+            );
+        }
+        // 九莲宝灯：门清且暗牌 13 张时才有意义
+        if melds.is_empty() {
+            for s in 0..3 {
+                for x in 1..=9usize {
+                    let mut t = counts();
+                    for n in 1..=9usize {
+                        t[s * 9 + n - 1] = if n == 1 || n == 9 { 3 } else { 1 };
+                    }
+                    t[s * 9 + x - 1] += 1;
+                    let c = cover(hand, &t);
+                    push_dir(
+                        &mut out,
+                        hand,
+                        format!("九莲宝灯({}门)", SUIT_NAME[s]),
+                        88,
+                        Some((c, t)),
+                        "门清",
+                        max_dist,
+                    );
+                }
+            }
+        }
+        // 组合龙：147/258/369 九张不能错位 + 一副面子 + 将（可带一副副露）
+        if melds.len() <= 1 {
+            for perm in PERMS.iter() {
+                let knit = knit_tiles(*perm);
+                let mut base = counts();
+                for &t in knit.iter() {
+                    base[t] = 1;
+                }
+                let melded = melds.len() == 1;
+                let mut best: Option<(u32, Counts)> = None;
+                let mut set_opts: Vec<Option<Vec<usize>>> = Vec::new();
+                if melded {
+                    set_opts.push(None);
+                } else {
+                    for t in 0..NUM_TILES {
+                        set_opts.push(Some(vec![t, t, t]));
+                    }
+                    for s in 0..3 {
+                        for n in 1..=7usize {
+                            set_opts.push(Some(vec![s * 9 + n - 1, s * 9 + n, s * 9 + n + 1]));
+                        }
+                    }
+                }
+                for so in set_opts.iter() {
+                    for p in 0..NUM_TILES {
+                        let mut t = base;
+                        if let Some(v) = so {
+                            for &x in v.iter() {
+                                t[x] = t[x].saturating_add(1);
+                            }
+                        }
+                        t[p] = t[p].saturating_add(2);
+                        let c = cover(hand, &t);
+                        if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+                            best = Some((c, t));
+                        }
+                    }
+                }
+                push_dir(&mut out, hand, "组合龙".into(), 12, best, "", max_dist);
+            }
+        }
+    }
+
     push_dir(&mut out, hand, "七对".into(), 24, seven_pairs(hand, melds), "门清", max_dist);
     push_dir(
         &mut out,
@@ -435,5 +775,22 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     );
 
     out.sort_by(|a, b| a.distance.cmp(&b.distance).then(b.value.cmp(&a.value)));
+    // 同名（同一骨架的不同排列）只留最近的那一条
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    out.retain(|d| seen.insert(d.name.clone()));
     out
+}
+
+fn push_forced(
+    out: &mut Vec<Direction>,
+    hand: &Counts,
+    melds: &[Meld],
+    name: String,
+    value: u32,
+    forced: &[[usize; 3]],
+    pair_tile: Option<usize>,
+    max_dist: u32,
+) {
+    let res = best_forced(hand, melds, Filter::Any, true, false, forced, pair_tile);
+    push_dir(out, hand, name, value, res, "", max_dist);
 }
