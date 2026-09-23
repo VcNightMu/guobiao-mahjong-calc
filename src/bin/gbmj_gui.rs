@@ -349,7 +349,11 @@ impl App {
                 });
                 ui.add_space(6.0);
                 let ready = total(&self.hand) as usize == self.expected_hidden();
-                let confirm = egui::Button::new(egui::RichText::new("确认").strong());
+                let confirm = egui::Button::new(
+                    egui::RichText::new("确认").strong().color(egui::Color32::WHITE),
+                )
+                .fill(egui::Color32::from_rgb(52, 120, 200))
+                .min_size(egui::vec2(72.0, 26.0));
                 if ui.add_enabled(ready, confirm).clicked() {
                     self.recompute();
                     self.dirty = false;
