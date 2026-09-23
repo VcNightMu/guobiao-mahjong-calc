@@ -261,13 +261,6 @@ impl App {
                 ui.set_min_width(430.0);
                 ui.horizontal(|ui| {
                     ui.strong(format!("手牌区（{} 张）", total(&self.hand)));
-                    if ui.small_button("清空").clicked() {
-                        self.hand = counts();
-                        self.melds.clear();
-                        self.pending_chi.clear();
-                        self.hint.clear();
-                        self.dirty = true;
-                    }
                     if ui.small_button("示例").clicked() {
                         self.load_sample();
                     }
@@ -354,10 +347,22 @@ impl App {
                 )
                 .fill(egui::Color32::from_rgb(52, 120, 200))
                 .min_size(egui::vec2(72.0, 26.0));
-                if ui.add_enabled(ready, confirm).clicked() {
-                    self.recompute();
-                    self.dirty = false;
-                }
+                ui.horizontal(|ui| {
+                    if ui.add_enabled(ready, confirm).clicked() {
+                        self.recompute();
+                        self.dirty = false;
+                    }
+                    if ui
+                        .add(egui::Button::new("清空").min_size(egui::vec2(56.0, 26.0)))
+                        .clicked()
+                    {
+                        self.hand = counts();
+                        self.melds.clear();
+                        self.pending_chi.clear();
+                        self.hint.clear();
+                        self.dirty = true;
+                    }
+                });
                 if !ready {
                     ui.weak(format!("（暗牌需 {} 张）", self.expected_hidden()));
                 }
