@@ -313,7 +313,8 @@ fn menqing_shows_qianmenqing_in_detail() {
     let an = analyze(&c, &[], 27, 27);
     let w = find(&an, 2); // 3万
     assert!(has(w, "门前清"), "{:?}", names(w));
-    assert_eq!(w.normal, 16, "组合龙12+平和2+门前清2: {:?}", names(w));
+    // 12万 听 3万 本身就是边张，组合龙手也照计
+    assert_eq!(w.normal, 17, "组合龙12+平和2+边张1+门前清2: {:?}", names(w));
 }
 
 #[test]
@@ -338,4 +339,41 @@ fn tsumo_detail_differs_from_normal() {
             .map(|f| f.name)
             .collect::<Vec<_>>()
     );
+}
+
+#[test]
+fn zuhelong_dan_diao_jiang() {
+    // 吃 234万；暗牌 147m 258s 3679p，和 7筒：
+    // 组合龙 + 平和 + 单钓将（听 7筒 正好补将牌）
+    let melds = vec![Meld::chi(1)]; // 234万
+    let c = parse_hand("147m258s3679p");
+    assert_eq!(total(&c), 10);
+    let an = analyze(&c, &melds, 27, 27);
+    let w = find(&an, 18 + 6); // 7筒
+    assert!(has(w, "组合龙"), "{:?}", names(w));
+    assert!(has(w, "平和"), "{:?}", names(w));
+    assert!(has(w, "单钓将"), "{:?}", names(w));
+}
+
+#[test]
+fn zuhelong_bian_zhang() {
+    // 门清 12247m 258s 12369p 和 3筒：
+    // 3筒 既在组合龙（369筒）里，又构成 12筒 的边张 → 加计边张
+    let c = parse_hand("12247m258s12369p");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 20); // 3筒
+    assert!(has(w, "组合龙"), "{:?}", names(w));
+    assert!(has(w, "边张"), "{:?}", names(w));
+}
+
+#[test]
+fn zuhelong_kan_zhang() {
+    // 门清 147m258s369p 13m 55p，和 2万：2万 既在组合龙体系的手牌里，又是 13万 的坎张
+    let c = parse_hand("147m258s369p13m55p");
+    assert_eq!(total(&c), 13);
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 1); // 2万
+    assert!(has(w, "组合龙"), "{:?}", names(w));
+    assert!(has(w, "坎张"), "{:?}", names(w));
 }

@@ -109,6 +109,28 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
                     v.push(f("平和", 2));
                 }
             }
+            // 官方补充：听牌既可解释为组合龙的一部分、也可解释为边张/坎张/单钓将时，
+            // 可加计边张 / 坎张 / 单钓将
+            if ctx.single_wait {
+                if d.pair == Some(ctx.win_tile) {
+                    v.push(f("单钓将", 1));
+                } else if let Some(s) = fourth {
+                    if s.is_run()
+                        && (s.tile == ctx.win_tile
+                            || s.tile + 1 == ctx.win_tile
+                            || s.tile + 2 == ctx.win_tile)
+                    {
+                        let n = num(s.tile);
+                        if ctx.win_tile == s.tile + 2 && n == 1 {
+                            v.push(f("边张", 1));
+                        } else if ctx.win_tile == s.tile && n == 7 {
+                            v.push(f("边张", 1));
+                        } else if ctx.win_tile == s.tile + 1 {
+                            v.push(f("坎张", 1));
+                        }
+                    }
+                }
+            }
             if !has_honor(all) {
                 v.push(f("无字", 1));
             }
