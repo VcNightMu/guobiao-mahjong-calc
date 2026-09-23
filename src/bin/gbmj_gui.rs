@@ -91,11 +91,16 @@ impl App {
                 // 双碰听：点炮补的刻子算明刻（双暗刻）、自摸才是三暗刻 → 点和/自摸番表不同
                 self.hand = parse_hand("555m66s777p123m东东");
             }
+            Ok("6") => {
+                // 改动后未点确认的状态：结果区应提示「已修改，点【确认】重新计算」
+                self.hand = parse_hand("555p666p777p 555s 6s");
+            }
             _ => {
                 self.hand = parse_hand("555p666p777p 555s 6s");
             }
         }
-        self.dirty = true;
+        self.recompute();
+        self.dirty = std::env::var("GBMJ_DEMO").as_deref() == Ok("6");
     }
 
     /// 某张牌已被占用的张数（手牌 + 副露）
@@ -329,15 +334,29 @@ impl App {
                 ui.label("圈风");
                 ui.horizontal(|ui| {
                     for (t, n) in [(27usize, "东"), (28, "南"), (29, "西"), (30, "北")] {
-                        ui.selectable_value(&mut self.round_wind, t, n);
+                        if ui.selectable_value(&mut self.round_wind, t, n).changed() {
+                            self.dirty = true;
+                        }
                     }
                 });
                 ui.label("门风");
                 ui.horizontal(|ui| {
                     for (t, n) in [(27usize, "东"), (28, "南"), (29, "西"), (30, "北")] {
-                        ui.selectable_value(&mut self.seat_wind, t, n);
+                        if ui.selectable_value(&mut self.seat_wind, t, n).changed() {
+                            self.dirty = true;
+                        }
                     }
                 });
+                ui.add_space(6.0);
+                let ready = total(&self.hand) as usize == self.expected_hidden();
+                let confirm = egui::Button::new(egui::RichText::new("确认").strong());
+                if ui.add_enabled(ready, confirm).clicked() {
+                    self.recompute();
+                    self.dirty = false;
+                }
+                if !ready {
+                    ui.weak(format!("（暗牌需 {} 张）", self.expected_hidden()));
+                }
                 ui.add_space(6.0);
                 let mq = self.melds.iter().all(|m| match m.kind {
                     gbmj::model::MeldKind::Chi | gbmj::model::MeldKind::Pon => false,
@@ -350,6 +369,13 @@ impl App {
 
     fn ui_results(&mut self, ui: &mut egui::Ui) {
         ui.strong("听牌 / 和牌计算");
+        if self.dirty {
+            ui.colored_label(
+                egui::Color32::from_rgb(200, 140, 0),
+                "已修改，点【确认】重新计算",
+            );
+            return;
+        }
         let an = match &self.analysis {
             Some(a) => a,
             None => {
@@ -449,10 +475,7 @@ impl App {
 
 impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        if self.dirty {
-            self.recompute();
-            self.dirty = false;
-        }
+        // 不再自动重算：任何改动都只标记 dirty，必须点「确认」才出结果
         egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 self.ui_header(ui);
