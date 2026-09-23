@@ -379,6 +379,21 @@ fn zuhelong_kan_zhang() {
 }
 
 #[test]
+fn lian_liu_survives_isolated_run() {
+    // 暗杠1条；暗牌 5788万 456789条，和 6万：
+    // 567万(坎6万) + 88万 与 456条 + 789条 并存；567万 跟谁都配不上，
+    // 不能因此把 456条+789条 的连六一起挡掉
+    let melds = vec![Meld::kan(9, false)]; // 暗杠 1条
+    let c = parse_hand("5788m456789s");
+    assert_eq!(total(&c), 10);
+    let an = analyze(&c, &melds, 27, 27);
+    let w = find(&an, 5); // 6万
+    assert!(has(w, "连六"), "{:?}", names(w));
+    assert!(has(w, "坎张"), "{:?}", names(w));
+    assert_eq!(w.normal, 9, "暗杠2+幺九刻1+缺一门1+无字1+坎张1+门前清2+连六1: {:?}", names(w));
+}
+
+#[test]
 fn shuang_peng_cannot_be_last_tile() {
     // 双碰听：暗牌里握着该张，永远不成绝张
     let c = parse_hand("555m66s777p123m东东");

@@ -633,10 +633,6 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
         let n = runs.len();
         let mut covered = used_runs.clone();
-        if n > 0 && !covered.iter().any(|&b| b) {
-            // 手牌里没有任何“已组合”的顺子时，任选一副作为扩张起点
-            covered[0] = true;
-        }
         let mut counts: std::collections::HashMap<&'static str, u32> = std::collections::HashMap::new();
         loop {
             let mut pick: Option<(usize, &'static str)> = None;
@@ -664,7 +660,26 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
                     covered[j] = true;
                     *counts.entry(name).or_insert(0) += 1;
                 }
-                None => break,
+                None => {
+                    // 停滞：若还有两副都没被用过的顺子可以互配，就任选一副作为新分量的根继续扩张。
+                    // 否则一副孤立顺子（跟谁都配不上）会把同手其他可配对的顺子一起挡掉。
+                    let mut seed: Option<usize> = None;
+                    'outer: for i in 0..n {
+                        if covered[i] {
+                            continue;
+                        }
+                        for j in 0..n {
+                            if j != i && !covered[j] && fan_between(runs[i], runs[j]).is_some() {
+                                seed = Some(j);
+                                break 'outer;
+                            }
+                        }
+                    }
+                    match seed {
+                        Some(j) => covered[j] = true,
+                        None => break,
+                    }
+                }
             }
         }
         for name in ["一般高", "喜相逢", "连六", "老少副"].iter() {
