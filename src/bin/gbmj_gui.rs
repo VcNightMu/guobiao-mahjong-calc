@@ -82,6 +82,11 @@ impl App {
                 self.mode = MeldMode::MingKan;
                 self.click_tile(26); // 明杠 9筒
             }
+            Ok("4") => {
+                // 四归一自检：吃 123万 + 吃 123条，暗牌 1112567万
+                self.hand = parse_hand("1112567m");
+                self.melds = vec![Meld::chi(0), Meld::chi(9)];
+            }
             _ => {
                 self.hand = parse_hand("555p666p777p 555s 6s");
             }
