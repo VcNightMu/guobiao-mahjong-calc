@@ -87,6 +87,10 @@ impl App {
                 self.hand = parse_hand("1112567m");
                 self.melds = vec![Meld::chi(0), Meld::chi(9)];
             }
+            Ok("5") => {
+                // 双碰听：点炮补的刻子算明刻（双暗刻）、自摸才是三暗刻 → 点和/自摸番表不同
+                self.hand = parse_hand("555m66s777p123m东东");
+            }
             _ => {
                 self.hand = parse_hand("555p666p777p 555s 6s");
             }
