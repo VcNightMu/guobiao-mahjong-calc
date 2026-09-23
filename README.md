@@ -4,18 +4,39 @@
 
 当前阶段：**听牌算番** —— 输入手牌 + 副露 + 圈风门风，算出听牌张，以及每种和法下的番数。
 
-**技术栈**：Rust（零依赖）。引擎与界面分离；界面先是命令行，后续用 WebView2 包壳出 `.exe`。
+**技术栈**：Rust。引擎（`gbmj` 库 + 命令行 `gbmj`）与界面分离；界面为原生窗口 `gbmj-gui`（egui / eframe）。
 
 ## 构建与运行
 
 ```bash
-cargo build          # 编译
-cargo test           # 跑单测
-cargo run -- 123456789m 55p 78p --round 东 --seat 东
+cargo test                                          # 单测
+cargo run --bin gbmj -- 123456789m 55p 78p --round 东 --seat 东   # 命令行
+cargo run --release --bin gbmj-gui                  # 图形界面
 ```
 
-> 提示：MinGW 工具链在含中文的路径下会链接失败（`ld` 打不开 UTF-8 路径），
-> 请把工程放在纯 ASCII 路径下。
+> 提示 1：MinGW 工具链在含中文的路径下会链接失败（`ld` 打不开 UTF-8 路径），请把工程放在纯 ASCII 路径下。
+>
+> 提示 2（界面必需）：本工程用 `x86_64-pc-windows-gnu`；`eframe` 走 raw-dylib，需要 **64 位 MinGW-w64 的 `dlltool`**（binutils ≥ 2.30）。
+> 若 `gcc -dumpmachine` 显示 `mingw32`（老 mingw.org 32 位版），会报 `dlltool: Can't create .lib file: Invalid bfd target`。
+> 装一个 64 位 MinGW-w64 即可（已在本机验证）：
+>
+> ```bash
+> winget install BrechtSanders.WinLibs.POSIX.UCRT
+> ```
+>
+> 确保它的 `bin`（含 64 位 `dlltool.exe`）在 PATH 中。
+
+## 图形界面（gbmj-gui）
+
+```bash
+cargo run --release --bin gbmj-gui
+```
+
+三段式布局：
+
+1. **顶部**：左「副露区」（吃 / 碰 / 明杠 / 暗杠 四种录入模式，先选类型再点牌库；带删除）、右「手牌区」（点击可移除，带张数校验）。
+2. **中部**：34 张牌库（每张显示 `已用/4`，满 4 张置灰）；右侧圈风 / 门风选择 + 门清提示。
+3. **下部**：听牌结果——每张结构听牌张横排四栏（点和 / 自摸 / 点和绝张 / 自摸绝张），≥ 8 番红色高亮，下方附番种明细。
 
 ## 命令行
 
@@ -60,9 +81,10 @@ gbmj <手牌> [副露...] [圈门...]
 | `src/fans.rs` | 番种识别 + 互斥 + 计分 |
 | `src/calc.rs` | 听牌枚举 + 四栏计算 |
 | `src/main.rs` | 命令行 |
+| `src/bin/gbmj_gui.rs` | 图形界面（egui / eframe） |
 | `tests/engine.rs` | 单测 |
 | `听牌算番方案-v0.1.md` | 早期方案稿（JS 时代的文档） |
-| `界面格式-v0.1.md` / `mockup.html` | 界面示意（待重做） |
+| `界面格式-v0.1.md` / `mockup.html` | 界面规格与早期 HTML 示意（现已由 gbmj-gui 实现） |
 
 ## 进度
 
@@ -72,5 +94,6 @@ gbmj <手牌> [副露...] [圈门...]
 - [x] 计番原则：不重复（互斥表）、不拆移（清龙不计连六/老少副）、不得相同（顺子最大匹配）、就高不就低（多解取最高）
 - [x] 一明一暗杠 5 番（98 未列，按现行网络国标惯例作第 82 个番种）
 - [ ] 遗留：套算一次只做了顺子对层面的近似（四副顺子以内基本等价）
-- [ ] WebView2 界面壳 → `.exe`
+- [x] 图形界面 `gbmj-gui`：牌库点选 / 副露录入 / 圈门风 / 四栏结果（原生窗口，egui）
+- [ ] 界面打磨：布局留白、牌面图形化（当前用文字牌名）
 - [ ] 未听牌靠张向听

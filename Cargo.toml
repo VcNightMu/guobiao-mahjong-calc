@@ -12,5 +12,17 @@ path = "src/lib.rs"
 name = "gbmj"
 path = "src/main.rs"
 
+[[bin]]
+name = "gbmj-gui"
+path = "src/bin/gbmj_gui.rs"
+required-features = ["gui"]
+
+[features]
+default = ["gui"]
+gui = ["dep:eframe"]
+
+[dependencies]
+eframe = { version = "0.36", default-features = false, features = ["glow", "default_fonts"], optional = true }
+
 [profile.release]
 opt-level = 3

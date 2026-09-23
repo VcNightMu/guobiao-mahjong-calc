@@ -21,3 +21,7 @@ Thumbs.db
 
 # 本机 cargo 配置（含绝对路径）
 .cargo/config.toml
+
+# temp artifacts (screenshots / logs)
+_*.png
+_*.txt
