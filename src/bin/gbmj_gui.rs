@@ -58,19 +58,34 @@ impl App {
         app
     }
 
-    /// 载入一个示例手牌（门清 555p666p777p 555s 6s，听 4s/7s，就高不就低取 48 番）
+    /// 载入示例。GBMJ_DEMO=1 门清示例；=2 带副露示例；=3 脚本化点击（自检副露按钮复位）
     fn load_sample(&mut self) {
-        if std::env::var("GBMJ_DEMO").as_deref() == Ok("2") {
-            // 带副露示例：碰 3筒 + 吃 123条；暗牌 456s 789s 7p，和 7p → 清龙
-            self.hand = parse_hand("456s789s 7p");
-            self.melds = vec![Meld::pon(20), Meld::chi(9)];
-        } else {
-            self.hand = parse_hand("555p666p777p 555s 6s");
-            self.melds.clear();
-        }
+        self.hand = counts();
+        self.melds.clear();
         self.mode = MeldMode::None;
         self.pending_chi.clear();
         self.hint.clear();
+        match std::env::var("GBMJ_DEMO").as_deref() {
+            Ok("2") => {
+                // 带副露示例：碰 3筒 + 吃 123条；暗牌 456s 789s 7p，和 7p → 清龙
+                self.hand = parse_hand("456s789s 7p");
+                self.melds = vec![Meld::pon(20), Meld::chi(9)];
+            }
+            Ok("3") => {
+                // 脚本化点击：每组副露做完后 mode 应自动复位；结束时四个按钮都不应高亮
+                self.mode = MeldMode::Pon;
+                self.click_tile(20); // 碰 3筒
+                self.mode = MeldMode::Chi;
+                self.click_tile(9);
+                self.click_tile(10);
+                self.click_tile(11); // 吃 1条2条3条
+                self.mode = MeldMode::MingKan;
+                self.click_tile(26); // 明杠 9筒
+            }
+            _ => {
+                self.hand = parse_hand("555p666p777p 555s 6s");
+            }
+        }
         self.dirty = true;
     }
 
@@ -118,6 +133,7 @@ impl App {
                 self.melds.push(Meld::pon(t));
                 self.hint.clear();
                 self.dirty = true;
+                self.mode = MeldMode::None; // 做成一组后复位
             }
             MeldMode::MingKan | MeldMode::AnKan => {
                 let open = self.mode == MeldMode::MingKan;
@@ -128,6 +144,7 @@ impl App {
                 self.melds.push(Meld::kan(t, open));
                 self.hint.clear();
                 self.dirty = true;
+                self.mode = MeldMode::None; // 做成一组后复位
             }
             MeldMode::Chi => {
                 self.pending_chi.push(t);
@@ -145,6 +162,9 @@ impl App {
                             self.melds.push(Meld::chi(v[0]));
                             self.hint.clear();
                             self.dirty = true;
+                            self.pending_chi.clear();
+                            self.mode = MeldMode::None; // 做成一组后复位
+                            return;
                         } else {
                             self.hint = "吃 超出 4 张上限".to_string();
                         }
@@ -261,7 +281,7 @@ impl App {
                 if now != exp {
                     ui.colored_label(
                         egui::Color32::from_rgb(200, 120, 0),
-                        format!("注意：暗牌应为 {} 张（13 - 3×副露 {}），当前 {} 张", exp, self.melds.len(), now),
+                        format!("注意：暗牌应为 {} 张（13 - 3×{} 组副露；杠算 1 个面子），当前 {} 张", exp, self.melds.len(), now),
                     );
                 } else {
                     ui.weak("√ 张数正确");
