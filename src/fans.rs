@@ -363,10 +363,13 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
 
     // ---------- 顺子系列 ----------
     let mut used_run_fan = false;
+    // 已被大番种（清龙/花龙/一色N同顺）组合掉的顺子（套算一次用）
+    let mut used_runs: Vec<bool> = vec![false; runs.len()];
 
     // 一色四同顺 / 一色三同顺 / 一般高
     {
         let mut best = 1usize; // 同花色相同顺子的最大重复数
+        let mut best_tile: Option<usize> = None;
         for s in 0..3usize {
             let mut cnt: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
             for &t in runs.iter() {
@@ -374,9 +377,10 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
                     *cnt.entry(t).or_insert(0) += 1;
                 }
             }
-            for (_, &c) in cnt.iter() {
+            for (&t, &c) in cnt.iter() {
                 if c > best {
                     best = c;
+                    best_tile = Some(t);
                 }
             }
         }
@@ -386,6 +390,15 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         } else if best == 3 {
             v.push(f("一色三同顺", 24));
             used_run_fan = true;
+        }
+        if best >= 3 {
+            if let Some(bt) = best_tile {
+                for (idx, &t) in runs.iter().enumerate() {
+                    if t == bt {
+                        used_runs[idx] = true;
+                    }
+                }
+            }
         }
     }
 
@@ -426,9 +439,21 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
         if qinglong {
             v.push(f("清龙", 16));
+            // 清龙用掉的三副顺子 → 已组合
+            for s in 0..3usize {
+                let st: std::collections::HashSet<usize> =
+                    runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+                if st.contains(&1) && st.contains(&4) && st.contains(&7) {
+                    for (idx, &t) in runs.iter().enumerate() {
+                        if suit(t) == s && matches!(num(t), 1 | 4 | 7) {
+                            used_runs[idx] = true;
+                        }
+                    }
+                }
+            }
         }
         // 花龙：三种花色分别有以 1/4/7 开头的顺子
-        let mut huolong = false;
+        let mut hl_perm: Option<[usize; 3]> = None;
         'outer: for perm in [[1usize, 4, 7], [1, 7, 4], [4, 1, 7], [4, 7, 1], [7, 1, 4], [7, 4, 1]].iter() {
             let mut ok = true;
             for s in 0..3usize {
@@ -440,12 +465,21 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
                 }
             }
             if ok {
-                huolong = true;
+                hl_perm = Some(*perm);
                 break 'outer;
             }
         }
-        if huolong {
+        if let Some(perm) = hl_perm {
             v.push(f("花龙", 8));
+            // 花龙用掉的三副顺子 → 已组合（其余顺子只能与它们套算一次）
+            for s in 0..3usize {
+                if let Some(idx) = runs
+                    .iter()
+                    .position(|&t| suit(t) == s && num(t) == perm[s])
+                {
+                    used_runs[idx] = true;
+                }
+            }
         }
     }
 
@@ -543,7 +577,13 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
     }
 
-    // 一般高 / 喜相逢 / 连六 / 老少副：同一副顺子只能用一次（对顺子做最大匹配）
+    // 一般高 / 喜相逢 / 连六 / 老少副
+    //
+    // 套算一次原则：一副顺子最多只能充当一次“新被套算”的一方（用一次就“用完了”），
+    // 而已被大番种（清龙/花龙/一色N同顺）组合掉的顺子算“已组合”，只能当被套算的对象。
+    // 所以从“已组合顺子”出发逐步向外扩张：每步接受一条一端已在图中、另一端尚未使用的顺子对。
+    // 同一副顺子可以同时出现在不同番种里（如 123万×2+123条 可同时计一般高与喜相逢），
+    // 但同一番种内不会重复用同一副顺子。
     {
         fn fan_between(a: usize, b: usize) -> Option<&'static str> {
             let (sa, na) = (suit(a), num(a));
@@ -560,53 +600,49 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
                 None
             }
         }
-        fn rec(
-            start: usize,
-            used: &mut [bool],
-            pairs: &mut Vec<(usize, usize)>,
-            runs: &[usize],
-            best: &mut usize,
-            best_pairs: &mut Vec<(usize, usize)>,
-        ) {
-            let mut i = start;
-            while i < runs.len() && used[i] {
-                i += 1;
-            }
-            if i >= runs.len() {
-                if pairs.len() > *best {
-                    *best = pairs.len();
-                    *best_pairs = pairs.clone();
-                }
-                return;
-            }
-            used[i] = true;
-            rec(i + 1, used, pairs, runs, best, best_pairs);
-            used[i] = false;
-            for j in (i + 1)..runs.len() {
-                if used[j] {
-                    continue;
-                }
-                if fan_between(runs[i], runs[j]).is_some() {
-                    used[i] = true;
-                    used[j] = true;
-                    pairs.push((i, j));
-                    rec(i + 1, used, pairs, runs, best, best_pairs);
-                    pairs.pop();
-                    used[i] = false;
-                    used[j] = false;
-                }
+        // 都是 1 番；优先取不易被“不计”消掉的番种
+        fn prio(name: &str) -> u8 {
+            match name {
+                "一般高" => 0,
+                "喜相逢" => 1,
+                "连六" => 2,
+                _ => 3,
             }
         }
-        let mut used = vec![false; runs.len()];
-        let mut best = 0usize;
-        let mut best_pairs: Vec<(usize, usize)> = Vec::new();
-        let mut pairs: Vec<(usize, usize)> = Vec::new();
-        rec(0, &mut used, &mut pairs, &runs, &mut best, &mut best_pairs);
-
+        let n = runs.len();
+        let mut covered = used_runs.clone();
+        if n > 0 && !covered.iter().any(|&b| b) {
+            // 手牌里没有任何“已组合”的顺子时，任选一副作为扩张起点
+            covered[0] = true;
+        }
         let mut counts: std::collections::HashMap<&'static str, u32> = std::collections::HashMap::new();
-        for (i, j) in best_pairs.iter() {
-            if let Some(n) = fan_between(runs[*i], runs[*j]) {
-                *counts.entry(n).or_insert(0) += 1;
+        loop {
+            let mut pick: Option<(usize, &'static str)> = None;
+            for i in 0..n {
+                if !covered[i] {
+                    continue;
+                }
+                for j in 0..n {
+                    if covered[j] {
+                        continue;
+                    }
+                    if let Some(name) = fan_between(runs[i], runs[j]) {
+                        let better = match pick {
+                            None => true,
+                            Some((_, cur)) => prio(name) < prio(cur),
+                        };
+                        if better {
+                            pick = Some((j, name));
+                        }
+                    }
+                }
+            }
+            match pick {
+                Some((j, name)) => {
+                    covered[j] = true;
+                    *counts.entry(name).or_insert(0) += 1;
+                }
+                None => break,
             }
         }
         for name in ["一般高", "喜相逢", "连六", "老少副"].iter() {

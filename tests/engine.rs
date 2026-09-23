@@ -254,3 +254,42 @@ fn yi_ming_yi_an_kan() {
         names(w)
     );
 }
+
+#[test]
+fn tao_suan_yi_ci_run_can_serve_two_fans() {
+    // 吃 123万 + 吃 123条；暗牌 1112567万。
+    // 和 3万：暗牌里还有一副 123万，与副露的 123万 组「一般高」，同时 123万 与 123条 组「喜相逢」。
+    // 一副顺子可以参与不同番种（只是同一番种内不重复用）。
+    let c = parse_hand("1112567m");
+    let melds = vec![Meld::chi(0), Meld::chi(9)];
+    let an = analyze(&c, &melds, 27, 27);
+    let w = find(&an, 2); // 3万
+    assert!(has(w, "一般高"), "和3万应计一般高: {:?}", names(w));
+    assert!(has(w, "喜相逢"), "和3万应计喜相逢: {:?}", names(w));
+    // 和 2万 时是 111万+567万，凑不出两副 123万，故无一般高
+    let w2 = find(&an, 1); // 2万
+    assert!(!has(w2, "一般高"), "和2万不该有一般高: {:?}", names(w2));
+    assert!(has(w2, "喜相逢"), "{:?}", names(w2));
+}
+
+#[test]
+fn tao_suan_yi_ci_four_runs_three_pairs() {
+    // 门清 123456m 123456s 5m，和 5万：四副顺子共可套算出 3 对（不是每副只能用一次）
+    let c = parse_hand("123456m123456s5m");
+    let an = analyze(&c, &[], 27, 27);
+    let w = find(&an, 4); // 5万
+    let n = names(w);
+    let val = |s: &str| {
+        w.fans
+            .iter()
+            .filter(|f| f.name == s)
+            .map(|f| f.value)
+            .sum::<u32>()
+    };
+    assert_eq!(
+        val("连六") + val("喜相逢"),
+        3,
+        "四副顺子应套算出 3 对: {:?}",
+        n
+    );
+}
