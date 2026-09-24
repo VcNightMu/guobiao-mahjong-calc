@@ -194,7 +194,7 @@ fn quan_dai_wu() {
     assert_eq!(d.distance, 0, "{:?}", d);
 
     // 手里三张用不上的牌（東東東）→ 距离 ≥ 3，不该出现
-    let h2 = parse_hand("345m456s567p5m東東東");
+    let h2 = parse_hand("345m456s567p5m东东东");
     assert_eq!(total(&h2), 13);
     let ds2 = plan(&h2, &[], 2);
     assert!(
