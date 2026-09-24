@@ -183,3 +183,33 @@ fn da_san_yuan_and_xiao_san_yuan() {
     assert!(find(&ds, "小三元").is_some(), "{:?}", ds);
     assert!(find(&ds, "大三元").is_some(), "{:?}", ds);
 }
+
+#[test]
+fn quan_dai_wu() {
+    // 345m456s567p55m34s：差一张 5条 就是全带五
+    let h = parse_hand("345m456s567p55m34s");
+    assert_eq!(total(&h), 13);
+    let ds = plan(&h, &[], 2);
+    let d = find(&ds, "全带五").expect("应有全带五");
+    assert_eq!(d.distance, 0, "{:?}", d);
+
+    // 手里三张用不上的牌（東東東）→ 距离 ≥ 3，不该出现
+    let h2 = parse_hand("345m456s567p5m東東東");
+    assert_eq!(total(&h2), 13);
+    let ds2 = plan(&h2, &[], 2);
+    assert!(
+        find(&ds2, "全带五").is_none(),
+        "{:?}",
+        ds2.iter().map(|d| &d.name).collect::<Vec<_>>()
+    );
+
+    // 副露里一副不含 5 → 直接不可能
+    let h3 = parse_hand("345m456s55m34s");
+    let melds = vec![Meld::chi(0)]; // 吃 1万2万3万
+    let ds3 = plan(&h3, &melds, 2);
+    assert!(
+        find(&ds3, "全带五").is_none(),
+        "{:?}",
+        ds3.iter().map(|d| &d.name).collect::<Vec<_>>()
+    );
+}

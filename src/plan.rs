@@ -838,6 +838,8 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         );
     }
 
+    push_dir(&mut out, hand, "全带五".into(), 16, quandaiwu(hand, melds), "", max_dist);
+
     push_dir(&mut out, hand, "七对".into(), 24, seven_pairs(hand, melds), "门清", max_dist);
     push_dir(
         &mut out,
@@ -907,6 +909,66 @@ fn combos(v: &[usize], k: usize) -> Vec<Vec<usize>> {
     let mut cur = Vec::new();
     go(v, k, 0, &mut cur, &mut out);
     out
+}
+
+/// 全带五：每一副面子和将都含 5 → 可用的只有 345/456/567/555 和 55。
+/// 由此 1、2、8、9、字牌完全用不上：手里这种牌超过两张，距离必然 ≥ 3，交给 ≤2 张的过滤就看不见了。
+pub fn quandaiwu(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> {
+    // 副露每一副都必须含 5（5万/5条/5筒 分别为 4/13/22），否则这副牌永远不成立
+    let fives = [4usize, 13, 22];
+    for m in melds {
+        let ts = m.tiles();
+        if !fives.iter().any(|&f| ts.contains(&f)) {
+            return None;
+        }
+    }
+    let left = 4usize.checked_sub(melds.len())?;
+    let mut sets: Vec<[usize; 3]> = Vec::new();
+    for s in 0..3usize {
+        sets.push([s * 9 + 2, s * 9 + 3, s * 9 + 4]);
+        sets.push([s * 9 + 3, s * 9 + 4, s * 9 + 5]);
+        sets.push([s * 9 + 4, s * 9 + 5, s * 9 + 6]);
+        sets.push([s * 9 + 4, s * 9 + 4, s * 9 + 4]);
+    }
+    let mut best: Option<(u32, Counts)> = None;
+    let mut cur = counts();
+    go_qdw(0, left, &sets, &mut cur, 0, hand, &mut best);
+    best
+}
+
+fn go_qdw(
+    i: usize,
+    left: usize,
+    sets: &[[usize; 3]],
+    cur: &mut Counts,
+    cov: u32,
+    hand: &Counts,
+    best: &mut Option<(u32, Counts)>,
+) {
+    if left == 0 {
+        for s in 0..3usize {
+            let p = s * 9 + 4;
+            let mut t = *cur;
+            t[p] = t[p].saturating_add(2);
+            let c = cov + gain(hand, cur, p, 2);
+            if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+                *best = Some((c, t));
+            }
+        }
+        return;
+    }
+    for k in i..sets.len() {
+        let s = sets[k];
+        let mut g = 0u32;
+        for &t in s.iter() {
+            g += gain(hand, cur, t, 1);
+            cur[t] += 1;
+        }
+        go_qdw(k, left - 1, sets, cur, cov + g, hand, best);
+        for &t in s.iter() {
+            cur[t] -= 1;
+        }
+    }
 }
 
 fn push_forced(
