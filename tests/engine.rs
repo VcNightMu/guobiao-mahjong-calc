@@ -14,6 +14,31 @@ fn find(an: &gbmj::calc::Analysis, t: usize) -> &WaitResult {
     an.waits.iter().find(|w| w.tile == t).expect("无此和牌张")
 }
 
+// ============================ 番值常量（四栏断言用；出处按内容引用，不写行号）============================
+const FAN_SHI_SAN_YAO: u32 = 88;       // 十三幺（88 番）      — 出处：src/fans.rs 的 f("十三幺", 88)
+const FAN_WU_FAN_HE: u32 = 8;          // 无番和（8 番，和法番）— 出处：src/fans.rs 的 f("无番和", 8)
+const FAN_QI_DUI: u32 = 24;            // 七对（24 番）        — 出处：src/fans.rs 的 f("七对", 24)
+const FAN_HUN_YI_SE: u32 = 6;          // 混一色（6 番）       — 出处：src/fans.rs 的 f("混一色", 6)
+const FAN_ZI_MO: u32 = 1;             // 自摸（1 番，和法番）  — 出处：src/fans.rs 的 f("自摸", 1)
+const FAN_HE_JUE_ZHANG: u32 = 4;       // 和绝张（4 番，和法番）— 出处：src/fans.rs 的 f("和绝张", 4)
+const FAN_BU_QIU_REN: u32 = 4;         // 不求人（4 番，和法番）— 出处：src/fans.rs 的 f("不求人", 4)
+const FAN_MEN_QIAN_QING: u32 = 2;      // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
+const FAN_QUE_YI_MEN: u32 = 1;         // 缺一门（1 番）       — 出处：src/fans.rs 的 f("缺一门", 1)
+const FAN_WU_ZI: u32 = 1;              // 无字（1 番）         — 出处：src/fans.rs 的 f("无字", 1)
+const FAN_SAN_SE_SAN_JIE_GAO: u32 = 8; // 三色三节高（8 番）   — 出处：src/fans.rs 的 f("三色三节高", 8)
+const FAN_SAN_AN_KE: u32 = 16;         // 三暗刻（16 番）      — 出处：src/fans.rs 的 f("三暗刻", 16)
+const FAN_SHUANG_AN_KE: u32 = 2;       // 双暗刻（2 番）       — 出处：src/fans.rs 的 f("双暗刻", 2)
+const FAN_YI_SE_SAN_TONG_SHUN: u32 = 24;// 一色三同顺（24 番） — 出处：src/fans.rs 的 f("一色三同顺", 24)
+const FAN_QUAN_DAI_WU: u32 = 16;       // 全带五（16 番）      — 出处：src/fans.rs 的 f("全带五", 16)
+const FAN_PING_HE: u32 = 2;            // 平和（2 番）         — 出处：src/fans.rs 的 f("平和", 2)
+const FAN_XI_XIANG_FENG: u32 = 1;      // 喜相逢（1 番）       — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_ZUHE_LONG: u32 = 12;         // 组合龙（12 番）      — 出处：src/fans.rs 的 f("组合龙", 12)
+const FAN_BIAN_ZHANG: u32 = 1;         // 边张（1 番）         — 出处：src/fans.rs 的 f("边张", 1)
+const FAN_AN_GANG: u32 = 2;            // 暗杠（2 番）         — 出处：src/fans.rs 的 f("暗杠", 2)
+const FAN_YAO_JIU_KE: u32 = 1;         // 幺九刻（1 番）       — 出处：src/fans.rs 的 f("幺九刻", 1)
+const FAN_KAN_ZHANG: u32 = 1;          // 坎张（1 番）         — 出处：src/fans.rs 的 f("坎张", 1)
+const FAN_LIAN_LIU: u32 = 1;           // 连六（1 番）         — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+
 #[test]
 fn thirteen_orphans_is_88() {
     let c = parse_hand("19m19s19p东南西北中发白");
@@ -21,7 +46,7 @@ fn thirteen_orphans_is_88() {
     assert_eq!(an.structural_waits.len(), 13, "十三幺应听 13 种");
     for w in &an.waits {
         assert!(has(w, "十三幺"), "{:?}", names(w));
-        assert_eq!(w.normal, 88, "十三幺点炮应 88（不计门前清）");
+        assert_eq!(w.normal, FAN_SHI_SAN_YAO, "十三幺点炮应 88（不计门前清）");
         assert!(w.can_win());
     }
 }
@@ -58,8 +83,8 @@ fn menqing_tsumo_is_buqiu_ren() {
     // 门清：点炮 门前清+2，自摸 不求人+4 → 差 2
     assert_eq!(w.tsumo - w.normal, 2);
     // 绝张：门上再多 4
-    assert_eq!(w.last - w.normal, 4);
-    assert_eq!(w.tsumo_last - w.tsumo, 4);
+    assert_eq!(w.last - w.normal, FAN_HE_JUE_ZHANG);
+    assert_eq!(w.tsumo_last - w.tsumo, FAN_HE_JUE_ZHANG);
 }
 
 #[test]
@@ -92,7 +117,7 @@ fn wu_fan_he_only_by_discard() {
     let an = analyze(&c, &melds, 27, 27);
     let w = find(&an, 9 + 6); // 7条
     assert!(has(w, "无番和"), "{:?}", names(w));
-    assert_eq!(w.normal, 8, "无番和 = 8");
+    assert_eq!(w.normal, FAN_WU_FAN_HE, "无番和 = 8");
     assert!(w.tsumo < 8, "自摸引入番，反而不到 8：{}", w.tsumo);
     assert!(w.can_win());
 }
@@ -105,7 +130,7 @@ fn seven_pairs_recognized() {
     let an = analyze(&c, &[], 27, 27);
     let w = find(&an, 9 + 6); // 7条
     assert!(has(w, "七对"), "{:?}", names(w));
-    assert_eq!(w.normal, 24 + 1 + 1, "七对 24 + 缺一门 1 + 无字 1");
+    assert_eq!(w.normal, FAN_QI_DUI + FAN_QUE_YI_MEN + FAN_WU_ZI, "七对 24 + 缺一门 1 + 无字 1");
 }
 
 #[test]
@@ -186,9 +211,9 @@ fn ankou_differs_by_win_method() {
     let w = find(&an, 9 + 5); // 6条
     // 三色三节高(8) 固定；差异在暗刻：
     // 自摸：666s 算暗刻 → 三暗刻 16 + 不求人 4 → 8+16+4 = 28
-    assert_eq!(w.tsumo, 28, "自摸：三色三节高+三暗刻+不求人");
+    assert_eq!(w.tsumo, FAN_SAN_SE_SAN_JIE_GAO + FAN_SAN_AN_KE + FAN_BU_QIU_REN, "自摸：三色三节高+三暗刻+不求人");
     // 点炮：666s 算明刻 → 双暗刻 2 + 门前清 2 → 8+2+2 = 12
-    assert_eq!(w.normal, 12, "点炮：三色三节高+双暗刻+门前清");
+    assert_eq!(w.normal, FAN_SAN_SE_SAN_JIE_GAO + FAN_SHUANG_AN_KE + FAN_MEN_QIAN_QING, "点炮：三色三节高+双暗刻+门前清");
 }
 
 #[test]
@@ -224,7 +249,7 @@ fn jiu_gao_bu_jiu_di() {
     assert_eq!(total(&c), 13);
     let an = analyze(&c, &[], 27, 27);
     let w = find(&an, 15); // 7条
-    assert_eq!(w.tsumo, 48, "就高不就低应取 48: {:?}", names(w));
+    assert_eq!(w.tsumo, FAN_YI_SE_SAN_TONG_SHUN + FAN_QUAN_DAI_WU + FAN_PING_HE + FAN_XI_XIANG_FENG + FAN_QUE_YI_MEN + FAN_BU_QIU_REN, "就高不就低应取 48: {:?}", names(w));
 }
 
 #[test]
@@ -301,8 +326,8 @@ fn bi_ran_menqing_tsumo_is_just_one() {
     let an = analyze(&c, &[], 27, 27);
     let w = find(&an, 33); // 白
     assert!(has(w, "七对"), "{:?}", names(w));
-    assert_eq!(w.normal, 30, "七对24+混一色6: {:?}", names(w));
-    assert_eq!(w.tsumo, 31, "必然门清自摸只应 +1: {:?}", names(w));
+    assert_eq!(w.normal, FAN_QI_DUI + FAN_HUN_YI_SE, "七对24+混一色6: {:?}", names(w));
+    assert_eq!(w.tsumo, FAN_QI_DUI + FAN_HUN_YI_SE + FAN_ZI_MO, "必然门清自摸只应 +1: {:?}", names(w));
     assert!(!has(w, "不求人"), "{:?}", names(w));
 }
 
@@ -314,7 +339,7 @@ fn menqing_shows_qianmenqing_in_detail() {
     let w = find(&an, 2); // 3万
     assert!(has(w, "门前清"), "{:?}", names(w));
     // 12万 听 3万 本身就是边张，组合龙手也照计
-    assert_eq!(w.normal, 17, "组合龙12+平和2+边张1+门前清2: {:?}", names(w));
+    assert_eq!(w.normal, FAN_ZUHE_LONG + FAN_PING_HE + FAN_BIAN_ZHANG + FAN_MEN_QIAN_QING, "组合龙12+平和2+边张1+门前清2: {:?}", names(w));
 }
 
 #[test]
@@ -390,7 +415,7 @@ fn lian_liu_survives_isolated_run() {
     let w = find(&an, 5); // 6万
     assert!(has(w, "连六"), "{:?}", names(w));
     assert!(has(w, "坎张"), "{:?}", names(w));
-    assert_eq!(w.normal, 9, "暗杠2+幺九刻1+缺一门1+无字1+坎张1+门前清2+连六1: {:?}", names(w));
+    assert_eq!(w.normal, FAN_AN_GANG + FAN_YAO_JIU_KE + FAN_QUE_YI_MEN + FAN_WU_ZI + FAN_KAN_ZHANG + FAN_MEN_QIAN_QING + FAN_LIAN_LIU, "暗杠2+幺九刻1+缺一门1+无字1+坎张1+门前清2+连六1: {:?}", names(w));
 }
 
 #[test]
