@@ -49,6 +49,12 @@ const FAN_QUAN_DA: u32 = 24; // 全大（24 番）— 出处：src/fans.rs 的 f
 const FAN_QUAN_XIAO: u32 = 24; // 全小（24 番）— 出处：src/fans.rs 的 f("全小", 24)
 const FAN_DA_YU_WU: u32 = 12; // 大于五（12 番）— 出处：src/fans.rs 的 f("大于五", 12)
 const FAN_XIAO_YU_WU: u32 = 12; // 小于五（12 番）— 出处：src/fans.rs 的 f("小于五", 12)
+const FAN_SAN_AN_KE: u32 = 16; // 三暗刻（16 番）— 出处：src/fans.rs 的 f("三暗刻", 16)
+const FAN_SAN_SE_SAN_JIE_GAO: u32 = 8; // 三色三节高（8 番）— 出处：src/fans.rs 的 f("三色三节高", 8)
+const FAN_BU_QIU_REN: u32 = 4; // 不求人（4 番，和法番）— 出处：src/fans.rs 的 f("不求人", 4)
+const FAN_MEN_QIAN_QING: u32 = 2; // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
+const FAN_LIAN_LIU: u32 = 1; // 连六（1 番）— 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_WU_ZI: u32 = 1; // 无字（1 番）— 出处：src/fans.rs 的 f("无字", 1)
 
 // ============================ DL-2：R-01 三态 ============================
 
@@ -155,6 +161,7 @@ fn r02_ron_win_tile_in_run_keeps_concealed_triplet() {
     let c = parse_hand("111m 23m 456m 999s 55p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "1万");
+    // 10 = 双暗刻2 + 幺九刻1 ×2 + 连六1 + 无字1 + 四归一2 + 门前清2（×2 = 幺九刻出现次数）
     assert_eq!(w.normal, 10, "{:?}", names(w));
     assert!(has_fan(w, "双暗刻"), "{:?}", names(w));
     assert!(has_fan(w, "四归一"), "四归一与双暗刻不互斥: {:?}", names(w));
@@ -169,6 +176,7 @@ fn r02_three_concealed_triplets_not_downgraded() {
     let c = parse_hand("111m 23m 999m 888s 55p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "1万");
+    // 23 = 三暗刻16 + 幺九刻1 ×2 + 无字1 + 四归一2 + 门前清2（×2 = 幺九刻出现次数）
     assert_eq!(w.normal, 23, "{:?}", names(w));
     assert!(has_fan(w, "三暗刻"), "{:?}", names(w));
     assert!(!has_fan(w, "双暗刻"), "三暗刻已含，不应并列: {:?}", names(w));
@@ -182,8 +190,18 @@ fn r02_reverse_guard_pair_completed_triplet_is_open() {
     let c = parse_hand("555m 66s 777p 123m 东东");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "6条");
-    assert_eq!(w.normal, 12, "{:?}", names(w));
-    assert_eq!(w.tsumo, 28, "{:?}", names(w));
+    assert_eq!(
+        w.normal,
+        FAN_SHUANG_AN_KE + FAN_SAN_SE_SAN_JIE_GAO + FAN_MEN_QIAN_QING,
+        "{:?}",
+        names(w)
+    );
+    assert_eq!(
+        w.tsumo,
+        FAN_SAN_AN_KE + FAN_SAN_SE_SAN_JIE_GAO + FAN_BU_QIU_REN,
+        "{:?}",
+        names(w)
+    );
     assert!(!has_fan(w, "三暗刻"), "荣和补成的刻子是明刻: {:?}", names(w));
     assert!(has_fan(w, "双暗刻"), "{:?}", names(w));
     // 肯定式对照（自摸）：666s 由自摸补成 ⇒ 暗刻 ⇒ 出现 三暗刻
@@ -197,7 +215,12 @@ fn r02_reverse_guard_pair_completed_triplet_is_open() {
     let c2 = parse_hand("111m 23m 456m 999s 55p");
     let an2 = analyze(&c2, &[], 27, 27);
     let w5 = by_name(&an2, "5筒");
-    assert_eq!(w5.normal, 5, "{:?}", names(w5));
+    assert_eq!(
+        w5.normal,
+        FAN_YAO_JIU_KE + FAN_LIAN_LIU + FAN_WU_ZI + FAN_MEN_QIAN_QING,
+        "{:?}",
+        names(w5)
+    );
     // 点炮：555筒 是明刻 ⇒ 只剩 999条 一个暗刻，不得出现暗刻类番
     assert!(!has_fan(w5, "双暗刻"), "荣和补成的 555筒 是明刻: {:?}", names(w5));
     assert!(!has_fan(w5, "三暗刻"), "{:?}", names(w5));
