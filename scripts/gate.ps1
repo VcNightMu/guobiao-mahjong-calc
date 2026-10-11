@@ -4,19 +4,23 @@
 
     Usage:
       powershell -NoProfile -ExecutionPolicy Bypass -File scripts\gate.ps1
-                 [-UpdateBaseline] [-SkipFmt] [-StrictFmt] [-SkipClippy] [-StrictClippy]
+                 [-UpdateBaseline] [-SkipFmt] [-StrictFmt] [-SkipClippy] [-LenientClippy]
 
     Blocking items (any FAIL => exit 1):
       1 build:        cargo build --no-default-features (debug), warning: lines must be 0
       2 test-list:    cargo test --no-default-features -- --list vs gate-data\tests-baseline.json
       3 test-result:  cargo test --no-default-features, failed == 0 and passed >= baseline count
+      4 clippy:       cargo clippy ... -- -D warnings   (blocking by default; -SkipClippy skips it,
+                      -LenientClippy downgrades findings to advisory WARN)
       6 utf8:         scripts\check-utf8.ps1 exit 0
       7 functional:   docs baseline txt vs target\debug\gbmj.exe, 9/9 line-exact (LF)
 
     Advisory items (WARN by default, FAIL only with -Strict*):
-      4 clippy:       cargo clippy ... -- -D warnings   (-SkipClippy / -StrictClippy)
       5 fmt:          cargo fmt --all -- --check        (-SkipFmt / -StrictFmt)
                       NEVER runs cargo fmt (never reformats sources).
+
+    Backward compatibility: -StrictClippy is still accepted as a no-op alias (clippy became
+    blocking by default once all lint findings were fixed), so older command lines keep working.
 
     -UpdateBaseline: re-list tests, print diff, ask for interactive y confirmation, then write JSON
                      (also accepts 'y' piped on stdin; no confirmation => nothing written).
@@ -29,6 +33,7 @@ param(
     [switch]$SkipFmt,
     [switch]$StrictFmt,
     [switch]$SkipClippy,
+    [switch]$LenientClippy,
     [switch]$StrictClippy
 )
 
@@ -40,8 +45,9 @@ function ConvertFrom-B64Utf8 {
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
 
-# Non-ASCII strings as Base64(UTF-8): pending-decision notices + the docs baseline file name.
-$MsgClippyPending = ConvertFrom-B64Utf8 '5b6F6KOB5a6a77ya6ZyA5YWI5L+u5aSNIHswfSDmnaEgbGludO+8iHNyYy/vvIzmnKzku7vliqHlhpnojIPlm7TlpJbvvIk='
+# Non-ASCII strings as Base64(UTF-8): clippy notices + the docs baseline file name.
+$MsgClippyBlocking = ConvertFrom-B64Utf8 'Y2xpcHB5IOmYu+aWreS4re+8muWPkeeOsCB7MH0g5p2hIGxpbnTvvIjor7fkv67lpI3vvJvkuLTml7bmlL7lrr3lj6/nlKggLUxlbmllbnRDbGlwcHnvvIk='
+$MsgClippyLenient  = ConvertFrom-B64Utf8 'LUxlbmllbnRDbGlwcHnvvJrmnKzmrKEgezB9IOadoSBsaW50IOS7heaPkOekuuOAgeS4jemYu+aWrQ=='
 $MsgFmtPending    = ConvertFrom-B64Utf8 '5b6F6KOB5a6a77ya6ZyA5YWI5L+u5aSN5qC85byP5beu5byC77yIezB9IOS4quaWh+S7tiAvIHsxfSDlpITniYfmrrXvvIzmnKzku7vliqHlhpnojIPlm7TlpJbvvIk='
 $DocBaselineName  = ConvertFrom-B64Utf8 'ZG9jc1xCQVNFTElORV/ml6fkuozov5vliLbooYzkuLrln7rlh4YudHh0'
 
@@ -113,7 +119,7 @@ function Normalize-Lines {
 
 Write-Host "=== gbmj local gate ===" -ForegroundColor Cyan
 Write-Host ("repo : {0}" -f $RepoRoot)
-Write-Host ("mode : UpdateBaseline={0} SkipFmt={1} StrictFmt={2} SkipClippy={3} StrictClippy={4}" -f [bool]$UpdateBaseline, [bool]$SkipFmt, [bool]$StrictFmt, [bool]$SkipClippy, [bool]$StrictClippy)
+Write-Host ("mode : UpdateBaseline={0} SkipFmt={1} StrictFmt={2} SkipClippy={3} LenientClippy={4} StrictClippy={5}" -f [bool]$UpdateBaseline, [bool]$SkipFmt, [bool]$StrictFmt, [bool]$SkipClippy, [bool]$LenientClippy, [bool]$StrictClippy)
 Write-Host ""
 
 # ---------------------------------------------------------------- -UpdateBaseline
@@ -226,12 +232,12 @@ if ($failed -eq 0 -and $required -gt 0 -and $passed -ge $required) {
     Add-Result 'test result (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds
 }
 
-# ---------------------------------------------------------------- 4. clippy (advisory)
+# ---------------------------------------------------------------- 4. clippy (blocking by default)
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 if ($SkipClippy) {
     Write-Host "[4/7] clippy: skipped (-SkipClippy)"
     Write-Detail "basis: skipped by -SkipClippy"
-    Add-Result 'clippy (advisory)' 'WARN' $sw.Elapsed.TotalSeconds
+    Add-Result 'clippy (blocking, skipped)' 'WARN' $sw.Elapsed.TotalSeconds
 } else {
     Write-Host "[4/7] clippy: cargo clippy --no-default-features --all-targets -- -D warnings"
     Push-Location $RepoRoot
@@ -257,15 +263,15 @@ if ($SkipClippy) {
     $top5 = @($spanCounts.GetEnumerator() | Sort-Object -Property Value -Descending | Select-Object -First 5 | ForEach-Object { "{0}:{1}" -f $_.Key, $_.Value }) -join ', '
     Write-Detail ("exit = {0}; lint span-lines = {1}; rustc diagnostics = {2}; by-file top5 = [{3}]" -f $clipExit, $lintCount, $diagCount, $top5)
     if ($clipExit -eq 0 -and $lintCount -eq 0) {
-        Add-Result 'clippy (advisory)' 'PASS' $sw.Elapsed.TotalSeconds
-    } elseif ($StrictClippy) {
-        Write-Detail ($MsgClippyPending -f $lintCount) 'Red'
-        Write-Detail "basis: -StrictClippy => lint findings are blocking" 'Red'
-        Add-Result 'clippy (advisory, -StrictClippy)' 'FAIL' $sw.Elapsed.TotalSeconds
+        Add-Result 'clippy (blocking)' 'PASS' $sw.Elapsed.TotalSeconds
+    } elseif ($LenientClippy) {
+        Write-Detail "basis: -LenientClippy => lint findings are advisory only" 'Yellow'
+        Write-Detail ($MsgClippyLenient -f $lintCount) 'Yellow'
+        Add-Result 'clippy (advisory, -LenientClippy)' 'WARN' $sw.Elapsed.TotalSeconds
     } else {
-        Write-Detail "basis: advisory only (default WARN); pass -StrictClippy to make it blocking"
-        Write-Detail ($MsgClippyPending -f $lintCount) 'Yellow'
-        Add-Result 'clippy (advisory)' 'WARN' $sw.Elapsed.TotalSeconds
+        Write-Detail ($MsgClippyBlocking -f $lintCount) 'Red'
+        Write-Detail "basis: -D warnings must pass (blocking by default); pass -LenientClippy to downgrade to advisory" 'Red'
+        Add-Result 'clippy (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds
     }
 }
 
