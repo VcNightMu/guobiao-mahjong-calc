@@ -100,6 +100,11 @@ fn r07b4_quan_zhong() {
     }
 }
 
+// 全双刻（24 番）— 出处：src/fans.rs:780 的 v.push(f("全双刻", 24))
+const FAN_QUAN_SHUANG_KE: u32 = 24;
+// 自摸（1 番，和法番）— 出处：src/fans.rs:990 与 :1003 的 extra.push(f("自摸", 1))
+const FAN_ZI_MO: u32 = 1;
+
 /// `全双刻`（24）：全部双数刻子 + 双数将；应吞 `碰碰和`/`断幺`（互斥表 `:925`）。
 /// 点炮为 `三暗刻`、自摸为 `四暗刻`（四暗刻吞 碰碰和/三暗刻）。
 #[test]
@@ -116,7 +121,7 @@ fn r07b4_quan_shuang_ke() {
     }
     // 自摸分支：四暗刻 成立并吞 碰碰和/三暗刻
     assert!(has_t(w, "四暗刻"), "自摸应四暗刻: {:?}", names_t(w));
-    assert_eq!(val_t(w, "全双刻"), 24);
+    assert_eq!(val_t(w, "全双刻"), FAN_QUAN_SHUANG_KE);
     assert!(!has_t(w, "碰碰和"), "四暗刻应吞碰碰和: {:?}", names_t(w));
 }
 
@@ -153,7 +158,7 @@ fn r07b4_zi_mo() {
     let w = by_name(&an, "9条");
     assert!(!has(w, "自摸"), "点和不得计自摸: {:?}", names(w));
     assert!(has_t(w, "自摸"), "自摸应计自摸: {:?}", names_t(w));
-    assert_eq!(val_t(w, "自摸"), 1);
+    assert_eq!(val_t(w, "自摸"), FAN_ZI_MO);
     assert!(!has_t(w, "不求人"), "非门清不计不求人: {:?}", names_t(w));
     // 门清对照：应以 不求人 取代 自摸
     let h2 = parse_hand("789m 789m 789s 99s 88p");

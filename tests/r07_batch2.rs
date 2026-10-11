@@ -245,6 +245,9 @@ fn r07b2_xiao_si_xi() {
     });
 }
 
+// 清幺九（64 番）— 出处：src/fans.rs:334 的 v.push(f("清幺九", 64))
+const FAN_QING_YAO_JIU: u32 = 64;
+
 // ==================== 清幺九（含自摸分支） ====================
 
 /// `清幺九`：全幺九数牌，**无字牌**；应吞 `碰碰和`/`全带幺`/`幺九刻`/`无字`/`双同刻`/`三同刻`。
@@ -270,5 +273,5 @@ fn r07b2_qing_yao_jiu_and_exclusions() {
         "自摸四暗刻应吞三暗刻"
     );
     assert!(has_tsumo(w, "自摸"), "自摸应计自摸番");
-    assert_eq!(val(w, "清幺九"), 64);
+    assert_eq!(val(w, "清幺九"), FAN_QING_YAO_JIU);
 }
