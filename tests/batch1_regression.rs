@@ -179,7 +179,11 @@ fn r02_three_concealed_triplets_not_downgraded() {
     // 23 = 三暗刻16 + 幺九刻1 ×2 + 无字1 + 四归一2 + 门前清2（×2 = 幺九刻出现次数）
     assert_eq!(w.normal, 23, "{:?}", names(w));
     assert!(has_fan(w, "三暗刻"), "{:?}", names(w));
-    assert!(!has_fan(w, "双暗刻"), "三暗刻已含，不应并列: {:?}", names(w));
+    assert!(
+        !has_fan(w, "双暗刻"),
+        "三暗刻已含，不应并列: {:?}",
+        names(w)
+    );
 }
 
 /// R-02 反向护栏（防修复过头）：和牌张确实把**对子补成刻子**时（`concealed[t]==2`），
@@ -202,7 +206,11 @@ fn r02_reverse_guard_pair_completed_triplet_is_open() {
         "{:?}",
         names(w)
     );
-    assert!(!has_fan(w, "三暗刻"), "荣和补成的刻子是明刻: {:?}", names(w));
+    assert!(
+        !has_fan(w, "三暗刻"),
+        "荣和补成的刻子是明刻: {:?}",
+        names(w)
+    );
     assert!(has_fan(w, "双暗刻"), "{:?}", names(w));
     // 肯定式对照（自摸）：666s 由自摸补成 ⇒ 暗刻 ⇒ 出现 三暗刻
     assert!(
@@ -222,7 +230,11 @@ fn r02_reverse_guard_pair_completed_triplet_is_open() {
         names(w5)
     );
     // 点炮：555筒 是明刻 ⇒ 只剩 999条 一个暗刻，不得出现暗刻类番
-    assert!(!has_fan(w5, "双暗刻"), "荣和补成的 555筒 是明刻: {:?}", names(w5));
+    assert!(
+        !has_fan(w5, "双暗刻"),
+        "荣和补成的 555筒 是明刻: {:?}",
+        names(w5)
+    );
     assert!(!has_fan(w5, "三暗刻"), "{:?}", names(w5));
     // 自摸对照：555筒 变暗刻 ⇒ 双暗刻 必须出现（且差值 = 双暗刻2 + 不求人4 − 门前清2）
     assert!(
@@ -230,7 +242,13 @@ fn r02_reverse_guard_pair_completed_triplet_is_open() {
         "自摸时 555筒 为暗刻: {:?}",
         w5.fans_tsumo.iter().map(|f| f.name).collect::<Vec<_>>()
     );
-    assert_eq!(w5.tsumo - w5.normal, 4, "{:?} vs {:?}", names(w5), w5.fans_tsumo.iter().map(|f| f.name).collect::<Vec<_>>());
+    assert_eq!(
+        w5.tsumo - w5.normal,
+        4,
+        "{:?} vs {:?}",
+        names(w5),
+        w5.fans_tsumo.iter().map(|f| f.name).collect::<Vec<_>>()
+    );
 }
 
 // ============================ DL-2：R-11 组合龙×杠 ============================
@@ -285,7 +303,11 @@ fn r11_zuhelong_triplet_fan_discriminants() {
     assert_eq!(fan_value(w5, "圈风刻"), FAN_QUAN_FENG_KE, "{:?}", names(w5));
     assert_eq!(fan_value(w5, "门风刻"), FAN_MEN_FENG_KE, "{:?}", names(w5));
     assert!(!has_fan(w5, "无字"), "含字牌 ⇒ 无字失效: {:?}", names(w5));
-    assert!(!has_fan(w5, "幺九刻"), "圈/门风刻与幺九刻互斥: {:?}", names(w5));
+    assert!(
+        !has_fan(w5, "幺九刻"),
+        "圈/门风刻与幺九刻互斥: {:?}",
+        names(w5)
+    );
 
     // M5b：东 既非圈风也非门风 ⇒ 降为 幺九刻1（18/20）
     let an5b = analyze(&c, &[Meld::kan(27, false)], 28, 29); // round=南 seat=西
@@ -353,16 +375,28 @@ fn r12_quanda_excludes_dayuwu() {
 
     let w9 = by_name(&an, "9条");
     assert_eq!((w9.normal, w9.tsumo), (31, 33), "{:?}", names(w9));
-    assert!(has_fan(w9, "全大") && !has_fan(w9, "大于五"), "{:?}", names(w9));
+    assert!(
+        has_fan(w9, "全大") && !has_fan(w9, "大于五"),
+        "{:?}",
+        names(w9)
+    );
 
     let w8 = by_name(&an, "8筒");
     assert_eq!((w8.normal, w8.tsumo), (28, 30), "{:?}", names(w8));
-    assert!(has_fan(w8, "全大") && !has_fan(w8, "大于五"), "{:?}", names(w8));
+    assert!(
+        has_fan(w8, "全大") && !has_fan(w8, "大于五"),
+        "{:?}",
+        names(w8)
+    );
 
     // 控制行：6条 行含 6条（非 7/8/9）⇒ 不成全大 ⇒ 大于五 12 照计、分值不变
     let w6 = by_name(&an, "6条");
     assert_eq!((w6.normal, w6.tsumo), (16, 18), "{:?}", names(w6));
-    assert!(has_fan(w6, "大于五") && !has_fan(w6, "全大"), "{:?}", names(w6));
+    assert!(
+        has_fan(w6, "大于五") && !has_fan(w6, "全大"),
+        "{:?}",
+        names(w6)
+    );
 }
 
 /// R-12（F2）：全小 **不计** 小于五；无全小时小于五照计（控制行）。
@@ -373,16 +407,28 @@ fn r12_quanxiao_excludes_xiaoyuwu() {
 
     let w1 = by_name(&an, "1筒");
     assert_eq!((w1.normal, w1.tsumo), (46, 48), "{:?}", names(w1));
-    assert!(has_fan(w1, "全小") && !has_fan(w1, "小于五"), "{:?}", names(w1));
+    assert!(
+        has_fan(w1, "全小") && !has_fan(w1, "小于五"),
+        "{:?}",
+        names(w1)
+    );
 
     let w2 = by_name(&an, "2筒");
     assert_eq!((w2.normal, w2.tsumo), (100, 101), "{:?}", names(w2));
-    assert!(has_fan(w2, "全小") && !has_fan(w2, "小于五"), "{:?}", names(w2));
+    assert!(
+        has_fan(w2, "全小") && !has_fan(w2, "小于五"),
+        "{:?}",
+        names(w2)
+    );
 
     // 控制行：4筒 行含 4筒 ⇒ 不成全小 ⇒ 小于五 12 照计、分值不变
     let w4 = by_name(&an, "4筒");
     assert_eq!((w4.normal, w4.tsumo), (34, 36), "{:?}", names(w4));
-    assert!(has_fan(w4, "小于五") && !has_fan(w4, "全小"), "{:?}", names(w4));
+    assert!(
+        has_fan(w4, "小于五") && !has_fan(w4, "全小"),
+        "{:?}",
+        names(w4)
+    );
 }
 
 // ============================ DL-3：T-2 批 1（8 个番种覆盖） ============================
@@ -430,7 +476,12 @@ fn t2b1_duan_yao() {
     assert_eq!(fan_value(w, "清一色"), FAN_QING_YI_SE, "{:?}", names(w));
     assert_eq!(fan_value(w, "绿一色"), FAN_LV_YI_SE, "{:?}", names(w));
     assert_eq!(fan_value(w, "四暗刻"), FAN_SI_AN_KE, "{:?}", names(w));
-    assert_eq!(fan_value(w, "一色三节高"), FAN_YI_SE_SAN_JIE_GAO, "{:?}", names(w));
+    assert_eq!(
+        fan_value(w, "一色三节高"),
+        FAN_YI_SE_SAN_JIE_GAO,
+        "{:?}",
+        names(w)
+    );
 
     // 互斥护栏：绿一色（无发）可计清一色、但不得计混一色；四暗刻吞 碰碰和/双暗刻；
     // 清一色与断幺均吞 无字；四暗刻不再计 门前清
