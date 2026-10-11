@@ -62,12 +62,23 @@ fn run(c: &Case) {
             names(w)
         );
         if v > 0 {
-            assert_eq!(val(w, n), v, "[{}] {} 番值不符（实际 {:?}）", c.label, n, names(w));
+            assert_eq!(
+                val(w, n),
+                v,
+                "[{}] {} 番值不符（实际 {:?}）",
+                c.label,
+                n,
+                names(w)
+            );
         }
     }
     for &(n, times) in c.repeat {
         let got = w.fans.iter().filter(|f| f.name == n).count();
-        assert_eq!(got, times, "[{}] {} 出现 {} 次（期望 {}）", c.label, n, got, times);
+        assert_eq!(
+            got, times,
+            "[{}] {} 出现 {} 次（期望 {}）",
+            c.label, n, got, times
+        );
     }
     for &n in c.must_not {
         assert!(
@@ -82,34 +93,34 @@ fn run(c: &Case) {
 
 // ============================ 番值常量（must 表：番名→期望番值和；出处为 src/fans.rs 的 f("番名", N) call site）============================
 // 同一数字不同番种分开命名；动态生成的番另有标注。
-const FAN_BIAN_ZHANG: u32 = 1;        // 边张（1 番）    — 出处：src/fans.rs 的 f("边张", 1)
-const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs 的 f("单钓将", 1)
-const FAN_HUA_LONG: u32 = 8;          // 花龙（8 番）    — 出处：src/fans.rs 的 f("花龙", 8)
-const FAN_HUN_YI_SE: u32 = 6;         // 混一色（6 番）  — 出处：src/fans.rs 的 f("混一色", 6)
-const FAN_MEN_FENG_KE: u32 = 2;       // 门风刻（2 番）  — 出处：src/fans.rs 的 f("门风刻", 2)
-const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
-const FAN_MING_GANG: u32 = 1;         // 明杠（1 番）    — 出处：src/fans.rs 的 f("明杠", 1)
-const FAN_QUAN_DAI_YAO: u32 = 4;      // 全带幺（4 番）  — 出处：src/fans.rs 的 f("全带幺", 4)
-const FAN_QUAN_FENG_KE: u32 = 2;      // 圈风刻（2 番）  — 出处：src/fans.rs 的 f("圈风刻", 2)
-const FAN_QUAN_QIU_REN: u32 = 6;      // 全求人（6 番）  — 出处：src/fans.rs 的 f("全求人", 6)
-const FAN_QUE_YI_MEN: u32 = 1;        // 缺一门（1 番）  — 出处：src/fans.rs 的 f("缺一门", 1)
-const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs 的 f("三暗刻", 16)
-const FAN_SAN_GANG: u32 = 32;         // 三杠（32 番）   — 出处：src/fans.rs 的 f("三杠", 32)
-const FAN_SAN_TONG_KE: u32 = 16;      // 三同刻（16 番） — 出处：src/fans.rs 的 f("三同刻", 16)
-const FAN_SHUANG_AN_GANG: u32 = 6;    // 双暗杠（6 番）  — 出处：src/fans.rs 的 f("双暗杠", 6)
-const FAN_SHUANG_AN_KE: u32 = 2;      // 双暗刻（2 番）  — 出处：src/fans.rs 的 f("双暗刻", 2)
-const FAN_SHUANG_JIAN_KE: u32 = 6;    // 双箭刻（6 番）  — 出处：src/fans.rs 的 f("双箭刻", 6)
-const FAN_SHUANG_MING_GANG: u32 = 4;  // 双明杠（4 番）  — 出处：src/fans.rs 的 f("双明杠", 4)
-const FAN_SHUANG_TONG_KE: u32 = 2;    // 双同刻（2 番）  — 出处：src/fans.rs 的 f("双同刻", 2)
-const FAN_SI_GANG: u32 = 88;          // 四杠（88 番）   — 出处：src/fans.rs 的 f("四杠", 88)
-const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
-const FAN_XIAO_SAN_YUAN: u32 = 64;    // 小三元（64 番） — 出处：src/fans.rs 的 f("小三元", 64)
-const FAN_XIAO_SI_XI: u32 = 64;       // 小四喜（64 番） — 出处：src/fans.rs 的 f("小四喜", 64)
-const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
-// ============================ 出现次数常量（repeat 表：番名→应出现次数；**不是番值**）============================
-const TIMES_YAO_JIU_KE_4: usize = 4;  // 幺九刻 应出现 4 次（每副各计 1 次）—— 非番值
-const TIMES_YAO_JIU_KE_3: usize = 3;  // 幺九刻 应出现 3 次（每副各计 1 次）—— 非番值
-const TIMES_YAO_JIU_KE_2: usize = 2;  // 幺九刻 应出现 2 次（每副各计 1 次）—— 非番值
+const FAN_BIAN_ZHANG: u32 = 1; // 边张（1 番）    — 出处：src/fans.rs 的 f("边张", 1)
+const FAN_DAN_DIAO_JIANG: u32 = 1; // 单钓将（1 番）  — 出处：src/fans.rs 的 f("单钓将", 1)
+const FAN_HUA_LONG: u32 = 8; // 花龙（8 番）    — 出处：src/fans.rs 的 f("花龙", 8)
+const FAN_HUN_YI_SE: u32 = 6; // 混一色（6 番）  — 出处：src/fans.rs 的 f("混一色", 6)
+const FAN_MEN_FENG_KE: u32 = 2; // 门风刻（2 番）  — 出处：src/fans.rs 的 f("门风刻", 2)
+const FAN_MEN_QIAN_QING: u32 = 2; // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
+const FAN_MING_GANG: u32 = 1; // 明杠（1 番）    — 出处：src/fans.rs 的 f("明杠", 1)
+const FAN_QUAN_DAI_YAO: u32 = 4; // 全带幺（4 番）  — 出处：src/fans.rs 的 f("全带幺", 4)
+const FAN_QUAN_FENG_KE: u32 = 2; // 圈风刻（2 番）  — 出处：src/fans.rs 的 f("圈风刻", 2)
+const FAN_QUAN_QIU_REN: u32 = 6; // 全求人（6 番）  — 出处：src/fans.rs 的 f("全求人", 6)
+const FAN_QUE_YI_MEN: u32 = 1; // 缺一门（1 番）  — 出处：src/fans.rs 的 f("缺一门", 1)
+const FAN_SAN_AN_KE: u32 = 16; // 三暗刻（16 番） — 出处：src/fans.rs 的 f("三暗刻", 16)
+const FAN_SAN_GANG: u32 = 32; // 三杠（32 番）   — 出处：src/fans.rs 的 f("三杠", 32)
+const FAN_SAN_TONG_KE: u32 = 16; // 三同刻（16 番） — 出处：src/fans.rs 的 f("三同刻", 16)
+const FAN_SHUANG_AN_GANG: u32 = 6; // 双暗杠（6 番）  — 出处：src/fans.rs 的 f("双暗杠", 6)
+const FAN_SHUANG_AN_KE: u32 = 2; // 双暗刻（2 番）  — 出处：src/fans.rs 的 f("双暗刻", 2)
+const FAN_SHUANG_JIAN_KE: u32 = 6; // 双箭刻（6 番）  — 出处：src/fans.rs 的 f("双箭刻", 6)
+const FAN_SHUANG_MING_GANG: u32 = 4; // 双明杠（4 番）  — 出处：src/fans.rs 的 f("双明杠", 4)
+const FAN_SHUANG_TONG_KE: u32 = 2; // 双同刻（2 番）  — 出处：src/fans.rs 的 f("双同刻", 2)
+const FAN_SI_GANG: u32 = 88; // 四杠（88 番）   — 出处：src/fans.rs 的 f("四杠", 88)
+const FAN_WU_ZI: u32 = 1; // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
+const FAN_XIAO_SAN_YUAN: u32 = 64; // 小三元（64 番） — 出处：src/fans.rs 的 f("小三元", 64)
+const FAN_XIAO_SI_XI: u32 = 64; // 小四喜（64 番） — 出处：src/fans.rs 的 f("小四喜", 64)
+const FAN_YAO_JIU_KE: u32 = 1; // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
+                               // ============================ 出现次数常量（repeat 表：番名→应出现次数；**不是番值**）============================
+const TIMES_YAO_JIU_KE_4: usize = 4; // 幺九刻 应出现 4 次（每副各计 1 次）—— 非番值
+const TIMES_YAO_JIU_KE_3: usize = 3; // 幺九刻 应出现 3 次（每副各计 1 次）—— 非番值
+const TIMES_YAO_JIU_KE_2: usize = 2; // 幺九刻 应出现 2 次（每副各计 1 次）—— 非番值
 
 // ==================== 杠系（4 条 + 明杠） ====================
 // 注：原预留但未使用的常量 `KAN_FAMILY_OTHERS` 已删除（消除 dead_code 警告）；
@@ -129,8 +140,22 @@ fn r07b2_si_gang_and_kan_family_exclusion() {
             Meld::kan(17, true), // 明杠 9条
         ],
         win: "5筒",
-        must: &[("四杠", FAN_SI_GANG), ("双同刻", FAN_SHUANG_TONG_KE), ("无字", FAN_WU_ZI), ("全求人", FAN_QUAN_QIU_REN)],
-        must_not: &["碰碰和", "单钓将", "三杠", "双暗杠", "双明杠", "一明一暗杠", "暗杠", "明杠"],
+        must: &[
+            ("四杠", FAN_SI_GANG),
+            ("双同刻", FAN_SHUANG_TONG_KE),
+            ("无字", FAN_WU_ZI),
+            ("全求人", FAN_QUAN_QIU_REN),
+        ],
+        must_not: &[
+            "碰碰和",
+            "单钓将",
+            "三杠",
+            "双暗杠",
+            "双明杠",
+            "一明一暗杠",
+            "暗杠",
+            "明杠",
+        ],
         repeat: &[("幺九刻", TIMES_YAO_JIU_KE_4)],
     });
 }
@@ -143,13 +168,22 @@ fn r07b2_san_gang() {
         hand: "55p 67m",
         melds: vec![Meld::kan(0, true), Meld::kan(8, true), Meld::kan(9, true)],
         win: "5万",
-        must: &[("三杠", FAN_SAN_GANG), ("双同刻", FAN_SHUANG_TONG_KE), ("无字", FAN_WU_ZI)],
+        must: &[
+            ("三杠", FAN_SAN_GANG),
+            ("双同刻", FAN_SHUANG_TONG_KE),
+            ("无字", FAN_WU_ZI),
+        ],
         must_not: &["四杠", "双暗杠", "双明杠", "一明一暗杠", "暗杠", "明杠"],
         repeat: &[("幺九刻", TIMES_YAO_JIU_KE_3)],
     });
     // 同一手的另一张听牌（8万）番表应一致
     let h = parse_hand("55p 67m");
-    let an = analyze(&h, &[Meld::kan(0, true), Meld::kan(8, true), Meld::kan(9, true)], 27, 27);
+    let an = analyze(
+        &h,
+        &[Meld::kan(0, true), Meld::kan(8, true), Meld::kan(9, true)],
+        27,
+        27,
+    );
     assert_eq!(val(by_name(&an, "8万"), "三杠"), 32);
 }
 
@@ -161,7 +195,14 @@ fn r07b2_shuang_an_gang() {
         hand: "123m 456s 9p",
         melds: vec![Meld::kan(18, false), Meld::kan(24, false)],
         win: "9筒",
-        must: &[("双暗杠", FAN_SHUANG_AN_GANG), ("双暗刻", FAN_SHUANG_AN_KE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING), ("幺九刻", FAN_YAO_JIU_KE), ("无字", FAN_WU_ZI)],
+        must: &[
+            ("双暗杠", FAN_SHUANG_AN_GANG),
+            ("双暗刻", FAN_SHUANG_AN_KE),
+            ("单钓将", FAN_DAN_DIAO_JIANG),
+            ("门前清", FAN_MEN_QIAN_QING),
+            ("幺九刻", FAN_YAO_JIU_KE),
+            ("无字", FAN_WU_ZI),
+        ],
         must_not: &["暗杠", "明杠", "双明杠", "一明一暗杠"],
         repeat: &[],
     });
@@ -175,7 +216,12 @@ fn r07b2_shuang_ming_gang() {
         hand: "123m 456s 9p",
         melds: vec![Meld::kan(18, true), Meld::kan(24, true)],
         win: "9筒",
-        must: &[("双明杠", FAN_SHUANG_MING_GANG), ("单钓将", FAN_DAN_DIAO_JIANG), ("幺九刻", FAN_YAO_JIU_KE), ("无字", FAN_WU_ZI)],
+        must: &[
+            ("双明杠", FAN_SHUANG_MING_GANG),
+            ("单钓将", FAN_DAN_DIAO_JIANG),
+            ("幺九刻", FAN_YAO_JIU_KE),
+            ("无字", FAN_WU_ZI),
+        ],
         must_not: &["明杠", "暗杠", "双暗杠", "一明一暗杠", "双暗刻", "门前清"],
         repeat: &[],
     });
@@ -189,7 +235,12 @@ fn r07b2_ming_gang() {
         hand: "123m 456s 789p 9s",
         melds: vec![Meld::kan(22, true)], // 明杠 5筒
         win: "9条",
-        must: &[("明杠", FAN_MING_GANG), ("花龙", FAN_HUA_LONG), ("单钓将", FAN_DAN_DIAO_JIANG), ("无字", FAN_WU_ZI)],
+        must: &[
+            ("明杠", FAN_MING_GANG),
+            ("花龙", FAN_HUA_LONG),
+            ("单钓将", FAN_DAN_DIAO_JIANG),
+            ("无字", FAN_WU_ZI),
+        ],
         must_not: &["暗杠", "双明杠", "双暗杠", "一明一暗杠", "三杠", "四杠"],
         repeat: &[],
     });
@@ -205,7 +256,12 @@ fn r07b2_san_tong_ke() {
         hand: "111m 111s 111p 456m 9s",
         melds: vec![],
         win: "9条",
-        must: &[("三同刻", FAN_SAN_TONG_KE), ("三暗刻", FAN_SAN_AN_KE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
+        must: &[
+            ("三同刻", FAN_SAN_TONG_KE),
+            ("三暗刻", FAN_SAN_AN_KE),
+            ("单钓将", FAN_DAN_DIAO_JIANG),
+            ("门前清", FAN_MEN_QIAN_QING),
+        ],
         must_not: &["双同刻", "四暗刻"],
         repeat: &[("幺九刻", TIMES_YAO_JIU_KE_3)], // 三副 1 的刻子各计一次幺九刻
     });
@@ -219,7 +275,12 @@ fn r07b2_shuang_tong_ke() {
         hand: "111m 111s 456m 789p 9s",
         melds: vec![],
         win: "9条",
-        must: &[("双同刻", FAN_SHUANG_TONG_KE), ("双暗刻", FAN_SHUANG_AN_KE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
+        must: &[
+            ("双同刻", FAN_SHUANG_TONG_KE),
+            ("双暗刻", FAN_SHUANG_AN_KE),
+            ("单钓将", FAN_DAN_DIAO_JIANG),
+            ("门前清", FAN_MEN_QIAN_QING),
+        ],
         must_not: &["三同刻", "三暗刻"],
         repeat: &[("幺九刻", TIMES_YAO_JIU_KE_2)],
     });
@@ -233,7 +294,12 @@ fn r07b2_shuang_jian_ke() {
         hand: "中中中 发发发 123m 456s 9p",
         melds: vec![],
         win: "9筒",
-        must: &[("双箭刻", FAN_SHUANG_JIAN_KE), ("双暗刻", FAN_SHUANG_AN_KE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
+        must: &[
+            ("双箭刻", FAN_SHUANG_JIAN_KE),
+            ("双暗刻", FAN_SHUANG_AN_KE),
+            ("单钓将", FAN_DAN_DIAO_JIANG),
+            ("门前清", FAN_MEN_QIAN_QING),
+        ],
         must_not: &["箭刻", "大三元", "小三元"],
         repeat: &[],
     });
@@ -247,7 +313,12 @@ fn r07b2_xiao_san_yuan() {
         hand: "中中中 发发发 白白 123m 45s",
         melds: vec![],
         win: "3条",
-        must: &[("小三元", FAN_XIAO_SAN_YUAN), ("双暗刻", FAN_SHUANG_AN_KE), ("缺一门", FAN_QUE_YI_MEN), ("门前清", FAN_MEN_QIAN_QING)],
+        must: &[
+            ("小三元", FAN_XIAO_SAN_YUAN),
+            ("双暗刻", FAN_SHUANG_AN_KE),
+            ("缺一门", FAN_QUE_YI_MEN),
+            ("门前清", FAN_MEN_QIAN_QING),
+        ],
         must_not: &["双箭刻", "箭刻", "大三元"],
         repeat: &[],
     });
@@ -290,15 +361,32 @@ fn r07b2_qing_yao_jiu_and_exclusions() {
         hand: "111m 999m 111s 99s 11p",
         melds: vec![],
         win: "9条",
-        must: &[("清幺九", FAN_QING_YAO_JIU), ("三暗刻", FAN_SAN_AN_KE), ("门前清", FAN_MEN_QIAN_QING)],
-        must_not: &["碰碰和", "全带幺", "幺九刻", "无字", "双同刻", "三同刻", "混幺九", "字一色"],
+        must: &[
+            ("清幺九", FAN_QING_YAO_JIU),
+            ("三暗刻", FAN_SAN_AN_KE),
+            ("门前清", FAN_MEN_QIAN_QING),
+        ],
+        must_not: &[
+            "碰碰和",
+            "全带幺",
+            "幺九刻",
+            "无字",
+            "双同刻",
+            "三同刻",
+            "混幺九",
+            "字一色",
+        ],
         repeat: &[],
     });
     // 自摸分支：四暗刻 成立、三暗刻 被吞
     let h = parse_hand("111m 999m 111s 99s 11p");
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "9条");
-    assert!(has_tsumo(w, "四暗刻"), "自摸应四暗刻: {:?}", w.fans_tsumo.iter().map(|f| f.name).collect::<Vec<_>>());
+    assert!(
+        has_tsumo(w, "四暗刻"),
+        "自摸应四暗刻: {:?}",
+        w.fans_tsumo.iter().map(|f| f.name).collect::<Vec<_>>()
+    );
     assert!(
         !w.fans_tsumo.iter().any(|f| f.name == "三暗刻"),
         "自摸四暗刻应吞三暗刻"
