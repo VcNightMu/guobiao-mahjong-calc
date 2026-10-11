@@ -343,9 +343,9 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     for s in 0..3usize {
         let b = s * 9;
         let mut others = 0u32;
-        for i in 0..34usize {
+        for (i, &n) in all.iter().enumerate() {
             if !(i >= b && i < b + 9) {
-                others += all[i] as u32;
+                others += n as u32;
             }
         }
         if others == 0
@@ -516,10 +516,10 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         let mut hl_perm: Option<[usize; 3]> = None;
         'outer: for perm in [[1usize, 4, 7], [1, 7, 4], [4, 1, 7], [4, 7, 1], [7, 1, 4], [7, 4, 1]].iter() {
             let mut ok = true;
-            for s in 0..3usize {
+            for (s, &p) in perm.iter().enumerate() {
                 let st: std::collections::HashSet<usize> =
                     runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
-                if !st.contains(&perm[s]) {
+                if !st.contains(&p) {
                     ok = false;
                     break;
                 }
@@ -532,10 +532,10 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         if let Some(perm) = hl_perm {
             v.push(f("花龙", 8));
             // 花龙用掉的三副顺子 → 已组合（其余顺子只能与它们套算一次）
-            for s in 0..3usize {
+            for (s, &p) in perm.iter().enumerate() {
                 if let Some(idx) = runs
                     .iter()
-                    .position(|&t| suit(t) == s && num(t) == perm[s])
+                    .position(|&t| suit(t) == s && num(t) == p)
                 {
                     used_runs[idx] = true;
                 }
@@ -813,8 +813,8 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     let _ = (qingyise, ziyise, used_run_fan);
 
     // 四归一：某张牌 4 张且未成杠
-    for t in 0..34usize {
-        if all[t] == 4 && !d.sets.iter().any(|s| s.is_kan && s.tile == t) {
+    for (t, &n) in all.iter().enumerate() {
+        if n == 4 && !d.sets.iter().any(|s| s.is_kan && s.tile == t) {
             v.push(f("四归一", 2));
         }
     }
