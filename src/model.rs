@@ -1,6 +1,7 @@
 //! 输入数据模型：副露、门清判定
 
 use crate::decompose::{Set, SetKind};
+use crate::tiles::{tile_name, total, Counts, NUM_TILES};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MeldKind {
@@ -58,4 +59,48 @@ pub fn breaks_menqing(melds: &[Meld]) -> bool {
         MeldKind::Chi | MeldKind::Pon => true,
         MeldKind::Kan => m.open,
     })
+}
+
+/// 输入校验错误
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InputError {
+    /// 暗牌张数不符：应为 expected（= 13 - 3×副露面子数，面子可为杠），实际 got
+    Count { expected: u32, got: u32 },
+    /// 某张牌全局（暗牌 + 副露 + 杠）超过 4 张
+    Over4(usize, u8),
+}
+
+impl std::fmt::Display for InputError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InputError::Count { expected, got } => write!(
+                f,
+                "暗牌张数不符：应为 {} 张（13 - 3×副露面子数），实际 {} 张",
+                expected, got
+            ),
+            InputError::Over4(t, n) => write!(f, "{} 共 {} 张，超过每种牌 4 张上限", tile_name(*t), n),
+        }
+    }
+}
+
+/// C7：全局计数（暗牌 + 副露；杠按 4 张计，由 Meld::tiles() 展开）先查超 4；
+/// C6：再查暗牌张数 = 13 - 3×副露面子数（面子可以是杠，四杠合法）。
+pub fn validate_counts(c: &Counts, melds: &[Meld]) -> Result<(), InputError> {
+    let mut all = *c;
+    for m in melds {
+        for t in m.tiles() {
+            all[t] = all[t].saturating_add(1);
+        }
+    }
+    for t in 0..NUM_TILES {
+        if all[t] > 4 {
+            return Err(InputError::Over4(t, all[t]));
+        }
+    }
+    let expected = 13u32.saturating_sub(3 * melds.len() as u32);
+    let got = total(c);
+    if got != expected {
+        return Err(InputError::Count { expected, got });
+    }
+    Ok(())
 }

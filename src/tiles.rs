@@ -134,3 +134,87 @@ pub fn parse_hand(s: &str) -> Counts {
     }
     c
 }
+
+/// 解析错误：非法字符 / 数字 0 / 悬空牌点（缺少花色后缀）
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParseError {
+    BadChar(char),
+    ZeroDigit,
+    DanglingDigits,
+}
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParseError::BadChar(c) => write!(f, "非法字符 '{}'", c),
+            ParseError::ZeroDigit => write!(f, "非法字符 '0'（牌点只能是 1-9）"),
+            ParseError::DanglingDigits => write!(f, "牌点后面缺少花色（m/s/p 或 万/条/筒）"),
+        }
+    }
+}
+
+/// 与 parse_hand 同一套语法，但把静默跳过改成报错：
+/// - 无法识别的字符 → Err(BadChar)；数字 0 → Err(ZeroDigit)；结尾悬空的数字 → Err(DanglingDigits)
+/// - 空白字符（空格/制表/换行）允许并忽略（CLI 会把多个手牌词用空格拼接）
+/// - parse_hand 的签名与行为保持不变（既有调用方/测试依赖它）
+pub fn try_parse_hand(s: &str) -> Result<Counts, ParseError> {
+    let mut c = counts();
+    let chars: Vec<char> = s.chars().collect();
+    let mut i = 0;
+    let mut digits: Vec<usize> = Vec::new();
+    while i < chars.len() {
+        let ch = chars[i];
+        match ch {
+            '0'..='9' => {
+                let d = ch as usize - '0' as usize;
+                if d == 0 {
+                    return Err(ParseError::ZeroDigit);
+                }
+                digits.push(d);
+                i += 1;
+            }
+            'm' | '万' => {
+                for &d in &digits {
+                    c[d - 1] += 1;
+                }
+                digits.clear();
+                i += 1;
+            }
+            's' | '条' => {
+                for &d in &digits {
+                    c[9 + d - 1] += 1;
+                }
+                digits.clear();
+                i += 1;
+            }
+            'p' | '筒' => {
+                for &d in &digits {
+                    c[18 + d - 1] += 1;
+                }
+                digits.clear();
+                i += 1;
+            }
+            '东' | '南' | '西' | '北' | '中' | '发' | '白' => {
+                let idx = match ch {
+                    '东' => 27,
+                    '南' => 28,
+                    '西' => 29,
+                    '北' => 30,
+                    '中' => 31,
+                    '发' => 32,
+                    _ => 33,
+                };
+                c[idx] += 1;
+                i += 1;
+            }
+            ch if ch.is_whitespace() => {
+                i += 1;
+            }
+            other => return Err(ParseError::BadChar(other)),
+        }
+    }
+    if !digits.is_empty() {
+        return Err(ParseError::DanglingDigits);
+    }
+    Ok(c)
+}

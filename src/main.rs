@@ -1,18 +1,32 @@
 use gbmj::calc::analyze;
-use gbmj::model::Meld;
+use gbmj::model::{validate_counts, Meld};
 use gbmj::tiles::*;
 
-fn first_tile(c: &Counts) -> usize {
-    (0..34usize).find(|&t| c[t] > 0).expect("空牌")
+fn first_tile(c: &Counts) -> Option<usize> {
+    (0..34usize).find(|&t| c[t] > 0)
 }
 
-fn wind_idx(s: &str) -> usize {
+fn wind_idx(s: &str) -> Option<usize> {
     match s {
-        "东" | "east" | "E" => 27,
-        "南" | "south" | "S" => 28,
-        "西" | "west" | "W" => 29,
-        "北" | "north" | "N" => 30,
-        _ => 27,
+        "东" | "east" | "E" => Some(27),
+        "南" | "south" | "S" => Some(28),
+        "西" | "west" | "W" => Some(29),
+        "北" | "north" | "N" => Some(30),
+        _ => None,
+    }
+}
+
+/// 统一错误通道（C1）：stderr 提示 + 用法提示 + 退出码 2
+fn die(msg: &str) -> ! {
+    eprintln!("错误: {}", msg);
+    eprintln!("用法: gbmj <手牌> [副露...] [圈门...]（gbmj --help 查看完整说明）");
+    std::process::exit(2);
+}
+
+fn parse_or_die(s: &str) -> Counts {
+    match try_parse_hand(s) {
+        Ok(c) => c,
+        Err(e) => die(&e.to_string()),
     }
 }
 
@@ -49,6 +63,8 @@ fn main() {
     let mut round = 27usize;
     let mut seat = 27usize;
     let mut plan_mode = false;
+    let mut round_set = false;
+    let mut seat_set = false;
 
     let mut i = 0;
     while i < args.len() {
@@ -57,11 +73,13 @@ fn main() {
             "--chi" | "--pon" | "--kan" | "--ankan" => {
                 i += 1;
                 if i >= args.len() {
-                    eprintln!("缺少参数: {}", a);
-                    return;
+                    die(&format!("缺少参数: {}", a));
                 }
-                let c = parse_hand(&args[i]);
-                let t = first_tile(&c);
+                let c = parse_or_die(&args[i]);
+                let t = match first_tile(&c) {
+                    Some(t) => t,
+                    None => die(&format!("{} 后面没有有效牌", a)),
+                };
                 let meld = match a {
                     "--chi" => Meld::chi(t),
                     "--pon" => Meld::pon(t),
@@ -72,16 +90,43 @@ fn main() {
             }
             "--round" => {
                 i += 1;
-                round = wind_idx(&args[i]);
+                if i >= args.len() {
+                    die("缺少参数: --round");
+                }
+                if round_set {
+                    die("--round 重复给出");
+                }
+                match wind_idx(&args[i]) {
+                    Some(w) => {
+                        round = w;
+                        round_set = true;
+                    }
+                    None => die(&format!("无效圈风: {}", args[i])),
+                }
             }
             "--plan" => {
                 plan_mode = true;
             }
             "--seat" => {
                 i += 1;
-                seat = wind_idx(&args[i]);
+                if i >= args.len() {
+                    die("缺少参数: --seat");
+                }
+                if seat_set {
+                    die("--seat 重复给出");
+                }
+                match wind_idx(&args[i]) {
+                    Some(w) => {
+                        seat = w;
+                        seat_set = true;
+                    }
+                    None => die(&format!("无效门风: {}", args[i])),
+                }
             }
             other => {
+                if other.starts_with('-') {
+                    die(&format!("未知参数: {}", other));
+                }
                 hand.push_str(other);
                 hand.push(' ');
             }
@@ -89,7 +134,16 @@ fn main() {
         i += 1;
     }
 
-    let concealed = parse_hand(&hand);
+    let concealed = parse_or_die(&hand);
+    if total(&concealed) == 0 {
+        die("没有解析出任何牌");
+    }
+    if melds.len() > 4 {
+        die("副露面子数不能超过 4 副（杠也算一副）");
+    }
+    if let Err(e) = validate_counts(&concealed, &melds) {
+        die(&e.to_string());
+    }
 
     if plan_mode {
         let dirs = gbmj::plan::plan(&concealed, &melds, 2);
