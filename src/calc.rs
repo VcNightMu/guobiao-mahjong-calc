@@ -34,8 +34,8 @@ pub fn detect_zuhelong(c: &Counts, m: usize) -> Vec<Decomp> {
         }
         if m == 1 {
             // 余下 2 张即将
-            for p in 0..34usize {
-                if cc[p] == 2 {
+            for (p, &v) in cc.iter().enumerate() {
+                if v == 2 {
                     out.push(Decomp {
                         pair: Some(p),
                         sets: vec![],
@@ -60,8 +60,8 @@ pub fn detect_zuhelong(c: &Counts, m: usize) -> Vec<Decomp> {
                     });
                 }
             }
-            for t in 0..34usize {
-                if c2[t] >= 3 {
+            for (t, &v) in c2.iter().enumerate() {
+                if v >= 3 {
                     out.push(Decomp {
                         pair: Some(p),
                         sets: vec![Set::triplet(t)],
