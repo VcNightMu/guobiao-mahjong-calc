@@ -186,6 +186,9 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
                             || s.tile + 2 == ctx.win_tile)
                     {
                         let n = num(s.tile);
+                        // 历史并列写法：两块都推入同一番同一值 f("边张", 1)（n==1 的 1-2 听 3、n==7 的 7-8-9 听 7），
+                        // 两条件互斥（n 不可能同时为 1 与 7）；合并虽等价但会改条件结构，计番核心取最小改动。
+                        #[allow(clippy::if_same_then_else)]
                         if ctx.win_tile == s.tile + 2 && n == 1 {
                             v.push(f("边张", 1));
                         } else if ctx.win_tile == s.tile && n == 7 {
@@ -406,7 +409,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             }
         }
         let mut san = false;
-        for (_, &c) in by_num.iter() {
+        for &c in by_num.values() {
             if c >= 3 {
                 san = true;
             }
@@ -773,9 +776,9 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
 
     // 全双刻
     let all_even_trip = all_trips
-        && d.sets.iter().all(|s| is_suited(s.tile) && num(s.tile) % 2 == 0)
+        && d.sets.iter().all(|s| is_suited(s.tile) && num(s.tile).is_multiple_of(2))
         && is_suited(pair)
-        && num(pair) % 2 == 0;
+        && num(pair).is_multiple_of(2);
     if all_even_trip {
         v.push(f("全双刻", 24));
     }
@@ -825,8 +828,8 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     }
 
     // ---------- 一色双龙会 / 三色双龙会 ----------
-    if d.sets.len() == 4 && d.sets.iter().all(|s| s.is_run()) {
-        if is_suited(pair) && num(pair) == 5 {
+    if d.sets.len() == 4 && d.sets.iter().all(|s| s.is_run())
+        && is_suited(pair) && num(pair) == 5 {
             let ps = suit(pair);
             // 一色双龙会：同一花色 123,123,789,789 + 5 作将
             let same = runs.iter().all(|&t| suit(t) == ps);
@@ -851,7 +854,6 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
                 v.push(f("三色双龙会", 16));
             }
         }
-    }
 
     // ---------- 和牌张结构：边张 / 坎张 / 单钓将 ----------
     if ctx.single_wait {
@@ -862,6 +864,9 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             for s in d.sets.iter() {
                 if s.is_run() && (s.tile == ctx.win_tile || s.tile + 1 == ctx.win_tile || s.tile + 2 == ctx.win_tile) {
                     let n = num(s.tile);
+                    // 历史并列写法：两块都推入同一番同一值 f("边张", 1)（n==1 的 1-2 听 3、n==7 的 7-8-9 听 7），
+                    // 两条件互斥（n 不可能同时为 1 与 7）；合并虽等价但会改条件结构，计番核心取最小改动。
+                    #[allow(clippy::if_same_then_else)]
                     if ctx.win_tile == s.tile + 2 && n == 1 {
                         v.push(f("边张", 1));
                     } else if ctx.win_tile == s.tile && n == 7 {
