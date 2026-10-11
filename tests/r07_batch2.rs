@@ -82,30 +82,30 @@ fn run(c: &Case) {
 
 // ============================ 番值常量（must 表：番名→期望番值和；出处为 src/fans.rs 的 f("番名", N) call site）============================
 // 同一数字不同番种分开命名；动态生成的番另有标注。
-const FAN_BIAN_ZHANG: u32 = 1;        // 边张（1 番）    — 出处：src/fans.rs:189 的 f("边张", 1)
-const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs:181 的 f("单钓将", 1)
-const FAN_HUA_LONG: u32 = 8;          // 花龙（8 番）    — 出处：src/fans.rs:533 的 f("花龙", 8)
-const FAN_HUN_YI_SE: u32 = 6;         // 混一色（6 番）  — 出处：src/fans.rs:231 的 f("混一色", 6)
-const FAN_MEN_FENG_KE: u32 = 2;       // 门风刻（2 番）  — 出处：src/fans.rs:95 的 f("门风刻", 2)
-const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs:987 的 f("门前清", 2)
-const FAN_MING_GANG: u32 = 1;         // 明杠（1 番）    — 出处：src/fans.rs:70 的 f("明杠", 1)
-const FAN_QUAN_DAI_YAO: u32 = 4;      // 全带幺（4 番）  — 出处：src/fans.rs:750 的 f("全带幺", 4)
-const FAN_QUAN_FENG_KE: u32 = 2;      // 圈风刻（2 番）  — 出处：src/fans.rs:92 的 f("圈风刻", 2)
-const FAN_QUAN_QIU_REN: u32 = 6;      // 全求人（6 番）  — 出处：src/fans.rs:1019 的 f("全求人", 6)
-const FAN_QUE_YI_MEN: u32 = 1;        // 缺一门（1 番）  — 出处：src/fans.rs:236 的 f("缺一门", 1)
-const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs:396 的 f("三暗刻", 16)
-const FAN_SAN_GANG: u32 = 32;         // 三杠（32 番）   — 出处：src/fans.rs:56 的 f("三杠", 32)
-const FAN_SAN_TONG_KE: u32 = 16;      // 三同刻（16 番） — 出处：src/fans.rs:418 的 f("三同刻", 16)
-const FAN_SHUANG_AN_GANG: u32 = 6;    // 双暗杠（6 番）  — 出处：src/fans.rs:59 的 f("双暗杠", 6)
-const FAN_SHUANG_AN_KE: u32 = 2;      // 双暗刻（2 番）  — 出处：src/fans.rs:398 的 f("双暗刻", 2)
-const FAN_SHUANG_JIAN_KE: u32 = 6;    // 双箭刻（6 番）  — 出处：src/fans.rs:110 的 f("双箭刻", 6)
-const FAN_SHUANG_MING_GANG: u32 = 4;  // 双明杠（4 番）  — 出处：src/fans.rs:61 的 f("双明杠", 4)
-const FAN_SHUANG_TONG_KE: u32 = 2;    // 双同刻（2 番）  — 出处：src/fans.rs:420 的 f("双同刻", 2)
-const FAN_SI_GANG: u32 = 88;          // 四杠（88 番）   — 出处：src/fans.rs:54 的 f("四杠", 88)
-const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs:203 的 f("无字", 1)
-const FAN_XIAO_SAN_YUAN: u32 = 64;    // 小三元（64 番） — 出处：src/fans.rs:312 的 f("小三元", 64)
-const FAN_XIAO_SI_XI: u32 = 64;       // 小四喜（64 番） — 出处：src/fans.rs:309 的 f("小四喜", 64)
-const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs:98 的 f("幺九刻", 1)
+const FAN_BIAN_ZHANG: u32 = 1;        // 边张（1 番）    — 出处：src/fans.rs 的 f("边张", 1)
+const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs 的 f("单钓将", 1)
+const FAN_HUA_LONG: u32 = 8;          // 花龙（8 番）    — 出处：src/fans.rs 的 f("花龙", 8)
+const FAN_HUN_YI_SE: u32 = 6;         // 混一色（6 番）  — 出处：src/fans.rs 的 f("混一色", 6)
+const FAN_MEN_FENG_KE: u32 = 2;       // 门风刻（2 番）  — 出处：src/fans.rs 的 f("门风刻", 2)
+const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
+const FAN_MING_GANG: u32 = 1;         // 明杠（1 番）    — 出处：src/fans.rs 的 f("明杠", 1)
+const FAN_QUAN_DAI_YAO: u32 = 4;      // 全带幺（4 番）  — 出处：src/fans.rs 的 f("全带幺", 4)
+const FAN_QUAN_FENG_KE: u32 = 2;      // 圈风刻（2 番）  — 出处：src/fans.rs 的 f("圈风刻", 2)
+const FAN_QUAN_QIU_REN: u32 = 6;      // 全求人（6 番）  — 出处：src/fans.rs 的 f("全求人", 6)
+const FAN_QUE_YI_MEN: u32 = 1;        // 缺一门（1 番）  — 出处：src/fans.rs 的 f("缺一门", 1)
+const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs 的 f("三暗刻", 16)
+const FAN_SAN_GANG: u32 = 32;         // 三杠（32 番）   — 出处：src/fans.rs 的 f("三杠", 32)
+const FAN_SAN_TONG_KE: u32 = 16;      // 三同刻（16 番） — 出处：src/fans.rs 的 f("三同刻", 16)
+const FAN_SHUANG_AN_GANG: u32 = 6;    // 双暗杠（6 番）  — 出处：src/fans.rs 的 f("双暗杠", 6)
+const FAN_SHUANG_AN_KE: u32 = 2;      // 双暗刻（2 番）  — 出处：src/fans.rs 的 f("双暗刻", 2)
+const FAN_SHUANG_JIAN_KE: u32 = 6;    // 双箭刻（6 番）  — 出处：src/fans.rs 的 f("双箭刻", 6)
+const FAN_SHUANG_MING_GANG: u32 = 4;  // 双明杠（4 番）  — 出处：src/fans.rs 的 f("双明杠", 4)
+const FAN_SHUANG_TONG_KE: u32 = 2;    // 双同刻（2 番）  — 出处：src/fans.rs 的 f("双同刻", 2)
+const FAN_SI_GANG: u32 = 88;          // 四杠（88 番）   — 出处：src/fans.rs 的 f("四杠", 88)
+const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
+const FAN_XIAO_SAN_YUAN: u32 = 64;    // 小三元（64 番） — 出处：src/fans.rs 的 f("小三元", 64)
+const FAN_XIAO_SI_XI: u32 = 64;       // 小四喜（64 番） — 出处：src/fans.rs 的 f("小四喜", 64)
+const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
 // ============================ 出现次数常量（repeat 表：番名→应出现次数；**不是番值**）============================
 const TIMES_YAO_JIU_KE_4: usize = 4;  // 幺九刻 应出现 4 次（每副各计 1 次）—— 非番值
 const TIMES_YAO_JIU_KE_3: usize = 3;  // 幺九刻 应出现 3 次（每副各计 1 次）—— 非番值
@@ -276,7 +276,7 @@ fn r07b2_xiao_si_xi() {
     });
 }
 
-// 清幺九（64 番）— 出处：src/fans.rs:334 的 v.push(f("清幺九", 64))
+// 清幺九（64 番）— 出处：src/fans.rs 的 f("清幺九", 64)
 const FAN_QING_YAO_JIU: u32 = 64;
 
 // ==================== 清幺九（含自摸分支） ====================

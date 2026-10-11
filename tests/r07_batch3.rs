@@ -60,28 +60,28 @@ fn run(c: &Case) {
 
 // ============================ 番值常量（must 表：番名→期望番值和；出处为 src/fans.rs 的 f("番名", N) call site）============================
 // 同一数字不同番种分开命名；动态生成的番另有标注。
-const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs:181 的 f("单钓将", 1)
-const FAN_LIAN_LIU: u32 = 1;          // 连六（1 番）    — 出处：动态生成（src/fans.rs:720 的 for name in [...]）
-const FAN_LIAN_QI_DUI: u32 = 88;      // 连七对（88 番） — 出处：src/fans.rs:156 的 f("连七对", 88)
-const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs:987 的 f("门前清", 2)
-const FAN_PING_HE: u32 = 2;           // 平和（2 番）    — 出处：src/fans.rs:174 的 f("平和", 2)
-const FAN_QI_DUI: u32 = 24;           // 七对（24 番）   — 出处：src/fans.rs:157 的 f("七对", 24)
-const FAN_QING_YI_SE: u32 = 24;       // 清一色（24 番） — 出处：src/fans.rs:228 的 f("清一色", 24)
-const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs:396 的 f("三暗刻", 16)
-const FAN_SAN_SE_SAN_BU_GAO: u32 = 6; // 三色三步高（6 番）— 出处：src/fans.rs:636 的 f("三色三步高", 6)
-const FAN_SAN_SE_SAN_JIE_GAO: u32 = 8;// 三色三节高（8 番）— 出处：src/fans.rs:609 的 f("三色三节高", 8)
-const FAN_SAN_SE_SAN_TONG_SHUN: u32 = 8; // 三色三同顺（8 番）— 出处：src/fans.rs:589 的 f("三色三同顺", 8)
-const FAN_SI_AN_KE: u32 = 64;         // 四暗刻（64 番） — 出处：src/fans.rs:394 的 f("四暗刻", 64)
-const FAN_SI_GUI_YI: u32 = 2;         // 四归一（2 番）  — 出处：src/fans.rs:818 的 f("四归一", 2)
-const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs:203 的 f("无字", 1)
-const FAN_XI_XIANG_FENG: u32 = 1;     // 喜相逢（1 番）  — 出处：动态生成（src/fans.rs:720 的 for name in [...]）
-const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs:98 的 f("幺九刻", 1)
-const FAN_YI_BAN_GAO: u32 = 1;        // 一般高（1 番）  — 出处：动态生成（src/fans.rs:720 的 for name in [...]）
-const FAN_YI_SE_SAN_BU_GAO: u32 = 16;// 一色三步高（16 番）— 出处：src/fans.rs:569 的 f("一色三步高", 16)
-const FAN_YI_SE_SAN_JIE_GAO: u32 = 24;// 一色三节高（24 番）— 出处：src/fans.rs:486 的 f("一色三节高", 24)
-const FAN_YI_SE_SI_BU_GAO: u32 = 32;  // 一色四步高（32 番）— 出处：src/fans.rs:567 的 f("一色四步高", 32)
-const FAN_YI_SE_SI_JIE_GAO: u32 = 48; // 一色四节高（48 番）— 出处：src/fans.rs:484 的 f("一色四节高", 48)
-const FAN_YI_SE_SI_TONG_SHUN: u32 = 48;// 一色四同顺（48 番）— 出处：src/fans.rs:448 的 f("一色四同顺", 48)
+const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs 的 f("单钓将", 1)
+const FAN_LIAN_LIU: u32 = 1;          // 连六（1 番）    — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_LIAN_QI_DUI: u32 = 88;      // 连七对（88 番） — 出处：src/fans.rs 的 f("连七对", 88)
+const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
+const FAN_PING_HE: u32 = 2;           // 平和（2 番）    — 出处：src/fans.rs 的 f("平和", 2)
+const FAN_QI_DUI: u32 = 24;           // 七对（24 番）   — 出处：src/fans.rs 的 f("七对", 24)
+const FAN_QING_YI_SE: u32 = 24;       // 清一色（24 番） — 出处：src/fans.rs 的 f("清一色", 24)
+const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs 的 f("三暗刻", 16)
+const FAN_SAN_SE_SAN_BU_GAO: u32 = 6; // 三色三步高（6 番）— 出处：src/fans.rs 的 f("三色三步高", 6)
+const FAN_SAN_SE_SAN_JIE_GAO: u32 = 8;// 三色三节高（8 番）— 出处：src/fans.rs 的 f("三色三节高", 8)
+const FAN_SAN_SE_SAN_TONG_SHUN: u32 = 8; // 三色三同顺（8 番）— 出处：src/fans.rs 的 f("三色三同顺", 8)
+const FAN_SI_AN_KE: u32 = 64;         // 四暗刻（64 番） — 出处：src/fans.rs 的 f("四暗刻", 64)
+const FAN_SI_GUI_YI: u32 = 2;         // 四归一（2 番）  — 出处：src/fans.rs 的 f("四归一", 2)
+const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
+const FAN_XI_XIANG_FENG: u32 = 1;     // 喜相逢（1 番）  — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
+const FAN_YI_BAN_GAO: u32 = 1;        // 一般高（1 番）  — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_YI_SE_SAN_BU_GAO: u32 = 16;// 一色三步高（16 番）— 出处：src/fans.rs 的 f("一色三步高", 16)
+const FAN_YI_SE_SAN_JIE_GAO: u32 = 24;// 一色三节高（24 番）— 出处：src/fans.rs 的 f("一色三节高", 24)
+const FAN_YI_SE_SI_BU_GAO: u32 = 32;  // 一色四步高（32 番）— 出处：src/fans.rs 的 f("一色四步高", 32)
+const FAN_YI_SE_SI_JIE_GAO: u32 = 48; // 一色四节高（48 番）— 出处：src/fans.rs 的 f("一色四节高", 48)
+const FAN_YI_SE_SI_TONG_SHUN: u32 = 48;// 一色四同顺（48 番）— 出处：src/fans.rs 的 f("一色四同顺", 48)
 
 /// `一色四同顺`（48）：4 副相同顺子；**应吞 `一色三同顺`/`一般高`/`四归一`/`七对`**（互斥表 `:919`）。
 #[test]

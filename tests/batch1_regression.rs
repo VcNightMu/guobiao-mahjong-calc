@@ -34,21 +34,21 @@ fn fan_value(w: &WaitResult, n: &str) -> u32 {
 
 // ============================ 番值常量（B 类番值，出处均为 src/fans.rs 的 v.push(f("番名", N)) call site）============================
 // 同一数字不同番种分开命名，禁止共用裸数字。
-const FAN_SI_GUI_YI: u32 = 2; // 四归一（2 番）— 出处：src/fans.rs:815 的 v.push(f("四归一", 2))
-const FAN_QUAN_FENG_KE: u32 = 2; // 圈风刻（2 番）— 出处：src/fans.rs:92 的 v.push(f("圈风刻", 2))
-const FAN_MEN_FENG_KE: u32 = 2; // 门风刻（2 番）— 出处：src/fans.rs:95 的 v.push(f("门风刻", 2))
-const FAN_YAO_JIU_KE: u32 = 1; // 幺九刻（1 番）— 出处：src/fans.rs:98 的 v.push(f("幺九刻", 1))
-const FAN_JIAN_KE: u32 = 2; // 箭刻（2 番）— 出处：src/fans.rs:88 的 v.push(f("箭刻", 2))
-const FAN_SHUANG_AN_KE: u32 = 2; // 双暗刻（2 番）— 出处：src/fans.rs:395 的 v.push(f("双暗刻", 2))
-const FAN_SI_AN_KE: u32 = 64; // 四暗刻（64 番）— 出处：src/fans.rs:391 的 v.push(f("四暗刻", 64))
-const FAN_DUAN_YAO: u32 = 2; // 断幺（2 番）— 出处：src/fans.rs:245 的 v.push(f("断幺", 2))
-const FAN_QING_YI_SE: u32 = 24; // 清一色（24 番）— 出处：src/fans.rs:225 的 v.push(f("清一色", 24))
-const FAN_LV_YI_SE: u32 = 88; // 绿一色（88 番）— 出处：src/fans.rs:327 的 v.push(f("绿一色", 88))
-const FAN_YI_SE_SAN_JIE_GAO: u32 = 24; // 一色三节高（24 番）— 出处：src/fans.rs:483 的 v.push(f("一色三节高", 24))
-const FAN_QUAN_DA: u32 = 24; // 全大（24 番）— 出处：src/fans.rs:757 的 v.push(f("全大", 24))
-const FAN_QUAN_XIAO: u32 = 24; // 全小（24 番）— 出处：src/fans.rs:761 的 v.push(f("全小", 24))
-const FAN_DA_YU_WU: u32 = 12; // 大于五（12 番）— 出处：src/fans.rs:768 的 v.push(f("大于五", 12))
-const FAN_XIAO_YU_WU: u32 = 12; // 小于五（12 番）— 出处：src/fans.rs:771 的 v.push(f("小于五", 12))
+const FAN_SI_GUI_YI: u32 = 2; // 四归一（2 番）— 出处：src/fans.rs 的 f("四归一", 2)
+const FAN_QUAN_FENG_KE: u32 = 2; // 圈风刻（2 番）— 出处：src/fans.rs 的 f("圈风刻", 2)
+const FAN_MEN_FENG_KE: u32 = 2; // 门风刻（2 番）— 出处：src/fans.rs 的 f("门风刻", 2)
+const FAN_YAO_JIU_KE: u32 = 1; // 幺九刻（1 番）— 出处：src/fans.rs 的 f("幺九刻", 1)
+const FAN_JIAN_KE: u32 = 2; // 箭刻（2 番）— 出处：src/fans.rs 的 f("箭刻", 2)
+const FAN_SHUANG_AN_KE: u32 = 2; // 双暗刻（2 番）— 出处：src/fans.rs 的 f("双暗刻", 2)
+const FAN_SI_AN_KE: u32 = 64; // 四暗刻（64 番）— 出处：src/fans.rs 的 f("四暗刻", 64)
+const FAN_DUAN_YAO: u32 = 2; // 断幺（2 番）— 出处：src/fans.rs 的 f("断幺", 2)
+const FAN_QING_YI_SE: u32 = 24; // 清一色（24 番）— 出处：src/fans.rs 的 f("清一色", 24)
+const FAN_LV_YI_SE: u32 = 88; // 绿一色（88 番）— 出处：src/fans.rs 的 f("绿一色", 88)
+const FAN_YI_SE_SAN_JIE_GAO: u32 = 24; // 一色三节高（24 番）— 出处：src/fans.rs 的 f("一色三节高", 24)
+const FAN_QUAN_DA: u32 = 24; // 全大（24 番）— 出处：src/fans.rs 的 f("全大", 24)
+const FAN_QUAN_XIAO: u32 = 24; // 全小（24 番）— 出处：src/fans.rs 的 f("全小", 24)
+const FAN_DA_YU_WU: u32 = 12; // 大于五（12 番）— 出处：src/fans.rs 的 f("大于五", 12)
+const FAN_XIAO_YU_WU: u32 = 12; // 小于五（12 番）— 出处：src/fans.rs 的 f("小于五", 12)
 
 // ============================ DL-2：R-01 三态 ============================
 

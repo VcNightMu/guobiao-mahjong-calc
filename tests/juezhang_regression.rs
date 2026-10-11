@@ -35,7 +35,7 @@ fn val_of(v: &[Fan], n: &str) -> u32 {
     v.iter().filter(|f| f.name == n).map(|f| f.value).sum()
 }
 
-// 和绝张（4 番）— 出处：src/fans.rs:997 与 :1005 的 extra.push(f("和绝张", 4))
+// 和绝张（4 番）— 出处：src/fans.rs 的 f("和绝张", 4)（两处）
 const FAN_HE_JUE_ZHANG: u32 = 4;
 
 /// **主用例**：`can_last == true` 的行（DEFECTC 的 `6条`）——
