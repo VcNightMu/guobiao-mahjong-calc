@@ -39,9 +39,15 @@ fn b2_parse_reports_bad_char_only() {
         ParseError::BadChar('n')
     );
     // 全角字符
-    assert_eq!(try_parse_hand("１２３ｍ").unwrap_err(), ParseError::BadChar('１'));
+    assert_eq!(
+        try_parse_hand("１２３ｍ").unwrap_err(),
+        ParseError::BadChar('１')
+    );
     // 任意未识别符号
-    assert_eq!(try_parse_hand("12*m").unwrap_err(), ParseError::BadChar('*'));
+    assert_eq!(
+        try_parse_hand("12*m").unwrap_err(),
+        ParseError::BadChar('*')
+    );
 
     // 文案只含字符本身，不应含位置/索引类措辞
     let msg = try_parse_hand("123n").unwrap_err().to_string();
@@ -58,7 +64,10 @@ fn b2_parse_reports_bad_char_only() {
 fn b2_parse_rejects_zero_and_dangling_digits() {
     assert_eq!(try_parse_hand("0m").unwrap_err(), ParseError::ZeroDigit);
     assert_eq!(try_parse_hand("000").unwrap_err(), ParseError::ZeroDigit);
-    assert_eq!(try_parse_hand("123").unwrap_err(), ParseError::DanglingDigits);
+    assert_eq!(
+        try_parse_hand("123").unwrap_err(),
+        ParseError::DanglingDigits
+    );
     assert_eq!(
         try_parse_hand("123456789m 55p 78p 9").unwrap_err(),
         ParseError::DanglingDigits
@@ -111,13 +120,11 @@ fn b2_validate_accepts_legal_including_four_kongs() {
 
     // 4 副副露（吃/碰混合）+ 1 张暗牌
     let c3 = parse_hand("5p");
-    let melds3 = vec![
-        Meld::chi(0),
-        Meld::pon(9),
-        Meld::pon(18),
-        Meld::chi(19),
-    ];
-    assert!(validate_counts(&c3, &melds3).is_ok(), "4 副副露 + 1 张暗牌应合法");
+    let melds3 = vec![Meld::chi(0), Meld::pon(9), Meld::pon(18), Meld::chi(19)];
+    assert!(
+        validate_counts(&c3, &melds3).is_ok(),
+        "4 副副露 + 1 张暗牌应合法"
+    );
 
     // 无副露 13 张
     assert!(validate_counts(&parse_hand("123456789m 55p 78p"), &[]).is_ok());
@@ -153,10 +160,7 @@ fn b2_validate_rejects_over4_globally_but_allows_exactly4() {
     // 边界：恰好 4 张 9万（13 张）⇒ 接受
     let c4 = parse_hand("9999m123p456p789p");
     assert_eq!(total(&c4), 13);
-    assert!(
-        validate_counts(&c4, &[]).is_ok(),
-        "恰好 4 张应接受（边界）"
-    );
+    assert!(validate_counts(&c4, &[]).is_ok(), "恰好 4 张应接受（边界）");
 }
 
 /// 张数必须等于 `13 - 3×副露面子数`（面子可为杠，C6）。
