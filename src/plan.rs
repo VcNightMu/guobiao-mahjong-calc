@@ -85,7 +85,7 @@ impl Filter {
             Filter::Small => is_suited(t) && num(t) <= 3,
             Filter::Above5 => is_suited(t) && num(t) >= 6,
             Filter::Below5 => is_suited(t) && num(t) <= 4,
-            Filter::Even => is_suited(t) && num(t) % 2 == 0,
+            Filter::Even => is_suited(t) && num(t).is_multiple_of(2),
             Filter::Tuibu => match suit(t) {
                 2 => matches!(num(t), 1 | 2 | 3 | 4 | 5 | 8 | 9),
                 1 => matches!(num(t), 2 | 4 | 5 | 6 | 8 | 9),
@@ -190,7 +190,7 @@ fn rec(
                 }
             }
             let c = cov + gain(hand, cur, p, 2);
-            if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+            if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
                 *best = Some((c, t));
             }
         }
@@ -364,7 +364,7 @@ pub fn seven_pairs_straight(hand: &Counts, melds: &[Meld]) -> Option<(u32, Count
                 t[s * 9 + (n - 1) + k] = 2;
             }
             let c = cover(hand, &t);
-            if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+            if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
                 best = Some((c, t));
             }
         }
@@ -419,7 +419,7 @@ pub fn bu_kao(hand: &Counts, melds: &[Meld], seven_stars: bool) -> Option<(u32, 
             }
         }
         let c = cover(hand, &t);
-        if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+        if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
             best = Some((c, t));
         }
     }
@@ -484,11 +484,11 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     // R-13：覆盖对只从 fans::coverage_pairs() 取（完整来源 = drop 表 ∪ 分支互斥表），全程只用这一份
     let coverage: Vec<(&str, &str)> = coverage_pairs().collect();
 
-    for s in 0..3 {
+    for (s, sname) in SUIT_NAME.iter().enumerate() {
         push_dir(
             &mut out,
             hand,
-            format!("清一色({}门)", SUIT_NAME[s]),
+            format!("清一色({}门)", sname),
             24,
             best_standard(hand, melds, Filter::Suit(s), true, false),
             "",
@@ -497,7 +497,7 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         push_dir(
             &mut out,
             hand,
-            format!("混一色({}门)", SUIT_NAME[s]),
+            format!("混一色({}门)", sname),
             6,
             best_standard(hand, melds, Filter::MixedHonor(s), true, false),
             "",
@@ -528,12 +528,12 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
             [2, 0, 1],
             [2, 1, 0],
         ];
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             push_forced(
                 &mut out,
                 hand,
                 melds,
-                format!("清龙({}门)", SUIT_NAME[s]),
+                format!("清龙({}门)", sname),
                 16,
                 &[run(s, 1), run(s, 4), run(s, 7)],
                 None,
@@ -552,14 +552,14 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 max_dist,
             );
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             for d in 1..=2usize {
                 for n in 1..=(7 - 2 * d) {
                     push_forced(
                         &mut out,
                         hand,
                         melds,
-                        format!("一色三步高({}门)", SUIT_NAME[s]),
+                        format!("一色三步高({}门)", sname),
                         16,
                         &[run(s, n), run(s, n + d), run(s, n + 2 * d)],
                         None,
@@ -584,13 +584,13 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 }
             }
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             for n in 1..=7 {
                 push_forced(
                     &mut out,
                     hand,
                     melds,
-                    format!("一色三同顺({}门)", SUIT_NAME[s]),
+                    format!("一色三同顺({}门)", sname),
                     24,
                     &[run(s, n), run(s, n), run(s, n)],
                     None,
@@ -610,13 +610,13 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 max_dist,
             );
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             for n in 1..=7 {
                 push_forced(
                     &mut out,
                     hand,
                     melds,
-                    format!("一色三节高({}门)", SUIT_NAME[s]),
+                    format!("一色三节高({}门)", sname),
                     24,
                     &[trip(s, n), trip(s, n + 1), trip(s, n + 2)],
                     None,
@@ -638,13 +638,13 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 );
             }
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             for n in 1..=7 {
                 push_forced(
                     &mut out,
                     hand,
                     melds,
-                    format!("一色四同顺({}门)", SUIT_NAME[s]),
+                    format!("一色四同顺({}门)", sname),
                     48,
                     &[run(s, n), run(s, n), run(s, n), run(s, n)],
                     None,
@@ -652,13 +652,13 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 );
             }
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             for n in 1..=6 {
                 push_forced(
                     &mut out,
                     hand,
                     melds,
-                    format!("一色四节高({}门)", SUIT_NAME[s]),
+                    format!("一色四节高({}门)", sname),
                     48,
                     &[trip(s, n), trip(s, n + 1), trip(s, n + 2), trip(s, n + 3)],
                     None,
@@ -666,14 +666,14 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 );
             }
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             for d in 1..=2usize {
                 for n in 1..=(7 - 3 * d) {
                     push_forced(
                         &mut out,
                         hand,
                         melds,
-                        format!("一色四步高({}门)", SUIT_NAME[s]),
+                        format!("一色四步高({}门)", sname),
                         32,
                         &[
                             run(s, n),
@@ -688,26 +688,26 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
             }
         }
         // 双龙会：两个老少副 + 本门 5 作将
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             push_forced(
                 &mut out,
                 hand,
                 melds,
-                format!("一色双龙会({}门)", SUIT_NAME[s]),
+                format!("一色双龙会({}门)", sname),
                 64,
                 &[run(s, 1), run(s, 1), run(s, 7), run(s, 7)],
                 Some(s * 9 + 4),
                 max_dist,
             );
         }
-        for s in 0..3 {
+        for (s, sname) in SUIT_NAME.iter().enumerate() {
             let a = (s + 1) % 3;
             let b = (s + 2) % 3;
             push_forced(
                 &mut out,
                 hand,
                 melds,
-                format!("三色双龙会({}门将)", SUIT_NAME[s]),
+                format!("三色双龙会({}门将)", sname),
                 16,
                 &[run(a, 1), run(a, 7), run(b, 1), run(b, 7)],
                 Some(s * 9 + 4),
@@ -769,7 +769,7 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                         }
                         t[p] = t[p].saturating_add(2);
                         let c = cover(hand, &t);
-                        if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+                        if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
                             best = Some((c, t));
                         }
                     }
@@ -1049,7 +1049,7 @@ fn go_qdw(
             let mut t = *cur;
             t[p] = t[p].saturating_add(2);
             let c = cov + gain(hand, cur, p, 2);
-            if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
+            if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
                 *best = Some((c, t));
             }
         }
@@ -1069,6 +1069,10 @@ fn go_qdw(
     }
 }
 
+// push_forced 的 8 个参数全为原始类型/不可变借用（&mut Vec / &Counts / &[Meld] / String / u32 / &[[usize;3]] / Option<usize> / u32），
+// 且约有 22 处调用点（L532/544/558/574/589/602/615/629/643/657/672/692/706/795/804/812/825/829/831/846/857/872）；
+// 抽参数结构体会牵动全部调用点，而本轮以「行为分毫不变」为最高优先，故显式 allow（T5 处置依据见回报）。
+#[allow(clippy::too_many_arguments)]
 fn push_forced(
     out: &mut Vec<Direction>,
     hand: &Counts,
