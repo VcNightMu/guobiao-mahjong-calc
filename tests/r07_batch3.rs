@@ -58,6 +58,31 @@ fn run(c: &Case) {
     }
 }
 
+// ============================ 番值常量（must 表：番名→期望番值和；出处为 src/fans.rs 的 f("番名", N) call site）============================
+// 同一数字不同番种分开命名；动态生成的番另有标注。
+const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs:181 的 f("单钓将", 1)
+const FAN_LIAN_LIU: u32 = 1;          // 连六（1 番）    — 出处：动态生成（src/fans.rs:720 的 for name in [...]）
+const FAN_LIAN_QI_DUI: u32 = 88;      // 连七对（88 番） — 出处：src/fans.rs:156 的 f("连七对", 88)
+const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs:987 的 f("门前清", 2)
+const FAN_PING_HE: u32 = 2;           // 平和（2 番）    — 出处：src/fans.rs:174 的 f("平和", 2)
+const FAN_QI_DUI: u32 = 24;           // 七对（24 番）   — 出处：src/fans.rs:157 的 f("七对", 24)
+const FAN_QING_YI_SE: u32 = 24;       // 清一色（24 番） — 出处：src/fans.rs:228 的 f("清一色", 24)
+const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs:396 的 f("三暗刻", 16)
+const FAN_SAN_SE_SAN_BU_GAO: u32 = 6; // 三色三步高（6 番）— 出处：src/fans.rs:636 的 f("三色三步高", 6)
+const FAN_SAN_SE_SAN_JIE_GAO: u32 = 8;// 三色三节高（8 番）— 出处：src/fans.rs:609 的 f("三色三节高", 8)
+const FAN_SAN_SE_SAN_TONG_SHUN: u32 = 8; // 三色三同顺（8 番）— 出处：src/fans.rs:589 的 f("三色三同顺", 8)
+const FAN_SI_AN_KE: u32 = 64;         // 四暗刻（64 番） — 出处：src/fans.rs:394 的 f("四暗刻", 64)
+const FAN_SI_GUI_YI: u32 = 2;         // 四归一（2 番）  — 出处：src/fans.rs:818 的 f("四归一", 2)
+const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs:203 的 f("无字", 1)
+const FAN_XI_XIANG_FENG: u32 = 1;     // 喜相逢（1 番）  — 出处：动态生成（src/fans.rs:720 的 for name in [...]）
+const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs:98 的 f("幺九刻", 1)
+const FAN_YI_BAN_GAO: u32 = 1;        // 一般高（1 番）  — 出处：动态生成（src/fans.rs:720 的 for name in [...]）
+const FAN_YI_SE_SAN_BU_GAO: u32 = 16;// 一色三步高（16 番）— 出处：src/fans.rs:569 的 f("一色三步高", 16)
+const FAN_YI_SE_SAN_JIE_GAO: u32 = 24;// 一色三节高（24 番）— 出处：src/fans.rs:486 的 f("一色三节高", 24)
+const FAN_YI_SE_SI_BU_GAO: u32 = 32;  // 一色四步高（32 番）— 出处：src/fans.rs:567 的 f("一色四步高", 32)
+const FAN_YI_SE_SI_JIE_GAO: u32 = 48; // 一色四节高（48 番）— 出处：src/fans.rs:484 的 f("一色四节高", 48)
+const FAN_YI_SE_SI_TONG_SHUN: u32 = 48;// 一色四同顺（48 番）— 出处：src/fans.rs:448 的 f("一色四同顺", 48)
+
 /// `一色四同顺`（48）：4 副相同顺子；**应吞 `一色三同顺`/`一般高`/`四归一`/`七对`**（互斥表 `:919`）。
 #[test]
 fn r07b3_yi_se_si_tong_shun() {
@@ -65,7 +90,7 @@ fn r07b3_yi_se_si_tong_shun() {
         label: "一色四同顺",
         hand: "123m123m123m123m 5m",
         win: "5万",
-        must: &[("一色四同顺", 48), ("清一色", 24), ("平和", 2), ("门前清", 2)],
+        must: &[("一色四同顺", FAN_YI_SE_SI_TONG_SHUN), ("清一色", FAN_QING_YI_SE), ("平和", FAN_PING_HE), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["一色三同顺", "一般高", "四归一", "七对", "一色三节高"],
         repeat: &[],
     });
@@ -78,7 +103,7 @@ fn r07b3_yi_se_si_jie_gao() {
         label: "一色四节高",
         hand: "111m222m333m444m 5m",
         win: "5万",
-        must: &[("一色四节高", 48), ("四暗刻", 64), ("清一色", 24), ("幺九刻", 1)],
+        must: &[("一色四节高", FAN_YI_SE_SI_JIE_GAO), ("四暗刻", FAN_SI_AN_KE), ("清一色", FAN_QING_YI_SE), ("幺九刻", FAN_YAO_JIU_KE)],
         must_not: &["一色三节高", "碰碰和", "三暗刻", "双暗刻", "门前清"],
         repeat: &[],
     });
@@ -91,7 +116,7 @@ fn r07b3_yi_se_si_bu_gao() {
         label: "一色四步高",
         hand: "123m234m345m456m 5m",
         win: "5万",
-        must: &[("一色四步高", 32), ("清一色", 24), ("平和", 2), ("四归一", 2), ("门前清", 2)],
+        must: &[("一色四步高", FAN_YI_SE_SI_BU_GAO), ("清一色", FAN_QING_YI_SE), ("平和", FAN_PING_HE), ("四归一", FAN_SI_GUI_YI), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["连六", "老少副", "一色三步高"],
         repeat: &[],
     });
@@ -104,7 +129,7 @@ fn r07b3_yi_se_san_jie_gao() {
         label: "一色三节高",
         hand: "111m222m333m 456s 9p",
         win: "9筒",
-        must: &[("一色三节高", 24), ("三暗刻", 16), ("幺九刻", 1), ("单钓将", 1), ("门前清", 2)],
+        must: &[("一色三节高", FAN_YI_SE_SAN_JIE_GAO), ("三暗刻", FAN_SAN_AN_KE), ("幺九刻", FAN_YAO_JIU_KE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["一色四节高", "一色三同顺"],
         repeat: &[],
     });
@@ -117,7 +142,7 @@ fn r07b3_yi_se_san_bu_gao() {
         label: "一色三步高",
         hand: "123m234m345m 456s 9p",
         win: "9筒",
-        must: &[("一色三步高", 16), ("平和", 2), ("单钓将", 1), ("门前清", 2)],
+        must: &[("一色三步高", FAN_YI_SE_SAN_BU_GAO), ("平和", FAN_PING_HE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["一色四步高", "一色三节高"],
         repeat: &[],
     });
@@ -130,7 +155,7 @@ fn r07b3_san_se_san_tong_shun() {
         label: "三色三同顺",
         hand: "123m 123s 123p 456m 9s",
         win: "9条",
-        must: &[("三色三同顺", 8), ("连六", 1), ("平和", 2), ("单钓将", 1), ("门前清", 2)],
+        must: &[("三色三同顺", FAN_SAN_SE_SAN_TONG_SHUN), ("连六", FAN_LIAN_LIU), ("平和", FAN_PING_HE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["喜相逢", "一般高", "三色三节高"],
         repeat: &[],
     });
@@ -143,7 +168,7 @@ fn r07b3_san_se_san_jie_gao() {
         label: "三色三节高",
         hand: "111m 222s 333p 456m 9s",
         win: "9条",
-        must: &[("三色三节高", 8), ("三暗刻", 16), ("幺九刻", 1), ("单钓将", 1), ("门前清", 2)],
+        must: &[("三色三节高", FAN_SAN_SE_SAN_JIE_GAO), ("三暗刻", FAN_SAN_AN_KE), ("幺九刻", FAN_YAO_JIU_KE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["三色三同顺", "三同刻", "一色三节高"],
         repeat: &[],
     });
@@ -156,7 +181,7 @@ fn r07b3_san_se_san_bu_gao() {
         label: "三色三步高",
         hand: "123m 234s 345p 456m 9s",
         win: "9条",
-        must: &[("三色三步高", 6), ("连六", 1), ("平和", 2), ("单钓将", 1), ("门前清", 2)],
+        must: &[("三色三步高", FAN_SAN_SE_SAN_BU_GAO), ("连六", FAN_LIAN_LIU), ("平和", FAN_PING_HE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["三色三节高", "三色三同顺"],
         repeat: &[],
     });
@@ -169,7 +194,7 @@ fn r07b3_lian_qi_dui() {
         label: "连七对",
         hand: "1122334455667m",
         win: "7万",
-        must: &[("连七对", 88)],
+        must: &[("连七对", FAN_LIAN_QI_DUI)],
         must_not: &["清一色", "七对", "单钓将", "门前清"],
         repeat: &[],
     });
@@ -184,7 +209,7 @@ fn r07b3_control_ban_gao() {
         label: "控制-一般高",
         hand: "123m123m 456s 789p 9p",
         win: "9筒",
-        must: &[("一般高", 1), ("平和", 2), ("门前清", 2)],
+        must: &[("一般高", FAN_YI_BAN_GAO), ("平和", FAN_PING_HE), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["一色三同顺", "一色四同顺"],
         repeat: &[],
     });
@@ -197,7 +222,7 @@ fn r07b3_control_lian_liu() {
         label: "控制-连六",
         hand: "123m 456m 789p 99s 55p",
         win: "5筒",
-        must: &[("连六", 1), ("无字", 1)],
+        must: &[("连六", FAN_LIAN_LIU), ("无字", FAN_WU_ZI)],
         must_not: &["一色四步高", "一色三步高", "老少副"],
         repeat: &[],
     });
@@ -210,7 +235,7 @@ fn r07b3_control_xi_xiang_feng() {
         label: "控制-喜相逢",
         hand: "123m 123s 456m 789p 9s",
         win: "9条",
-        must: &[("喜相逢", 1), ("平和", 2), ("单钓将", 1), ("门前清", 2)],
+        must: &[("喜相逢", FAN_XI_XIANG_FENG), ("平和", FAN_PING_HE), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)],
         must_not: &["三色三同顺"],
         repeat: &[],
     });
@@ -223,7 +248,7 @@ fn r07b3_control_qi_dui() {
         label: "控制-七对",
         hand: "112233m 445566p 9s",
         win: "9条",
-        must: &[("七对", 24), ("无字", 1)],
+        must: &[("七对", FAN_QI_DUI), ("无字", FAN_WU_ZI)],
         must_not: &["连七对", "清一色"],
         repeat: &[],
     });
