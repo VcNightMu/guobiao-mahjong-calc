@@ -47,13 +47,25 @@ fn juezhang_fans_last_contains_he_jue_zhang() {
     let w = by_name(&an, "6条");
 
     assert!(w.can_last, "6条 应可绝张: {:?}", w);
-    assert!(has_of(&w.fans_last, "和绝张"), "fans_last 应含和绝张: {:?}", names_of(&w.fans_last));
-    assert_eq!(val_of(&w.fans_last, "和绝张"), FAN_HE_JUE_ZHANG, "和绝张 = 4 番");
+    assert!(
+        has_of(&w.fans_last, "和绝张"),
+        "fans_last 应含和绝张: {:?}",
+        names_of(&w.fans_last)
+    );
+    assert_eq!(
+        val_of(&w.fans_last, "和绝张"),
+        FAN_HE_JUE_ZHANG,
+        "和绝张 = 4 番"
+    );
 
     // 组合关系：fans_last == fans + 一个 和绝张4
     let mut expect = names_of(&w.fans);
     expect.push("和绝张".to_string());
-    assert_eq!(names_of(&w.fans_last), expect, "fans_last 应为 点和番表 + 和绝张");
+    assert_eq!(
+        names_of(&w.fans_last),
+        expect,
+        "fans_last 应为 点和番表 + 和绝张"
+    );
 
     // 数值护栏（辅助）
     assert_eq!(w.last, w.normal + 4, "L == N + 4");
@@ -66,7 +78,11 @@ fn juezhang_fans_tsumo_last_contains_he_jue_zhang() {
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "6条");
 
-    assert!(has_of(&w.fans_tsumo_last, "和绝张"), "{:?}", names_of(&w.fans_tsumo_last));
+    assert!(
+        has_of(&w.fans_tsumo_last, "和绝张"),
+        "{:?}",
+        names_of(&w.fans_tsumo_last)
+    );
     assert_eq!(val_of(&w.fans_tsumo_last, "和绝张"), FAN_HE_JUE_ZHANG);
     let mut expect = names_of(&w.fans_tsumo);
     expect.push("和绝张".to_string());
@@ -87,8 +103,16 @@ fn juezhang_can_last_false_still_filled_semantics() {
     assert!(w.last > 0 && w.tsumo_last > 0, "L/TL 仍照算: {:?}", w);
     assert_eq!(w.last, w.normal + 4);
     // 两表照样填充（**不清空**）——这正是开发登记的语义
-    assert!(has_of(&w.fans_last, "和绝张"), "can_last=false 时 fans_last 仍填充: {:?}", names_of(&w.fans_last));
-    assert!(has_of(&w.fans_tsumo_last, "和绝张"), "{:?}", names_of(&w.fans_tsumo_last));
+    assert!(
+        has_of(&w.fans_last, "和绝张"),
+        "can_last=false 时 fans_last 仍填充: {:?}",
+        names_of(&w.fans_last)
+    );
+    assert!(
+        has_of(&w.fans_tsumo_last, "和绝张"),
+        "{:?}",
+        names_of(&w.fans_tsumo_last)
+    );
     // 适用性由消费方门控：该行 verdict 为 NoWin（绝张世界不参与判定）
     assert_eq!(w.verdict(), gbmj::calc::WinVerdict::NoWin);
 }
@@ -104,19 +128,49 @@ fn juezhang_no_wufanhe_on_last_path() {
     let w = by_name(&an, "9条");
 
     assert!(w.can_last, "{:?}", w);
-    assert!(has_of(&w.fans, "无番和") && val_of(&w.fans, "无番和") == 8, "点和为无番和8: {:?}", names_of(&w.fans));
+    assert!(
+        has_of(&w.fans, "无番和") && val_of(&w.fans, "无番和") == 8,
+        "点和为无番和8: {:?}",
+        names_of(&w.fans)
+    );
     // 绝张路径：仅 和绝张4，**无无番和**
-    assert_eq!(names_of(&w.fans_last), vec!["和绝张".to_string()], "{:?}", w);
-    assert!(!has_of(&w.fans_last, "无番和"), "无番和仅点和，不得出现在绝张路径: {:?}", names_of(&w.fans_last));
+    assert_eq!(
+        names_of(&w.fans_last),
+        vec!["和绝张".to_string()],
+        "{:?}",
+        w
+    );
+    assert!(
+        !has_of(&w.fans_last, "无番和"),
+        "无番和仅点和，不得出现在绝张路径: {:?}",
+        names_of(&w.fans_last)
+    );
     assert_eq!((w.normal, w.last), (8, 4), "N=8 / L=4（L ≠ N+4 的例外）");
-    assert_eq!(w.last, FAN_HE_JUE_ZHANG, "L 必须为 4（绝张路径：和绝张4 起）");
+    assert_eq!(
+        w.last, FAN_HE_JUE_ZHANG,
+        "L 必须为 4（绝张路径：和绝张4 起）"
+    );
     // 自摸绝张：自摸1 + 和绝张4（亦无无番和）
-    assert_eq!(names_of(&w.fans_tsumo_last), vec!["自摸".to_string(), "和绝张".to_string()], "{:?}", w);
+    assert_eq!(
+        names_of(&w.fans_tsumo_last),
+        vec!["自摸".to_string(), "和绝张".to_string()],
+        "{:?}",
+        w
+    );
     // **数值-番表同源**（直接校验，而非结构推断）：L/TL 应等于各自番表的番值和
     let sum = |v: &[Fan]| v.iter().map(|f| f.value).sum::<u32>();
-    assert_eq!(w.last, sum(&w.fans_last), "L 应等于 fans_last 番值和: {:?}", names_of(&w.fans_last));
+    assert_eq!(
+        w.last,
+        sum(&w.fans_last),
+        "L 应等于 fans_last 番值和: {:?}",
+        names_of(&w.fans_last)
+    );
     assert_eq!(w.normal, sum(&w.fans), "N 应等于 fans 番值和");
-    assert_eq!(w.tsumo_last, sum(&w.fans_tsumo_last), "TL 应等于 fans_tsumo_last 番值和");
+    assert_eq!(
+        w.tsumo_last,
+        sum(&w.fans_tsumo_last),
+        "TL 应等于 fans_tsumo_last 番值和"
+    );
     assert_eq!(w.tsumo, sum(&w.fans_tsumo), "T 应等于 fans_tsumo 番值和");
 }
 
@@ -130,11 +184,20 @@ fn juezhang_non_menqing_can_last_true() {
 
     assert!(w.can_last, "{:?}", w);
     assert!(!an.menqing, "本手非门清");
-    assert_eq!(val_of(&w.fans_last, "和绝张"), FAN_HE_JUE_ZHANG, "{:?}", names_of(&w.fans_last));
+    assert_eq!(
+        val_of(&w.fans_last, "和绝张"),
+        FAN_HE_JUE_ZHANG,
+        "{:?}",
+        names_of(&w.fans_last)
+    );
     assert_eq!(w.last, w.normal + 4, "非门清 base>0：L == N + 4");
     assert_eq!(w.tsumo_last, w.tsumo + 4, "TL == T + 4");
     // 组合关系（与其余用例对齐）：fans_last == fans + 和绝张
     let mut expect = names_of(&w.fans);
     expect.push("和绝张".to_string());
-    assert_eq!(names_of(&w.fans_last), expect, "非门清行同样满足「常规番表 + 和绝张」");
+    assert_eq!(
+        names_of(&w.fans_last),
+        expect,
+        "非门清行同样满足「常规番表 + 和绝张」"
+    );
 }
