@@ -40,7 +40,10 @@ fn tile_list(v: &[usize]) -> String {
     if v.is_empty() {
         return "—".to_string();
     }
-    v.iter().map(|&t| tile_name(t)).collect::<Vec<_>>().join(" ")
+    v.iter()
+        .map(|&t| tile_name(t))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// 牌种限制
@@ -118,9 +121,7 @@ impl Filter {
 }
 
 fn cover(hand: &Counts, target: &Counts) -> u32 {
-    (0..NUM_TILES)
-        .map(|t| hand[t].min(target[t]) as u32)
-        .sum()
+    (0..NUM_TILES).map(|t| hand[t].min(target[t]) as u32).sum()
 }
 
 fn gain(hand: &Counts, cur: &Counts, t: usize, k: u8) -> u32 {
@@ -306,17 +307,7 @@ pub fn best_forced(
         }
     }
     rec(
-        0,
-        left0,
-        &mut cur,
-        cov0,
-        hand,
-        f,
-        five_gates,
-        melds,
-        &opts,
-        pair_tile,
-        &mut best,
+        0, left0, &mut cur, cov0, hand, f, five_gates, melds, &opts, pair_tile, &mut best,
     );
     best
 }
@@ -378,7 +369,11 @@ pub fn thirteen_orphans(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> 
         return None;
     }
     let kinds = YAOJIU.iter().filter(|&&t| hand[t] > 0).count() as u32;
-    let pair_flag = if YAOJIU.iter().any(|&t| hand[t] >= 2) { 1 } else { 0 };
+    let pair_flag = if YAOJIU.iter().any(|&t| hand[t] >= 2) {
+        1
+    } else {
+        0
+    };
     let mut t = counts();
     for &x in YAOJIU.iter() {
         t[x] = 1;
@@ -792,7 +787,16 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         if full.len() >= need3 {
             for c in combos(&full, need3) {
                 let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
-                push_forced(&mut out, hand, melds, "三暗刻".into(), 16, &forced, None, max_dist);
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    "三暗刻".into(),
+                    16,
+                    &forced,
+                    None,
+                    max_dist,
+                );
             }
         }
     }
@@ -801,7 +805,16 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         if full.len() >= need4 {
             for c in combos(&full, need4) {
                 let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
-                push_forced(&mut out, hand, melds, "四暗刻".into(), 64, &forced, None, max_dist);
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    "四暗刻".into(),
+                    64,
+                    &forced,
+                    None,
+                    max_dist,
+                );
             }
         }
     }
@@ -822,11 +835,29 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     }
     for c in combos(&winds, 3) {
         let forced: Vec<[usize; 3]> = c.iter().map(|&n| trip(3, n)).collect();
-        push_forced(&mut out, hand, melds, "三风刻".into(), 12, &forced, None, max_dist);
+        push_forced(
+            &mut out,
+            hand,
+            melds,
+            "三风刻".into(),
+            12,
+            &forced,
+            None,
+            max_dist,
+        );
     }
     for c in combos(&dragons, 2) {
         let forced: Vec<[usize; 3]> = c.iter().map(|&n| trip(3, n)).collect();
-        push_forced(&mut out, hand, melds, "双箭刻".into(), 6, &forced, None, max_dist);
+        push_forced(
+            &mut out,
+            hand,
+            melds,
+            "双箭刻".into(),
+            6,
+            &forced,
+            None,
+            max_dist,
+        );
     }
     push_forced(
         &mut out,
@@ -881,9 +912,25 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         );
     }
 
-    push_dir(&mut out, hand, "全带五".into(), 16, quandaiwu(hand, melds), "", max_dist);
+    push_dir(
+        &mut out,
+        hand,
+        "全带五".into(),
+        16,
+        quandaiwu(hand, melds),
+        "",
+        max_dist,
+    );
 
-    push_dir(&mut out, hand, "七对".into(), 24, seven_pairs(hand, melds), "门清", max_dist);
+    push_dir(
+        &mut out,
+        hand,
+        "七对".into(),
+        24,
+        seven_pairs(hand, melds),
+        "门清",
+        max_dist,
+    );
     push_dir(
         &mut out,
         hand,
@@ -980,7 +1027,10 @@ fn covered_by_coverer(coverer: &str, covered: &str, coverage: &[(&str, &str)]) -
         (Some(a), Some(b)) => a == b,
         _ => true,
     };
-    same_suit && coverage.iter().any(|&(c, cov_name)| c == cb && cov_name == db)
+    same_suit
+        && coverage
+            .iter()
+            .any(|&(c, cov_name)| c == cb && cov_name == db)
 }
 
 /// 从 v 里取 k 个的组合（用于枚举哪几个刻子/哪几个风箭）
