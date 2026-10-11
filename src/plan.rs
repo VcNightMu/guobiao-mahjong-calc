@@ -9,6 +9,7 @@
 //! 口径提醒：距离是「离和牌型」而不是「离花色/骨架」，否则会给出假的近。
 
 use crate::decompose::{knit_tiles, PERMS, YAOJIU};
+use crate::fans::coverage_pairs;
 use crate::model::{Meld, MeldKind};
 use crate::tiles::*;
 
@@ -22,6 +23,8 @@ pub struct Direction {
     pub need: Vec<usize>,
     pub drop: Vec<usize>,
     pub tag: &'static str,
+    /// R-13：本方向被哪些「已完成（distance==0）」的主番覆盖（仅标注用，不影响 distance/need/drop/value）
+    pub covered_by: Vec<String>,
 }
 
 impl Direction {
@@ -471,12 +474,15 @@ fn push_dir(
         need,
         drop,
         tag,
+        covered_by: Vec::new(),
     });
 }
 
 /// 扫描这手牌离各个番种还差几张。只返回距离 ≤ max_dist 的方向。
 pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     let mut out: Vec<Direction> = Vec::new();
+    // R-13：覆盖对只从 fans::coverage_pairs() 取（完整来源 = drop 表 ∪ 分支互斥表），全程只用这一份
+    let coverage: Vec<(&str, &str)> = coverage_pairs().collect();
 
     for s in 0..3 {
         push_dir(
@@ -919,7 +925,62 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     // 同名（同一骨架的不同排列）只留最近的那一条
     let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
     out.retain(|d| seen.insert(d.name.clone()));
+
+    // ── R-13：已完成（distance==0）的主番 → 其覆盖的低番方向加标注（只标注、不隐藏、不改距离） ──
+    let achieved: Vec<(String, u32)> = out
+        .iter()
+        .filter(|d| d.distance == 0)
+        .map(|d| (d.name.clone(), d.value))
+        .collect();
+    for d in out.iter_mut() {
+        let mut cov: Vec<(String, u32)> = achieved
+            .iter()
+            .filter(|(n, _)| covered_by_coverer(n, &d.name, &coverage))
+            .cloned()
+            .collect();
+        // 番数降序、同名升序（口径同 out 的排序精神）
+        cov.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        cov.dedup_by(|a, b| a.0 == b.0);
+        d.covered_by = cov.into_iter().map(|(n, _)| n).collect();
+    }
     out
+}
+
+/// 拆出「(X门)」后缀：`清一色(万门)` → (`清一色`, Some(`(万门)`))；无括号 → (`名`, None)。
+fn split_suffix(s: &str) -> (&str, Option<&str>) {
+    match s.find('(') {
+        Some(i) => (&s[..i], Some(&s[i..])),
+        None => (s, None),
+    }
+}
+
+/// R-13 覆盖关系：coverer 已完成时，covered 方向不值得再考虑（只标注，不隐藏）。
+///
+/// **覆盖对来源 = `src/fans.rs::coverage_pairs()` 自动导出**（完整来源 = 计番 drop 表 `EXCLUSIONS`
+/// ∪ 分支互斥表 `BRANCH_EXCLUSIONS`：清幺九/混幺九、一色四节高/一色三节高、一色四步高/一色三步高），
+/// 此处不再手工枚举任何覆盖对，也不再直接引用 `EXCLUSIONS`（避免第二处手工枚举）。
+///
+/// 匹配规则：
+/// 1. 拆后缀：`清一色(万门)` → base = `清一色`、suffix = `(万门)`；无括号则 suffix = None。
+/// 2. 表内匹配：`coverage` 中存在覆盖对 `(coverer_base, covered_base)`（两端 base 完全相等）。
+/// 3. **同门约束**：coverer 与 covered 双方都有后缀时，后缀必须**完全相同**；
+///    至少一方无后缀时视为**通配**（可匹配任意门）。
+///
+/// **交集过滤（只保留两端都真实出现在本次 `out` 里的对）**：由 `plan()` 现有循环天然满足，
+/// 无需任何静态名单 —— 见 `plan()` 末尾：只有 `distance == 0` 的方向才会进入 `achieved` 充当 coverer，
+/// 而 covered 必须本身就是本次 `out` 中的方向才会被遍历到并接受标注。
+fn covered_by_coverer(coverer: &str, covered: &str, coverage: &[(&str, &str)]) -> bool {
+    if coverer == covered {
+        return false;
+    }
+    let (cb, cs) = split_suffix(coverer);
+    let (db, ds) = split_suffix(covered);
+    // 同门判定：双方都带后缀必须相同；至少一方无后缀 → 通配
+    let same_suit = match (cs, ds) {
+        (Some(a), Some(b)) => a == b,
+        _ => true,
+    };
+    same_suit && coverage.iter().any(|&(c, cov_name)| c == cb && cov_name == db)
 }
 
 /// 从 v 里取 k 个的组合（用于枚举哪几个刻子/哪几个风箭）

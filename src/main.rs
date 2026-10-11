@@ -160,7 +160,7 @@ fn main() {
         }
         for d in dirs.iter() {
             println!(
-                "  {:<12}{:>3}番  差{}张   补: {:<16}换掉: {}{}",
+                "  {:<12}{:>3}番  差{}张   补: {:<16}换掉: {}{}{}",
                 d.name,
                 d.value,
                 d.distance,
@@ -170,6 +170,11 @@ fn main() {
                     String::new()
                 } else {
                     format!("   【{}】", d.tag)
+                },
+                if d.covered_by.is_empty() {
+                    String::new()
+                } else {
+                    format!("   【已被 {} 覆盖】", d.covered_by.join("、"))
                 }
             );
         }
