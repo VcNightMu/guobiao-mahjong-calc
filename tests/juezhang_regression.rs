@@ -109,7 +109,7 @@ fn juezhang_no_wufanhe_on_last_path() {
     assert_eq!(names_of(&w.fans_last), vec!["和绝张".to_string()], "{:?}", w);
     assert!(!has_of(&w.fans_last, "无番和"), "无番和仅点和，不得出现在绝张路径: {:?}", names_of(&w.fans_last));
     assert_eq!((w.normal, w.last), (8, 4), "N=8 / L=4（L ≠ N+4 的例外）");
-    assert_eq!(w.last, 4, "L 必须为 4（绝张路径：和绝张4 起）");
+    assert_eq!(w.last, FAN_HE_JUE_ZHANG, "L 必须为 4（绝张路径：和绝张4 起）");
     // 自摸绝张：自摸1 + 和绝张4（亦无无番和）
     assert_eq!(names_of(&w.fans_tsumo_last), vec!["自摸".to_string(), "和绝张".to_string()], "{:?}", w);
     // **数值-番表同源**（直接校验，而非结构推断）：L/TL 应等于各自番表的番值和
