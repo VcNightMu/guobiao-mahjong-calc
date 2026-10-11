@@ -10,7 +10,7 @@ fn has(w: &WaitResult, n: &str) -> bool {
     w.fans.iter().any(|f| f.name == n)
 }
 
-fn find<'a>(an: &'a gbmj::calc::Analysis, t: usize) -> &'a WaitResult {
+fn find(an: &gbmj::calc::Analysis, t: usize) -> &WaitResult {
     an.waits.iter().find(|w| w.tile == t).expect("无此和牌张")
 }
 
