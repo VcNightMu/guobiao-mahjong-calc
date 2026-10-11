@@ -63,15 +63,29 @@ fn r13_yise_sijiegao_covers_sanjiegao() {
     assert!(c.covered_by.is_empty());
 
     let d1 = get(&ds, "一色三节高(万门)");
-    assert_eq!(coverers(d1), vec!["一色四节高(万门)".to_string()], "{:?}", d1);
+    assert_eq!(
+        coverers(d1),
+        vec!["一色四节高(万门)".to_string()],
+        "{:?}",
+        d1
+    );
     let d2 = get(&ds, "一色三同顺(万门)");
-    assert_eq!(coverers(d2), vec!["一色四节高(万门)".to_string()], "{:?}", d2);
+    assert_eq!(
+        coverers(d2),
+        vec!["一色四节高(万门)".to_string()],
+        "{:?}",
+        d2
+    );
 
     // 四暗刻（差0）亦覆盖 三暗刻 / 碰碰和；碰碰和 为多覆盖者
     assert_eq!(coverers(get(&ds, "三暗刻")), vec!["四暗刻".to_string()]);
     let mut pk = coverers(get(&ds, "碰碰和"));
     pk.retain(|x| x != "一色四节高(万门)");
-    assert_eq!(pk, vec!["四暗刻".to_string()], "碰碰和 应含 四暗刻 与 一色四节高(万门) 两个覆盖者");
+    assert_eq!(
+        pk,
+        vec!["四暗刻".to_string()],
+        "碰碰和 应含 四暗刻 与 一色四节高(万门) 两个覆盖者"
+    );
 }
 
 /// 反向锁定 ★新增 3：**一色四步高 → 一色三步高**（分支互斥表来源）。
@@ -107,7 +121,10 @@ fn r13_pure_suit_does_not_cover_mixed_suit() {
 fn r13_no_annotation_without_achieved_coverer() {
     let h = parse_hand("123m456m789m 11m 东东");
     let ds = plan(&h, &[], 2);
-    assert!(ds.iter().any(|d| d.distance == 0), "本手存在差0方向（清龙/混一色）");
+    assert!(
+        ds.iter().any(|d| d.distance == 0),
+        "本手存在差0方向（清龙/混一色）"
+    );
     // 该手差0的方向均非任一差0方向在覆盖表中的 coverer
     for d in ds.iter() {
         assert!(
@@ -148,12 +165,20 @@ fn r13_zipaiyise_covers_hunyaojiu_but_not_mixed_suit() {
     for m in ["混一色(万门)", "混一色(条门)", "混一色(筒门)"] {
         let d = get(&ds, m);
         assert_eq!(d.distance, 1, "{:?}", d);
-        assert!(d.covered_by.is_empty(), "字一色 不得覆盖 {}（该门数牌为 0）", m);
+        assert!(
+            d.covered_by.is_empty(),
+            "字一色 不得覆盖 {}（该门数牌为 0）",
+            m
+        );
     }
     // 碰碰和 为多覆盖者（番数降序、同名升序）
     assert_eq!(
         get(&ds, "碰碰和").covered_by,
-        vec!["四暗刻".to_string(), "字一色".to_string(), "混幺九".to_string()]
+        vec![
+            "四暗刻".to_string(),
+            "字一色".to_string(),
+            "混幺九".to_string()
+        ]
     );
     assert_eq!(coverers(get(&ds, "三暗刻")), vec!["四暗刻".to_string()]);
 }
@@ -164,7 +189,10 @@ fn r13_jiulian_covers_pure_suit_only() {
     let h = parse_hand("1112345678999m");
     let ds = plan(&h, &[], 2);
     assert_eq!(get(&ds, "九莲宝灯(万门)").distance, 0);
-    assert_eq!(coverers(get(&ds, "清一色(万门)")), vec!["九莲宝灯(万门)".to_string()]);
+    assert_eq!(
+        coverers(get(&ds, "清一色(万门)")),
+        vec!["九莲宝灯(万门)".to_string()]
+    );
     let m = get(&ds, "混一色(万门)");
     assert_eq!(m.distance, 1, "{:?}", m);
     assert!(m.covered_by.is_empty(), "{:?}", m);
@@ -184,8 +212,17 @@ fn r13_coverage_source_is_automated_and_complete() {
     s.sort();
     s.dedup();
     assert_eq!(s.len(), 95, "不应有重复覆盖对");
-    for &(c, d) in &[("清幺九", "混幺九"), ("一色四节高", "一色三节高"), ("一色四步高", "一色三步高")] {
-        assert!(all.iter().any(|&(x, y)| x == c && y == d), "缺分支覆盖对 {} -> {}", c, d);
+    for &(c, d) in &[
+        ("清幺九", "混幺九"),
+        ("一色四节高", "一色三节高"),
+        ("一色四步高", "一色三步高"),
+    ] {
+        assert!(
+            all.iter().any(|&(x, y)| x == c && y == d),
+            "缺分支覆盖对 {} -> {}",
+            c,
+            d
+        );
     }
 }
 
@@ -223,6 +260,11 @@ fn r13_sibling_chains_are_not_coverage_pairs() {
         ("清幺九", "混幺九"),
         ("字一色", "混幺九"),
     ] {
-        assert!(pairs.iter().any(|&(x, y)| x == c && y == d), "缺覆盖对 {} -> {}", c, d);
+        assert!(
+            pairs.iter().any(|&(x, y)| x == c && y == d),
+            "缺覆盖对 {} -> {}",
+            c,
+            d
+        );
     }
 }
