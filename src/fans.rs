@@ -126,11 +126,19 @@ fn has_honor(all: &Counts) -> bool {
 }
 
 fn runs_of(d: &Decomp) -> Vec<usize> {
-    d.sets.iter().filter(|s| s.is_run()).map(|s| s.tile).collect()
+    d.sets
+        .iter()
+        .filter(|s| s.is_run())
+        .map(|s| s.tile)
+        .collect()
 }
 
 fn trips_of(d: &Decomp) -> Vec<usize> {
-    d.sets.iter().filter(|s| s.is_triplet()).map(|s| s.tile).collect()
+    d.sets
+        .iter()
+        .filter(|s| s.is_triplet())
+        .map(|s| s.tile)
+        .collect()
 }
 
 fn is_green(t: usize) -> bool {
@@ -466,7 +474,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     {
         let mut best = 1usize;
         for s in 0..3usize {
-            let mut nums: Vec<usize> = trips.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+            let mut nums: Vec<usize> = trips
+                .iter()
+                .filter(|&&t| suit(t) == s)
+                .map(|&t| num(t))
+                .collect();
             nums.sort();
             nums.dedup();
             // 最长连续（步长1）
@@ -491,8 +503,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     {
         let mut qinglong = false;
         for s in 0..3usize {
-            let st: std::collections::HashSet<usize> =
-                runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+            let st: std::collections::HashSet<usize> = runs
+                .iter()
+                .filter(|&&t| suit(t) == s)
+                .map(|&t| num(t))
+                .collect();
             if st.contains(&1) && st.contains(&4) && st.contains(&7) {
                 qinglong = true;
             }
@@ -501,8 +516,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             v.push(f("清龙", 16));
             // 清龙用掉的三副顺子 → 已组合
             for s in 0..3usize {
-                let st: std::collections::HashSet<usize> =
-                    runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+                let st: std::collections::HashSet<usize> = runs
+                    .iter()
+                    .filter(|&&t| suit(t) == s)
+                    .map(|&t| num(t))
+                    .collect();
                 if st.contains(&1) && st.contains(&4) && st.contains(&7) {
                     for (idx, &t) in runs.iter().enumerate() {
                         if suit(t) == s && matches!(num(t), 1 | 4 | 7) {
@@ -514,11 +532,23 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
         // 花龙：三种花色分别有以 1/4/7 开头的顺子
         let mut hl_perm: Option<[usize; 3]> = None;
-        'outer: for perm in [[1usize, 4, 7], [1, 7, 4], [4, 1, 7], [4, 7, 1], [7, 1, 4], [7, 4, 1]].iter() {
+        'outer: for perm in [
+            [1usize, 4, 7],
+            [1, 7, 4],
+            [4, 1, 7],
+            [4, 7, 1],
+            [7, 1, 4],
+            [7, 4, 1],
+        ]
+        .iter()
+        {
             let mut ok = true;
             for (s, &p) in perm.iter().enumerate() {
-                let st: std::collections::HashSet<usize> =
-                    runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+                let st: std::collections::HashSet<usize> = runs
+                    .iter()
+                    .filter(|&&t| suit(t) == s)
+                    .map(|&t| num(t))
+                    .collect();
                 if !st.contains(&p) {
                     ok = false;
                     break;
@@ -533,10 +563,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             v.push(f("花龙", 8));
             // 花龙用掉的三副顺子 → 已组合（其余顺子只能与它们套算一次）
             for (s, &p) in perm.iter().enumerate() {
-                if let Some(idx) = runs
-                    .iter()
-                    .position(|&t| suit(t) == s && num(t) == p)
-                {
+                if let Some(idx) = runs.iter().position(|&t| suit(t) == s && num(t) == p) {
                     used_runs[idx] = true;
                 }
             }
@@ -547,8 +574,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     {
         let mut best = 1usize;
         for s in 0..3usize {
-            let mut nums: Vec<usize> =
-                runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+            let mut nums: Vec<usize> = runs
+                .iter()
+                .filter(|&&t| suit(t) == s)
+                .map(|&t| num(t))
+                .collect();
             nums.sort();
             nums.dedup();
             for step in [1usize, 2] {
@@ -591,7 +621,13 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
 
         // 三色三节高：三种花色刻子，数字依次 +1
         let tnum: Vec<Vec<usize>> = (0..3usize)
-            .map(|s| trips.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect())
+            .map(|s| {
+                trips
+                    .iter()
+                    .filter(|&&t| suit(t) == s)
+                    .map(|&t| num(t))
+                    .collect()
+            })
             .collect();
         let mut found7 = false;
         for a in tnum[0].iter() {
@@ -613,8 +649,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         let mut found8 = false;
         let nums_by_suit: Vec<Vec<usize>> = (0..3usize)
             .map(|s| {
-                let mut vv: Vec<usize> =
-                    runs.iter().filter(|&&t| suit(t) == s).map(|&t| num(t)).collect();
+                let mut vv: Vec<usize> = runs
+                    .iter()
+                    .filter(|&&t| suit(t) == s)
+                    .map(|&t| num(t))
+                    .collect();
                 vv.sort();
                 vv.dedup();
                 vv
@@ -671,7 +710,8 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         }
         let n = runs.len();
         let mut covered = used_runs.clone();
-        let mut counts: std::collections::HashMap<&'static str, u32> = std::collections::HashMap::new();
+        let mut counts: std::collections::HashMap<&'static str, u32> =
+            std::collections::HashMap::new();
         loop {
             let mut pick: Option<(usize, &'static str)> = None;
             for i in 0..n {
@@ -752,9 +792,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
 
     // 全大 / 全中 / 全小
     let only_num = |lo: usize, hi: usize| {
-        (0..34usize).all(|t| {
-            all[t] == 0 || (is_suited(t) && num(t) >= lo && num(t) <= hi)
-        })
+        (0..34usize).all(|t| all[t] == 0 || (is_suited(t) && num(t) >= lo && num(t) <= hi))
     };
     if only_num(7, 9) {
         v.push(f("全大", 24));
@@ -776,7 +814,9 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
 
     // 全双刻
     let all_even_trip = all_trips
-        && d.sets.iter().all(|s| is_suited(s.tile) && num(s.tile).is_multiple_of(2))
+        && d.sets
+            .iter()
+            .all(|s| is_suited(s.tile) && num(s.tile).is_multiple_of(2))
         && is_suited(pair)
         && num(pair).is_multiple_of(2);
     if all_even_trip {
@@ -828,32 +868,31 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     }
 
     // ---------- 一色双龙会 / 三色双龙会 ----------
-    if d.sets.len() == 4 && d.sets.iter().all(|s| s.is_run())
-        && is_suited(pair) && num(pair) == 5 {
-            let ps = suit(pair);
-            // 一色双龙会：同一花色 123,123,789,789 + 5 作将
-            let same = runs.iter().all(|&t| suit(t) == ps);
-            let c1 = runs.iter().filter(|&&t| num(t) == 1).count();
-            let c7 = runs.iter().filter(|&&t| num(t) == 7).count();
-            if same && c1 == 2 && c7 == 2 {
-                v.push(f("一色双龙会", 64));
+    if d.sets.len() == 4 && d.sets.iter().all(|s| s.is_run()) && is_suited(pair) && num(pair) == 5 {
+        let ps = suit(pair);
+        // 一色双龙会：同一花色 123,123,789,789 + 5 作将
+        let same = runs.iter().all(|&t| suit(t) == ps);
+        let c1 = runs.iter().filter(|&&t| num(t) == 1).count();
+        let c7 = runs.iter().filter(|&&t| num(t) == 7).count();
+        if same && c1 == 2 && c7 == 2 {
+            v.push(f("一色双龙会", 64));
+        }
+        // 三色双龙会：两花色各一老少副，第三花色 5 作将
+        let mut full = 0;
+        for s in 0..3usize {
+            if s == ps {
+                continue;
             }
-            // 三色双龙会：两花色各一老少副，第三花色 5 作将
-            let mut full = 0;
-            for s in 0..3usize {
-                if s == ps {
-                    continue;
-                }
-                let has1 = runs.iter().any(|&t| suit(t) == s && num(t) == 1);
-                let has7 = runs.iter().any(|&t| suit(t) == s && num(t) == 7);
-                if has1 && has7 {
-                    full += 1;
-                }
-            }
-            if full == 2 && runs.iter().all(|&t| suit(t) != ps) {
-                v.push(f("三色双龙会", 16));
+            let has1 = runs.iter().any(|&t| suit(t) == s && num(t) == 1);
+            let has7 = runs.iter().any(|&t| suit(t) == s && num(t) == 7);
+            if has1 && has7 {
+                full += 1;
             }
         }
+        if full == 2 && runs.iter().all(|&t| suit(t) != ps) {
+            v.push(f("三色双龙会", 16));
+        }
+    }
 
     // ---------- 和牌张结构：边张 / 坎张 / 单钓将 ----------
     if ctx.single_wait {
@@ -862,7 +901,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         } else {
             // 找出含和牌张的顺子
             for s in d.sets.iter() {
-                if s.is_run() && (s.tile == ctx.win_tile || s.tile + 1 == ctx.win_tile || s.tile + 2 == ctx.win_tile) {
+                if s.is_run()
+                    && (s.tile == ctx.win_tile
+                        || s.tile + 1 == ctx.win_tile
+                        || s.tile + 2 == ctx.win_tile)
+                {
                     let n = num(s.tile);
                     // 历史并列写法：两块都推入同一番同一值 f("边张", 1)（n==1 的 1-2 听 3、n==7 的 7-8-9 听 7），
                     // 两条件互斥（n 不可能同时为 1 与 7）；合并虽等价但会改条件结构，计番核心取最小改动。
@@ -905,23 +948,47 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
 /// 注：原合并条件 `if has(v, "大于五") || has(v, "小于五") { drop.push("无字") }`
 /// 已按要求拆成两条独立条目（行为等价：两者都 drop 同一批名字）。
 pub const EXCLUSIONS: &[(&str, &[&str])] = &[
-    ("大四喜", &["三风刻", "碰碰和", "圈风刻", "门风刻", "幺九刻"]),
+    (
+        "大四喜",
+        &["三风刻", "碰碰和", "圈风刻", "门风刻", "幺九刻"],
+    ),
     ("大三元", &["双箭刻", "箭刻"]),
     ("绿一色", &["混一色"]),
     ("九莲宝灯", &["清一色", "幺九刻"]),
-    ("四杠", &["碰碰和", "单钓将", "三杠", "双暗杠", "双明杠", "一明一暗杠", "暗杠", "明杠"]),
+    (
+        "四杠",
+        &[
+            "碰碰和",
+            "单钓将",
+            "三杠",
+            "双暗杠",
+            "双明杠",
+            "一明一暗杠",
+            "暗杠",
+            "明杠",
+        ],
+    ),
     ("三杠", &["双暗杠", "双明杠", "一明一暗杠", "暗杠", "明杠"]),
     ("连七对", &["清一色", "七对", "单钓将"]),
     ("十三幺", &["五门齐", "单钓将"]),
-    ("清幺九", &["碰碰和", "全带幺", "幺九刻", "无字", "双同刻", "三同刻"]),
+    (
+        "清幺九",
+        &["碰碰和", "全带幺", "幺九刻", "无字", "双同刻", "三同刻"],
+    ),
     ("混幺九", &["碰碰和", "全带幺", "幺九刻"]),
     ("字一色", &["碰碰和", "全带幺", "幺九刻", "混幺九"]),
     ("小四喜", &["三风刻", "幺九刻"]),
     ("小三元", &["双箭刻", "箭刻"]),
     ("四暗刻", &["碰碰和", "三暗刻", "双暗刻"]),
     ("三暗刻", &["双暗刻"]),
-    ("一色双龙会", &["七对", "清一色", "平和", "一般高", "老少副", "无字"]),
-    ("一色四同顺", &["一色三节高", "一色三同顺", "七对", "四归一", "一般高"]),
+    (
+        "一色双龙会",
+        &["七对", "清一色", "平和", "一般高", "老少副", "无字"],
+    ),
+    (
+        "一色四同顺",
+        &["一色三节高", "一色三同顺", "七对", "四归一", "一般高"],
+    ),
     ("一色四节高", &["一色三同顺", "碰碰和"]),
     ("清龙", &["连六", "老少副"]),
     ("一色四步高", &["连六", "老少副"]),
@@ -977,9 +1044,17 @@ pub fn score(ctx: &WinCtx, mode: WinMode) -> (u32, Vec<Fan>) {
     let mut extra: Vec<Fan> = Vec::new();
     let menqing = ctx.menqing;
     // 定死门清的牌型不计「门前清」
-    let no_menqing_fan = ["七对", "连七对", "十三幺", "九莲宝灯", "七星不靠", "全不靠", "四暗刻"]
-        .iter()
-        .any(|n| fans.iter().any(|x| x.name == *n));
+    let no_menqing_fan = [
+        "七对",
+        "连七对",
+        "十三幺",
+        "九莲宝灯",
+        "七星不靠",
+        "全不靠",
+        "四暗刻",
+    ]
+    .iter()
+    .any(|n| fans.iter().any(|x| x.name == *n));
 
     match mode {
         WinMode::Normal => {
@@ -1012,10 +1087,7 @@ pub fn score(ctx: &WinCtx, mode: WinMode) -> (u32, Vec<Fan>) {
     }
 
     // 全求人：四副明副露 + 单钓（荣和）
-    if mode == WinMode::Normal
-        && ctx.melds.len() == 4
-        && ctx.melds.iter().all(|m| m.open)
-    {
+    if mode == WinMode::Normal && ctx.melds.len() == 4 && ctx.melds.iter().all(|m| m.open) {
         extra.push(f("全求人", 6));
         fans.retain(|x| x.name != "单钓将");
     }
