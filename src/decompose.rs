@@ -149,9 +149,9 @@ pub fn is_seven_pairs_straight(c: &Counts) -> bool {
             }
             if ok {
                 let mut others = 0u32;
-                for i in 0..34usize {
+                for (i, &v) in c.iter().enumerate() {
                     if !(i >= base + start && i < base + start + 7) {
-                        others += c[i] as u32;
+                        others += v as u32;
                     }
                 }
                 if others == 0 {
@@ -180,8 +180,8 @@ pub fn is_thirteen_orphans(c: &Counts) -> bool {
     if pairs != 1 {
         return false;
     }
-    for i in 0..34usize {
-        if !YAOJIU.contains(&i) && c[i] > 0 {
+    for (i, &v) in c.iter().enumerate() {
+        if !YAOJIU.contains(&i) && v > 0 {
             return false;
         }
     }
