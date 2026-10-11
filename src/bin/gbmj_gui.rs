@@ -122,7 +122,12 @@ impl App {
 
     fn recompute(&mut self) {
         if self.hand.iter().map(|&x| x as usize).sum::<usize>() == self.expected_hidden() {
-            self.analysis = Some(analyze(&self.hand, &self.melds, self.round_wind, self.seat_wind));
+            self.analysis = Some(analyze(
+                &self.hand,
+                &self.melds,
+                self.round_wind,
+                self.seat_wind,
+            ));
         } else {
             self.analysis = None;
         }
@@ -195,7 +200,12 @@ impl App {
         match m.kind {
             gbmj::model::MeldKind::Chi => {
                 let t = m.tile;
-                format!("吃 {}{}{}", tile_name(t), tile_name(t + 1), tile_name(t + 2))
+                format!(
+                    "吃 {}{}{}",
+                    tile_name(t),
+                    tile_name(t + 1),
+                    tile_name(t + 2)
+                )
             }
             gbmj::model::MeldKind::Pon => format!("碰 {}×3", tile_name(m.tile)),
             gbmj::model::MeldKind::Kan => {
@@ -234,7 +244,11 @@ impl App {
                         self.pending_chi.iter().map(|&t| tile_name(t)).collect();
                     ui.colored_label(
                         egui::Color32::from_rgb(200, 140, 0),
-                        format!("吃：{}（再点 {} 张）", names.join(" "), 3 - self.pending_chi.len()),
+                        format!(
+                            "吃：{}（再点 {} 张）",
+                            names.join(" "),
+                            3 - self.pending_chi.len()
+                        ),
                     );
                 }
                 let mut remove: Option<usize> = None;
@@ -288,7 +302,12 @@ impl App {
                 if now != exp {
                     ui.colored_label(
                         egui::Color32::from_rgb(200, 120, 0),
-                        format!("注意：暗牌应为 {} 张（13 - 3×{} 组副露；杠算 1 个面子），当前 {} 张", exp, self.melds.len(), now),
+                        format!(
+                            "注意：暗牌应为 {} 张（13 - 3×{} 组副露；杠算 1 个面子），当前 {} 张",
+                            exp,
+                            self.melds.len(),
+                            now
+                        ),
                     );
                 } else {
                     ui.weak("√ 张数正确");
@@ -300,7 +319,12 @@ impl App {
     fn ui_palette(&mut self, ui: &mut egui::Ui) {
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
-                for (start, label, n) in [(0usize, "万", 9usize), (9, "条", 9), (18, "筒", 9), (27, "字", 7)] {
+                for (start, label, n) in [
+                    (0usize, "万", 9usize),
+                    (9, "条", 9),
+                    (18, "筒", 9),
+                    (27, "字", 7),
+                ] {
                     ui.horizontal(|ui| {
                         ui.add_sized([26.0, 34.0], egui::Label::new(label));
                         for k in 0..n {
@@ -343,7 +367,9 @@ impl App {
                 ui.add_space(6.0);
                 let ready = total(&self.hand) as usize == self.expected_hidden();
                 let confirm = egui::Button::new(
-                    egui::RichText::new("确认").strong().color(egui::Color32::WHITE),
+                    egui::RichText::new("确认")
+                        .strong()
+                        .color(egui::Color32::WHITE),
                 )
                 .fill(egui::Color32::from_rgb(52, 120, 200))
                 .min_size(egui::vec2(72.0, 26.0));
@@ -409,7 +435,10 @@ impl App {
 
         for w in &an.waits {
             ui.horizontal(|ui| {
-                ui.add_sized([52.0, 22.0], egui::Label::new(egui::RichText::new(tile_name(w.tile)).strong()));
+                ui.add_sized(
+                    [52.0, 22.0],
+                    egui::Label::new(egui::RichText::new(tile_name(w.tile)).strong()),
+                );
                 let cols = [
                     ("点和", w.normal, true),
                     ("自摸", w.tsumo, true),
@@ -516,16 +545,28 @@ fn tile_cell(ui: &mut egui::Ui, t: usize, used: usize) -> egui::Response {
         let (bg, fg) = if full {
             // 用满：深红底 + 淡红字（与浅灰的“未用”反差极大）
             if hovered {
-                (egui::Color32::from_rgb(74, 32, 32), egui::Color32::from_rgb(255, 200, 200))
+                (
+                    egui::Color32::from_rgb(74, 32, 32),
+                    egui::Color32::from_rgb(255, 200, 200),
+                )
             } else {
-                (egui::Color32::from_rgb(44, 24, 24), egui::Color32::from_rgb(214, 138, 138))
+                (
+                    egui::Color32::from_rgb(44, 24, 24),
+                    egui::Color32::from_rgb(214, 138, 138),
+                )
             }
         } else if used > 0 {
             // 已用部分：黄底黑字
             if hovered {
-                (egui::Color32::from_rgb(232, 188, 78), egui::Color32::from_rgb(24, 18, 6))
+                (
+                    egui::Color32::from_rgb(232, 188, 78),
+                    egui::Color32::from_rgb(24, 18, 6),
+                )
             } else {
-                (egui::Color32::from_rgb(202, 154, 50), egui::Color32::from_rgb(24, 18, 6))
+                (
+                    egui::Color32::from_rgb(202, 154, 50),
+                    egui::Color32::from_rgb(24, 18, 6),
+                )
             }
         } else if hovered {
             (
