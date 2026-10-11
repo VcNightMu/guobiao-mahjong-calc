@@ -25,7 +25,10 @@ fn get<'a>(ds: &'a [Direction], kw: &str) -> &'a Direction {
 }
 
 fn names(v: &[usize]) -> String {
-    v.iter().map(|&t| tile_name(t)).collect::<Vec<_>>().join(",")
+    v.iter()
+        .map(|&t| tile_name(t))
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 /// 完整的「逐方向快照」：`名称|番数|距离|补|换掉|标签`
@@ -66,11 +69,21 @@ fn plan_r08_zero_honor_mixed_suit_is_not_zero() {
     let m = get(&ds, "混一色(万门)");
     assert!(m.distance >= 1, "零字牌手混一色不得为 0 张差: {:?}", m);
     assert_eq!(m.distance, 1, "应为 1 张差: {:?}", m);
-    assert_eq!((m.value, names(&m.need).as_str(), m.drop.len()), (6, "东,东", 1), "{:?}", m);
+    assert_eq!(
+        (m.value, names(&m.need).as_str(), m.drop.len()),
+        (6, "东,东", 1),
+        "{:?}",
+        m
+    );
 
     // 同手「清一色」确实可以 0 张差（对照，说明并非把整手判远）
     let q = get(&ds, "清一色(万门)");
-    assert_eq!((q.value, q.distance, names(&q.need).as_str()), (24, 0, "9万"), "{:?}", q);
+    assert_eq!(
+        (q.value, q.distance, names(&q.need).as_str()),
+        (24, 0, "9万"),
+        "{:?}",
+        q
+    );
 }
 
 /// **同类扩展 · 混幺九**：全幺九但**零字牌**时必须 ≥1（否则是清幺九）。
@@ -103,11 +116,21 @@ fn plan_pure_honor_hand_mixed_suit_each_one_away() {
         let d = get(&ds, &format!("混一色({}门)", name));
         assert!(d.distance >= 1, "纯字牌手 {} 不得为 0: {:?}", name, d);
         assert_eq!(d.distance, 1, "{}: {:?}", name, d);
-        assert_eq!(names(&d.need), format!("{},{}", suit_first, suit_first), "{}", name);
+        assert_eq!(
+            names(&d.need),
+            format!("{},{}", suit_first, suit_first),
+            "{}",
+            name
+        );
     }
     // 字一色本身是真的 0 张差
     let z = get(&ds, "字一色");
-    assert_eq!((z.value, z.distance, names(&z.need).as_str()), (64, 0, "发"), "{:?}", z);
+    assert_eq!(
+        (z.value, z.distance, names(&z.need).as_str()),
+        (64, 0, "发"),
+        "{:?}",
+        z
+    );
 }
 
 // ==================== 正向护栏：不得修过头 ====================
@@ -120,10 +143,20 @@ fn plan_with_honor_mixed_suit_stays_zero() {
     let ds = plan(&h, &[], 2);
 
     let m = get(&ds, "混一色(万门)");
-    assert_eq!((m.value, m.distance, names(&m.need).as_str(), m.drop.len()), (6, 0, "1万", 0), "{:?}", m);
+    assert_eq!(
+        (m.value, m.distance, names(&m.need).as_str(), m.drop.len()),
+        (6, 0, "1万", 0),
+        "{:?}",
+        m
+    );
 
     let q = get(&ds, "清一色(万门)");
-    assert_eq!((q.distance, names(&q.drop).as_str()), (2, "东,东"), "{:?}", q);
+    assert_eq!(
+        (q.distance, names(&q.drop).as_str()),
+        (2, "东,东"),
+        "{:?}",
+        q
+    );
 }
 
 /// 含字牌的幺九手：混幺九仍为 0 张差（清幺九反需换掉字牌）。
@@ -132,7 +165,12 @@ fn plan_hunyaojiu_with_honor_stays_zero() {
     let h = parse_hand("111m 999m 111s 99s 中中");
     let ds = plan(&h, &[], 2);
     let m = get(&ds, "混幺九");
-    assert_eq!((m.value, m.distance, names(&m.need).as_str()), (32, 0, "9条"), "{:?}", m);
+    assert_eq!(
+        (m.value, m.distance, names(&m.need).as_str()),
+        (32, 0, "9条"),
+        "{:?}",
+        m
+    );
     assert_eq!(get(&ds, "清幺九").distance, 2, "清幺九需换掉中中");
 }
 
@@ -145,7 +183,12 @@ fn plan_mirror_meld_supplies_honor() {
     let melds = vec![Meld::pon(0)]; // 碰 1万
     let ds = plan(&h, &melds, 2);
     let m = get(&ds, "混一色(万门)");
-    assert_eq!((m.value, m.distance, names(&m.need).as_str(), m.drop.len()), (6, 0, "西", 0), "{:?}", m);
+    assert_eq!(
+        (m.value, m.distance, names(&m.need).as_str(), m.drop.len()),
+        (6, 0, "西", 0),
+        "{:?}",
+        m
+    );
 }
 
 /// **镜像假阴性回归（副露供该门数牌）**：`--pon 9m` 已提供该门数牌，暗牌含字牌 ⇒
@@ -157,7 +200,12 @@ fn plan_mirror_meld_supplies_suit_tile() {
     let melds = vec![Meld::pon(8)]; // 碰 9万
     let ds = plan(&h, &melds, 2);
     let m = get(&ds, "混一色(万门)");
-    assert_eq!((m.value, m.distance, names(&m.need).as_str(), m.drop.len()), (6, 0, "3万", 0), "{:?}", m);
+    assert_eq!(
+        (m.value, m.distance, names(&m.need).as_str(), m.drop.len()),
+        (6, 0, "3万", 0),
+        "{:?}",
+        m
+    );
 }
 
 /// **口径记录（非缺陷）**：`23456789m 55p --pon 1m` 下 清一色 与 混一色 **同为 2 张差** ——
@@ -172,7 +220,11 @@ fn plan_mixed_suit_same_distance_as_pure_suit_is_not_defect() {
     let q = get(&ds, "清一色(万门)");
     let m = get(&ds, "混一色(万门)");
     assert_eq!(q.distance, 2, "{:?}", q);
-    assert_eq!(m.distance, 2, "混一色的字牌可由将牌承担 ⇒ 与清一色同距: {:?}", m);
+    assert_eq!(
+        m.distance, 2,
+        "混一色的字牌可由将牌承担 ⇒ 与清一色同距: {:?}",
+        m
+    );
     assert_eq!(names(&m.need).as_str(), "4万,东,东", "{:?}", m);
 }
 
@@ -185,8 +237,21 @@ fn plan_single_category_filters_have_no_false_positive() {
     // 全万、且含低数牌与 6/7 等，明显不是 字一色 / 绿一色 / 全大 / 推不倒 / 全双刻
     let h = parse_hand("123m456m789m 11m22m");
     let ds = plan(&h, &[], 2);
-    for f in ["字一色", "绿一色", "全大", "全双刻", "推不倒", "清幺九", "混幺九"] {
-        assert!(find(&ds, f).is_none(), "{} 不应在 2 张内可达: {:?}", f, dump(&ds));
+    for f in [
+        "字一色",
+        "绿一色",
+        "全大",
+        "全双刻",
+        "推不倒",
+        "清幺九",
+        "混幺九",
+    ] {
+        assert!(
+            find(&ds, f).is_none(),
+            "{} 不应在 2 张内可达: {:?}",
+            f,
+            dump(&ds)
+        );
     }
 
     // 零幺九、零字牌手：清幺九 / 混幺九 均不可达
