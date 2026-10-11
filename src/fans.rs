@@ -44,6 +44,71 @@ pub struct WinCtx<'a> {
     pub single_wait: bool,
     /// 是否自摸（影响：荣和补成的刻子算明刻）
     pub tsumo: bool,
+    /// 荣和这张牌把手中已有对子补成刻子
+    pub win_completes_triplet: bool,
+}
+
+/// 杠系番：由 kan_cnt / ankan / mingkan 决定（逻辑与 collect_standard 原内联块逐行等价）
+fn push_kan_fans(v: &mut Vec<Fan>, kan_cnt: usize, ankan: usize, mingkan: usize) {
+    if kan_cnt >= 4 {
+        v.push(f("四杠", 88));
+    } else if kan_cnt == 3 {
+        v.push(f("三杠", 32));
+    } else if kan_cnt == 2 {
+        if ankan == 2 {
+            v.push(f("双暗杠", 6));
+        } else if mingkan == 2 {
+            v.push(f("双明杠", 4));
+        } else {
+            // 一明一暗杠：98 规则未列，现行网络国标普遍计 5 番
+            v.push(f("一明一暗杠", 5));
+        }
+    } else if kan_cnt == 1 {
+        if ankan == 1 {
+            v.push(f("暗杠", 2));
+        } else {
+            v.push(f("明杠", 1));
+        }
+    }
+}
+
+/// 刻子类番：箭刻 / 圈风刻 / 门风刻 / 幺九刻（逐刻子追加）+ 三风刻 + 双箭刻
+fn push_triplet_fans(
+    v: &mut Vec<Fan>,
+    ctx: &WinCtx,
+    trips: &[usize],
+    pair: Option<usize>,
+    wind_tri: usize,
+    dragon_tri: usize,
+    big4: bool,
+) {
+    for &t in trips.iter() {
+        if is_dragon(t) {
+            if dragon_tri == 1 {
+                v.push(f("箭刻", 2));
+            }
+        } else if is_wind(t) {
+            if t == ctx.round_wind {
+                v.push(f("圈风刻", 2));
+            }
+            if t == ctx.seat_wind {
+                v.push(f("门风刻", 2));
+            }
+            if t != ctx.round_wind && t != ctx.seat_wind {
+                v.push(f("幺九刻", 1));
+            }
+        } else if is_terminal(t) {
+            v.push(f("幺九刻", 1));
+        }
+    }
+    if wind_tri == 3 && !pair.map(is_wind).unwrap_or(false) && !big4 {
+        v.push(f("三风刻", 12));
+    }
+
+    // 双箭刻
+    if dragon_tri == 2 {
+        v.push(f("双箭刻", 6));
+    }
 }
 
 fn suits_present(all: &Counts) -> [bool; 3] {
@@ -134,6 +199,22 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
             if !has_honor(all) {
                 v.push(f("无字", 1));
             }
+            // 组合龙：杠系 / 刻子类番（合并暗牌面子与副露面子；m==1 时副露面子在 ctx.melds）
+            let mut all_sets: Vec<Set> = d.sets.clone();
+            all_sets.extend(ctx.melds.iter().map(|m| m.to_set()));
+            let kan_cnt = all_sets.iter().filter(|s| s.is_kan).count();
+            let ankan = all_sets.iter().filter(|s| s.is_kan && !s.open).count();
+            let mingkan = all_sets.iter().filter(|s| s.is_kan && s.open).count();
+            let trips: Vec<usize> = all_sets
+                .iter()
+                .filter(|s| s.is_triplet())
+                .map(|s| s.tile)
+                .collect();
+            let wind_tri = trips.iter().filter(|&&t| is_wind(t)).count();
+            let dragon_tri = trips.iter().filter(|&&t| is_dragon(t)).count();
+            let big4 = wind_tri == 4;
+            push_kan_fans(&mut v, kan_cnt, ankan, mingkan);
+            push_triplet_fans(&mut v, ctx, &trips, d.pair, wind_tri, dragon_tri, big4);
         }
     }
 
@@ -280,26 +361,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     let ankan = d.sets.iter().filter(|s| s.is_kan && !s.open).count();
     let mingkan = d.sets.iter().filter(|s| s.is_kan && s.open).count();
 
-    if kan_cnt >= 4 {
-        v.push(f("四杠", 88));
-    } else if kan_cnt == 3 {
-        v.push(f("三杠", 32));
-    } else if kan_cnt == 2 {
-        if ankan == 2 {
-            v.push(f("双暗杠", 6));
-        } else if mingkan == 2 {
-            v.push(f("双明杠", 4));
-        } else {
-            // 一明一暗杠：98 规则未列，现行网络国标普遍计 5 番
-            v.push(f("一明一暗杠", 5));
-        }
-    } else if kan_cnt == 1 {
-        if ankan == 1 {
-            v.push(f("暗杠", 2));
-        } else {
-            v.push(f("明杠", 1));
-        }
-    }
+    push_kan_fans(&mut v, kan_cnt, ankan, mingkan);
 
     // 碰碰和
     let all_trips = d.sets.iter().all(|s| s.is_triplet());
@@ -307,7 +369,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         v.push(f("碰碰和", 6));
     }
 
-    // 暗刻统计（手中的刻子 + 暗杠）；荣和补成的刻子算明刻
+    // 暗刻统计（手中的刻子 + 暗杠）；荣和时仅当和牌张确实把手中对子补成该刻子，才把该刻子算明刻
     let concealed_trips = d
         .sets
         .iter()
@@ -319,7 +381,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             if !is_conc {
                 return false;
             }
-            if !ctx.tsumo && !s.is_kan && s.tile == ctx.win_tile {
+            if !ctx.tsumo && ctx.win_completes_triplet && !s.is_kan && s.tile == ctx.win_tile {
                 return false; // 荣和补成的刻子→明刻
             }
             true
@@ -333,34 +395,7 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
         v.push(f("双暗刻", 2));
     }
 
-    // 箭刻 / 风刻 / 幺九刻
-    for &t in trips.iter() {
-        if is_dragon(t) {
-            if dragon_tri == 1 {
-                v.push(f("箭刻", 2));
-            }
-        } else if is_wind(t) {
-            if t == ctx.round_wind {
-                v.push(f("圈风刻", 2));
-            }
-            if t == ctx.seat_wind {
-                v.push(f("门风刻", 2));
-            }
-            if t != ctx.round_wind && t != ctx.seat_wind {
-                v.push(f("幺九刻", 1));
-            }
-        } else if is_terminal(t) {
-            v.push(f("幺九刻", 1));
-        }
-    }
-    if wind_tri == 3 && !is_wind(pair) && !big4 {
-        v.push(f("三风刻", 12));
-    }
-
-    // 双箭刻
-    if dragon_tri == 2 {
-        v.push(f("双箭刻", 6));
-    }
+    push_triplet_fans(&mut v, ctx, &trips, d.pair, wind_tri, dragon_tri, big4);
 
     // 双同刻 / 三同刻
     {
@@ -889,7 +924,7 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
         drop.extend(["碰碰和", "全带幺", "幺九刻"]);
     }
     if has(v, "字一色") {
-        drop.extend(["碰碰和", "全带幺", "幺九刻"]);
+        drop.extend(["碰碰和", "全带幺", "幺九刻", "混幺九"]);
     }
     if has(v, "小四喜") {
         drop.extend(["三风刻", "幺九刻"]);
@@ -933,8 +968,11 @@ fn apply_exclusions(v: &mut Vec<Fan>, _ctx: &WinCtx) {
     if has(v, "一色三同顺") {
         drop.push("一般高");
     }
-    if has(v, "全大") || has(v, "全小") {
-        drop.push("无字");
+    if has(v, "全大") {
+        drop.extend(["无字", "大于五"]);
+    }
+    if has(v, "全小") {
+        drop.extend(["无字", "小于五"]);
     }
     if has(v, "全中") {
         drop.extend(["断幺", "无字"]);

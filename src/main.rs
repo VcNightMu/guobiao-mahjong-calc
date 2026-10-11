@@ -135,12 +135,27 @@ fn main() {
     println!("结构听牌: {}", wait_str.join(" "));
     println!();
     println!("{:<6}{:>8}{:>8}{:>10}{:>12}   够和", "和牌张", "点和", "自摸", "点和绝张", "自摸绝张");
+    let mut has_non_win = false;
     for w in an.waits.iter() {
-        let ok = if w.can_win() { "✔" } else { "" };
-        let tag = if w.only_tsumo() {
-            " ✔仅自摸"
-        } else if w.only_last() {
-            " ✔仅绝张"
+        let verdict = w.verdict();
+        if verdict != gbmj::calc::WinVerdict::Win {
+            has_non_win = true;
+        }
+        // 三态短标记（D2）：✔ 能和 / △ 条件可和 / ✘ 不可和
+        let ok = match verdict {
+            gbmj::calc::WinVerdict::Win => "✔",
+            gbmj::calc::WinVerdict::ConditionalLast => "△",
+            gbmj::calc::WinVerdict::NoWin => "✘",
+        };
+        // 「仅自摸 / 仅绝张」标签仅在确定能和的 Win 行保留
+        let tag = if verdict == gbmj::calc::WinVerdict::Win {
+            if w.only_tsumo() {
+                " ✔仅自摸"
+            } else if w.only_last() {
+                " ✔仅绝张"
+            } else {
+                ""
+            }
         } else {
             ""
         };
@@ -159,12 +174,14 @@ fn main() {
             tag
         );
     }
+    if has_non_win {
+        println!("图例：✔ 可和；△ 条件可和（仅非绝张世界，点和）；✘ 不可和");
+    }
     println!();
     for w in an.waits.iter() {
-        if w.can_win() {
-            let names: Vec<String> =
-                w.fans.iter().map(|f| format!("{}{}", f.name, f.value)).collect();
-            println!("{}: {}", tile_name(w.tile), names.join(" "));
-        }
+        // 番表明细：未听牌行在本函数更早处已 return，循环内均为听牌行——除未听牌外全部打印明细
+        let names: Vec<String> =
+            w.fans.iter().map(|f| format!("{}{}", f.name, f.value)).collect();
+        println!("{}: {}", tile_name(w.tile), names.join(" "));
     }
 }

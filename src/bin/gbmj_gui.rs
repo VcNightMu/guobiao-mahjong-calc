@@ -430,17 +430,26 @@ impl App {
                     };
                     ui.colored_label(color, format!("{name} {v}"));
                 }
-                let mark = if !w.can_win() {
-                    "（不足 8 番）"
-                } else if w.only_last() {
-                    "（仅绝张可和）"
-                } else if w.only_tsumo() {
-                    "（仅自摸可和）"
-                } else {
-                    ""
+                let mark = match w.verdict() {
+                    gbmj::calc::WinVerdict::Win => {
+                        if w.only_last() {
+                            "（仅绝张可和）"
+                        } else if w.only_tsumo() {
+                            "（仅自摸可和）"
+                        } else {
+                            ""
+                        }
+                    }
+                    gbmj::calc::WinVerdict::ConditionalLast => "条件可和（仅非绝张·点和）",
+                    gbmj::calc::WinVerdict::NoWin => "不可和",
                 };
                 if !mark.is_empty() {
-                    ui.colored_label(egui::Color32::from_rgb(200, 160, 60), mark);
+                    let color = if w.verdict() == gbmj::calc::WinVerdict::NoWin {
+                        egui::Color32::from_gray(120)
+                    } else {
+                        egui::Color32::from_rgb(200, 160, 60)
+                    };
+                    ui.colored_label(color, mark);
                 }
             });
             let fmt_fans = |list: &[gbmj::fans::Fan]| {

@@ -90,9 +90,30 @@ pub struct WaitResult {
     pub special: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WinVerdict {
+    Win,
+    ConditionalLast,
+    NoWin,
+}
+
 impl WaitResult {
     pub fn can_win(&self) -> bool {
-        self.normal >= 8 || self.tsumo >= 8 || self.last >= 8 || self.tsumo_last >= 8
+        matches!(self.verdict(), WinVerdict::Win)
+    }
+    /// 三态：能和 / 条件可和（仅非绝张世界）/ 不可和。N/T 恒适用，L/TL 仅在 can_last 时适用。
+    pub fn verdict(&self) -> WinVerdict {
+        let nt_ok = self.normal >= 8 || self.tsumo >= 8;
+        let last_ok = self.can_last && (self.last >= 8 || self.tsumo_last >= 8);
+        if last_ok {
+            WinVerdict::Win
+        } else if nt_ok && self.can_last {
+            WinVerdict::ConditionalLast
+        } else if nt_ok {
+            WinVerdict::Win
+        } else {
+            WinVerdict::NoWin
+        }
     }
     pub fn only_tsumo(&self) -> bool {
         self.normal < 8 && self.tsumo >= 8
@@ -211,6 +232,7 @@ pub fn analyze(
                 menqing,
                 single_wait,
                 tsumo: false,
+                win_completes_triplet: concealed[t] == 2,
             };
             let (n, nf) = score(&ctx, WinMode::Normal);
             let (ts, tf) = score(&ctx, WinMode::Tsumo);
