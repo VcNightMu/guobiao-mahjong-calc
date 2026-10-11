@@ -21,25 +21,48 @@ pub struct Meld {
 
 impl Meld {
     pub fn chi(tile: usize) -> Self {
-        Meld { kind: MeldKind::Chi, tile, open: true }
+        Meld {
+            kind: MeldKind::Chi,
+            tile,
+            open: true,
+        }
     }
     pub fn pon(tile: usize) -> Self {
-        Meld { kind: MeldKind::Pon, tile, open: true }
+        Meld {
+            kind: MeldKind::Pon,
+            tile,
+            open: true,
+        }
     }
     pub fn kan(tile: usize, open: bool) -> Self {
-        Meld { kind: MeldKind::Kan, tile, open }
+        Meld {
+            kind: MeldKind::Kan,
+            tile,
+            open,
+        }
     }
 
     /// 转成面子的统一表示
     pub fn to_set(&self) -> Set {
         match self.kind {
-            MeldKind::Chi => Set { kind: SetKind::Run, tile: self.tile, is_kan: false, open: true },
-            MeldKind::Pon => {
-                Set { kind: SetKind::Triplet, tile: self.tile, is_kan: false, open: true }
-            }
-            MeldKind::Kan => {
-                Set { kind: SetKind::Triplet, tile: self.tile, is_kan: true, open: self.open }
-            }
+            MeldKind::Chi => Set {
+                kind: SetKind::Run,
+                tile: self.tile,
+                is_kan: false,
+                open: true,
+            },
+            MeldKind::Pon => Set {
+                kind: SetKind::Triplet,
+                tile: self.tile,
+                is_kan: false,
+                open: true,
+            },
+            MeldKind::Kan => Set {
+                kind: SetKind::Triplet,
+                tile: self.tile,
+                is_kan: true,
+                open: self.open,
+            },
         }
     }
 
@@ -78,7 +101,9 @@ impl std::fmt::Display for InputError {
                 "暗牌张数不符：应为 {} 张（13 - 3×副露面子数），实际 {} 张",
                 expected, got
             ),
-            InputError::Over4(t, n) => write!(f, "{} 共 {} 张，超过每种牌 4 张上限", tile_name(*t), n),
+            InputError::Over4(t, n) => {
+                write!(f, "{} 共 {} 张，超过每种牌 4 张上限", tile_name(*t), n)
+            }
         }
     }
 }
