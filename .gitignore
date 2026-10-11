@@ -9,6 +9,7 @@ build/
 # 预览 / 临时产物
 _preview*.html
 *.tmp
+out_*.txt
 
 # 日志
 *.log

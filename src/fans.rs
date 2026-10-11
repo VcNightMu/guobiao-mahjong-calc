@@ -4,7 +4,7 @@
 //! 和绝张）在 score() 里按和法叠加；边张 / 坎张 / 单钓将是结构性的（依赖和牌张），
 //! 放在本文件的 collect() 里。
 //!
-//! 未实现/待核：组合龙、推不倒、一色四步高细化判定等（见文件末尾 TODO）。
+//! 已实现（原“未实现/待核”注释已过期）：组合龙见 `collect_special` 的 `Special::Zuhelong` 分支（`detect_zuhelong` 在 calc.rs）；推不倒见下文 `TBD` 表；一色三步高 / 一色四步高见对应判定块。文件末尾没有 TODO 列表。
 
 use crate::decompose::*;
 use crate::model::*;

@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const root = 'F:/ArkCodes/国标算番器';
+const root = 'F:/AllCodes/guobiao-mahjong-calc';
 const types = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
