@@ -27,7 +27,11 @@ fn has_t(w: &WaitResult, n: &str) -> bool {
 }
 
 fn val_t(w: &WaitResult, n: &str) -> u32 {
-    w.fans_tsumo.iter().filter(|f| f.name == n).map(|f| f.value).sum()
+    w.fans_tsumo
+        .iter()
+        .filter(|f| f.name == n)
+        .map(|f| f.value)
+        .sum()
 }
 
 fn names(w: &WaitResult) -> Vec<String> {
@@ -40,24 +44,24 @@ fn names_t(w: &WaitResult) -> Vec<String> {
 
 // ============================ 番值常量（for 表：番名→期望番值和；出处为 src/fans.rs 的 f("番名", N) call site）============================
 // 同一数字不同番种分开命名；动态生成的番另有标注。
-const FAN_DAN_DIAO_JIANG: u32 = 1;    // 单钓将（1 番）  — 出处：src/fans.rs 的 f("单钓将", 1)
-const FAN_HUA_LONG: u32 = 8;          // 花龙（8 番）    — 出处：src/fans.rs 的 f("花龙", 8)
-const FAN_LAO_SHAO_FU: u32 = 1;       // 老少副（1 番）  — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
-const FAN_MEN_FENG_KE: u32 = 2;       // 门风刻（2 番）  — 出处：src/fans.rs 的 f("门风刻", 2)
-const FAN_MEN_QIAN_QING: u32 = 2;     // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
-const FAN_QUAN_DAI_WU: u32 = 16;      // 全带五（16 番） — 出处：src/fans.rs 的 f("全带五", 16)
-const FAN_QUAN_DAI_YAO: u32 = 4;      // 全带幺（4 番）  — 出处：src/fans.rs 的 f("全带幺", 4)
-const FAN_QUAN_FENG_KE: u32 = 2;      // 圈风刻（2 番）  — 出处：src/fans.rs 的 f("圈风刻", 2)
-const FAN_QUAN_QIU_REN: u32 = 6;      // 全求人（6 番）  — 出处：src/fans.rs 的 f("全求人", 6)
-const FAN_QUAN_ZHONG: u32 = 24;       // 全中（24 番）   — 出处：src/fans.rs 的 f("全中", 24)
-const FAN_SAN_AN_KE: u32 = 16;        // 三暗刻（16 番） — 出处：src/fans.rs 的 f("三暗刻", 16)
+const FAN_DAN_DIAO_JIANG: u32 = 1; // 单钓将（1 番）  — 出处：src/fans.rs 的 f("单钓将", 1)
+const FAN_HUA_LONG: u32 = 8; // 花龙（8 番）    — 出处：src/fans.rs 的 f("花龙", 8)
+const FAN_LAO_SHAO_FU: u32 = 1; // 老少副（1 番）  — 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_MEN_FENG_KE: u32 = 2; // 门风刻（2 番）  — 出处：src/fans.rs 的 f("门风刻", 2)
+const FAN_MEN_QIAN_QING: u32 = 2; // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
+const FAN_QUAN_DAI_WU: u32 = 16; // 全带五（16 番） — 出处：src/fans.rs 的 f("全带五", 16)
+const FAN_QUAN_DAI_YAO: u32 = 4; // 全带幺（4 番）  — 出处：src/fans.rs 的 f("全带幺", 4)
+const FAN_QUAN_FENG_KE: u32 = 2; // 圈风刻（2 番）  — 出处：src/fans.rs 的 f("圈风刻", 2)
+const FAN_QUAN_QIU_REN: u32 = 6; // 全求人（6 番）  — 出处：src/fans.rs 的 f("全求人", 6)
+const FAN_QUAN_ZHONG: u32 = 24; // 全中（24 番）   — 出处：src/fans.rs 的 f("全中", 24)
+const FAN_SAN_AN_KE: u32 = 16; // 三暗刻（16 番） — 出处：src/fans.rs 的 f("三暗刻", 16)
 const FAN_SAN_SE_SAN_BU_GAO: u32 = 6; // 三色三步高（6 番）— 出处：src/fans.rs 的 f("三色三步高", 6)
 const FAN_SAN_SE_SAN_TONG_SHUN: u32 = 8; // 三色三同顺（8 番）— 出处：src/fans.rs 的 f("三色三同顺", 8)
-const FAN_SHUANG_AN_KE: u32 = 2;      // 双暗刻（2 番）  — 出处：src/fans.rs 的 f("双暗刻", 2)
-const FAN_SI_GUI_YI: u32 = 2;         // 四归一（2 番）  — 出处：src/fans.rs 的 f("四归一", 2)
-const FAN_WU_MEN_QI: u32 = 6;         // 五门齐（6 番）  — 出处：src/fans.rs 的 f("五门齐", 6)
-const FAN_WU_ZI: u32 = 1;             // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
-const FAN_YAO_JIU_KE: u32 = 1;        // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
+const FAN_SHUANG_AN_KE: u32 = 2; // 双暗刻（2 番）  — 出处：src/fans.rs 的 f("双暗刻", 2)
+const FAN_SI_GUI_YI: u32 = 2; // 四归一（2 番）  — 出处：src/fans.rs 的 f("四归一", 2)
+const FAN_WU_MEN_QI: u32 = 6; // 五门齐（6 番）  — 出处：src/fans.rs 的 f("五门齐", 6)
+const FAN_WU_ZI: u32 = 1; // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
+const FAN_YAO_JIU_KE: u32 = 1; // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
 
 // ==================== 花色整手番 ====================
 
@@ -67,7 +71,14 @@ fn r07b4_wu_men_qi() {
     let h = parse_hand("123m 456s 789p 东东东 中");
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "中");
-    for (n, v) in [("五门齐", FAN_WU_MEN_QI), ("圈风刻", FAN_QUAN_FENG_KE), ("门风刻", FAN_MEN_FENG_KE), ("花龙", FAN_HUA_LONG), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)] {
+    for (n, v) in [
+        ("五门齐", FAN_WU_MEN_QI),
+        ("圈风刻", FAN_QUAN_FENG_KE),
+        ("门风刻", FAN_MEN_FENG_KE),
+        ("花龙", FAN_HUA_LONG),
+        ("单钓将", FAN_DAN_DIAO_JIANG),
+        ("门前清", FAN_MEN_QIAN_QING),
+    ] {
         assert!(has(w, n), "缺 {}: {:?}", n, names(w));
         assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
     }
@@ -79,7 +90,13 @@ fn r07b4_quan_dai_yao() {
     let h = parse_hand("123m 789m 111s 999p 东");
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "东");
-    for (n, v) in [("全带幺", FAN_QUAN_DAI_YAO), ("双暗刻", FAN_SHUANG_AN_KE), ("老少副", FAN_LAO_SHAO_FU), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)] {
+    for (n, v) in [
+        ("全带幺", FAN_QUAN_DAI_YAO),
+        ("双暗刻", FAN_SHUANG_AN_KE),
+        ("老少副", FAN_LAO_SHAO_FU),
+        ("单钓将", FAN_DAN_DIAO_JIANG),
+        ("门前清", FAN_MEN_QIAN_QING),
+    ] {
         assert!(has(w, n), "缺 {}: {:?}", n, names(w));
         assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
     }
@@ -97,7 +114,13 @@ fn r07b4_quan_dai_wu() {
     let h = parse_hand("345m 456s 567p 555m 5s");
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "5条");
-    for (n, v) in [("全带五", FAN_QUAN_DAI_WU), ("三色三步高", FAN_SAN_SE_SAN_BU_GAO), ("四归一", FAN_SI_GUI_YI), ("单钓将", FAN_DAN_DIAO_JIANG), ("门前清", FAN_MEN_QIAN_QING)] {
+    for (n, v) in [
+        ("全带五", FAN_QUAN_DAI_WU),
+        ("三色三步高", FAN_SAN_SE_SAN_BU_GAO),
+        ("四归一", FAN_SI_GUI_YI),
+        ("单钓将", FAN_DAN_DIAO_JIANG),
+        ("门前清", FAN_MEN_QIAN_QING),
+    ] {
         assert!(has(w, n), "缺 {}: {:?}", n, names(w));
         assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
     }
@@ -112,7 +135,12 @@ fn r07b4_quan_zhong() {
     let h = parse_hand("456m 456s 456p 55m 66s");
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "5万");
-    for (n, v) in [("全中", FAN_QUAN_ZHONG), ("三色三同顺", FAN_SAN_SE_SAN_TONG_SHUN), ("四归一", FAN_SI_GUI_YI), ("门前清", FAN_MEN_QIAN_QING)] {
+    for (n, v) in [
+        ("全中", FAN_QUAN_ZHONG),
+        ("三色三同顺", FAN_SAN_SE_SAN_TONG_SHUN),
+        ("四归一", FAN_SI_GUI_YI),
+        ("门前清", FAN_MEN_QIAN_QING),
+    ] {
         assert!(has(w, n), "缺 {}: {:?}", n, names(w));
         assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
     }
@@ -133,7 +161,11 @@ fn r07b4_quan_shuang_ke() {
     let h = parse_hand("222m 444s 666p 88m 22s");
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "8万");
-    for (n, v) in [("全双刻", FAN_QUAN_SHUANG_KE), ("三暗刻", FAN_SAN_AN_KE), ("门前清", FAN_MEN_QIAN_QING)] {
+    for (n, v) in [
+        ("全双刻", FAN_QUAN_SHUANG_KE),
+        ("三暗刻", FAN_SAN_AN_KE),
+        ("门前清", FAN_MEN_QIAN_QING),
+    ] {
         assert!(has(w, n), "缺 {}: {:?}", n, names(w));
         assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
     }
@@ -153,14 +185,18 @@ fn r07b4_quan_shuang_ke() {
 fn r07b4_quan_qiu_ren() {
     let h = parse_hand("5p");
     let melds = vec![
-        Meld::chi(0),   // 吃 123万
-        Meld::pon(13),  // 碰 5条
-        Meld::pon(24),  // 碰 8筒
-        Meld::pon(17),  // 碰 9条
+        Meld::chi(0),  // 吃 123万
+        Meld::pon(13), // 碰 5条
+        Meld::pon(24), // 碰 8筒
+        Meld::pon(17), // 碰 9条
     ];
     let an = analyze(&h, &melds, 27, 27);
     let w = by_name(&an, "5筒");
-    for (n, v) in [("全求人", FAN_QUAN_QIU_REN), ("幺九刻", FAN_YAO_JIU_KE), ("无字", FAN_WU_ZI)] {
+    for (n, v) in [
+        ("全求人", FAN_QUAN_QIU_REN),
+        ("幺九刻", FAN_YAO_JIU_KE),
+        ("无字", FAN_WU_ZI),
+    ] {
         assert!(has(w, n), "缺 {}: {:?}", n, names(w));
         assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
     }
@@ -168,7 +204,11 @@ fn r07b4_quan_qiu_ren() {
     assert!(!has(w, "单钓将"), "全求人 应吞 单钓将: {:?}", names(w));
     // 自摸：全求人不成立，改为 单钓将 + 自摸
     assert!(!has_t(w, "全求人"), "全求人仅荣和: {:?}", names_t(w));
-    assert!(has_t(w, "单钓将") && has_t(w, "自摸"), "自摸应 单钓将+自摸: {:?}", names_t(w));
+    assert!(
+        has_t(w, "单钓将") && has_t(w, "自摸"),
+        "自摸应 单钓将+自摸: {:?}",
+        names_t(w)
+    );
 }
 
 /// `自摸`（1）：**非门清**手自摸得 `自摸`；门清手改计 `不求人`（此处以非门清手锁 `自摸` 之名）。
@@ -185,7 +225,11 @@ fn r07b4_zi_mo() {
     let h2 = parse_hand("789m 789m 789s 99s 88p");
     let an2 = analyze(&h2, &[], 27, 27);
     let w2 = by_name(&an2, "9条");
-    assert!(has_t(w2, "不求人") && !has_t(w2, "自摸"), "门清自摸应为不求人: {:?}", names_t(w2));
+    assert!(
+        has_t(w2, "不求人") && !has_t(w2, "自摸"),
+        "门清自摸应为不求人: {:?}",
+        names_t(w2)
+    );
 }
 
 // ==================== 不靠系 ====================
@@ -196,8 +240,16 @@ fn r07b4_quan_bu_kao() {
     let h = parse_hand("147m 258s 36p 东南西北中");
     let an = analyze(&h, &[], 27, 27);
     let w9 = by_name(&an, "9筒");
-    assert!(has(w9, "全不靠") && val(w9, "全不靠") == 12, "{:?}", names(w9));
-    assert!(has(w9, "组合龙") && val(w9, "组合龙") == 12, "全不靠+组合龙 可并列: {:?}", names(w9));
+    assert!(
+        has(w9, "全不靠") && val(w9, "全不靠") == 12,
+        "{:?}",
+        names(w9)
+    );
+    assert!(
+        has(w9, "组合龙") && val(w9, "组合龙") == 12,
+        "全不靠+组合龙 可并列: {:?}",
+        names(w9)
+    );
     // 听字牌（发/白）时只有 全不靠
     let wf = by_name(&an, "发");
     assert!(has(wf, "全不靠") && !has(wf, "组合龙"), "{:?}", names(wf));
@@ -210,7 +262,12 @@ fn r07b4_qi_xing_bu_kao() {
     let an = analyze(&h, &[], 27, 27);
     for t in ["3筒", "6筒", "9筒"] {
         let w = by_name(&an, t);
-        assert!(has(w, "七星不靠") && val(w, "七星不靠") == 24, "{}: {:?}", t, names(w));
+        assert!(
+            has(w, "七星不靠") && val(w, "七星不靠") == 24,
+            "{}: {:?}",
+            t,
+            names(w)
+        );
         assert!(!has(w, "全不靠"), "七星不靠应吞全不靠: {:?}", names(w));
     }
 }
@@ -231,7 +288,12 @@ fn r07b4_observation_he_jue_zhang_has_no_public_fan_list() {
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "6筒");
     assert!(w.can_last, "该方向应可绝张: {:?}", w);
-    assert_eq!(w.last, w.normal + 4, "点炮绝张 = 点和 + 4（和绝张 4 番）: {:?}", w);
+    assert_eq!(
+        w.last,
+        w.normal + 4,
+        "点炮绝张 = 点和 + 4（和绝张 4 番）: {:?}",
+        w
+    );
     assert_eq!(
         w.tsumo_last,
         w.tsumo + 4,
