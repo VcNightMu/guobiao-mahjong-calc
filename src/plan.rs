@@ -48,6 +48,8 @@ pub enum Filter {
     Suit(usize),
     /// 单门花色 + 字牌（混一色）
     Mixed(usize),
+    /// 单门花色 + 字牌，且目标必须含至少一张字牌（混一色）
+    MixedHonor(usize),
     Honors,
     /// 幺九牌（含字牌）——混幺九
     TermHonor,
@@ -71,7 +73,7 @@ impl Filter {
         match self {
             Filter::Any => true,
             Filter::Suit(s) => suit(t) == s,
-            Filter::Mixed(s) => suit(t) == s || suit(t) == 3,
+            Filter::Mixed(s) | Filter::MixedHonor(s) => suit(t) == s || suit(t) == 3,
             Filter::Honors => suit(t) == 3,
             Filter::TermHonor => is_terminal_or_honor(t),
             Filter::TermNum => is_terminal(t),
@@ -90,6 +92,24 @@ impl Filter {
                 1 => matches!(num(t), 2 | 3 | 4 | 6 | 8),
                 _ => t == 32,
             },
+        }
+    }
+
+    /// 存在性约束：目标必须含至少一张字牌（混一色 / 混幺九）。
+    /// 与 `has_five_gates`（五门齐的同类强制）同型：`Filter` 本身只是「允许集」，
+    /// 规则额外要求的「必须存在」在搜索终点（加将之后）显式校验，避免 `gain()`
+    /// 在 `hand[t] == 0` 时恒 0、搜索只最大化覆盖而回避「非必需但规则必需」的牌类。
+    pub fn requires_honor(self) -> bool {
+        matches!(self, Filter::MixedHonor(_) | Filter::TermHonor)
+    }
+
+    /// 存在性约束：目标必须含至少一张该门数牌（混一色）。
+    /// 同 `has_five_gates` 型强制：`MixedHonor(s)` 的允许集含 s 门数牌与字牌，
+    /// 但规则要求两者都真实出现，故在终点校验 s 门数牌的存在性。
+    pub fn required_suit(self) -> Option<usize> {
+        match self {
+            Filter::MixedHonor(s) => Some(s),
+            _ => None,
         }
     }
 }
@@ -148,6 +168,23 @@ fn rec(
             t[p] = t[p].saturating_add(2);
             if five_gates && !has_five_gates(&t, melds) {
                 continue;
+            }
+            // 存在性约束（混一色的字牌/该门数牌、混幺九的字牌）：与 has_five_gates 一致，把固定副露一并计入
+            if f.requires_honor() || f.required_suit().is_some() {
+                let mut tc = t;
+                for m in melds {
+                    for x in m.tiles() {
+                        tc[x] = tc[x].saturating_add(1);
+                    }
+                }
+                if f.requires_honor() && !(27..=33).any(|x| tc[x] > 0) {
+                    continue;
+                }
+                if let Some(s) = f.required_suit() {
+                    if !(s * 9..s * 9 + 9).any(|x| tc[x] > 0) {
+                        continue;
+                    }
+                }
             }
             let c = cov + gain(hand, cur, p, 2);
             if best.as_ref().map_or(true, |(bc, _)| c > *bc) {
@@ -456,7 +493,7 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
             hand,
             format!("混一色({}门)", SUIT_NAME[s]),
             6,
-            best_standard(hand, melds, Filter::Mixed(s), true, false),
+            best_standard(hand, melds, Filter::MixedHonor(s), true, false),
             "",
             max_dist,
         );
