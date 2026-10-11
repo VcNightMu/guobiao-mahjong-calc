@@ -32,6 +32,24 @@ fn fan_value(w: &WaitResult, n: &str) -> u32 {
     w.fans.iter().filter(|f| f.name == n).map(|f| f.value).sum()
 }
 
+// ============================ 番值常量（B 类番值，出处均为 src/fans.rs 的 v.push(f("番名", N)) call site）============================
+// 同一数字不同番种分开命名，禁止共用裸数字。
+const FAN_SI_GUI_YI: u32 = 2; // 四归一（2 番）— 出处：src/fans.rs:815 的 v.push(f("四归一", 2))
+const FAN_QUAN_FENG_KE: u32 = 2; // 圈风刻（2 番）— 出处：src/fans.rs:92 的 v.push(f("圈风刻", 2))
+const FAN_MEN_FENG_KE: u32 = 2; // 门风刻（2 番）— 出处：src/fans.rs:95 的 v.push(f("门风刻", 2))
+const FAN_YAO_JIU_KE: u32 = 1; // 幺九刻（1 番）— 出处：src/fans.rs:98 的 v.push(f("幺九刻", 1))
+const FAN_JIAN_KE: u32 = 2; // 箭刻（2 番）— 出处：src/fans.rs:88 的 v.push(f("箭刻", 2))
+const FAN_SHUANG_AN_KE: u32 = 2; // 双暗刻（2 番）— 出处：src/fans.rs:395 的 v.push(f("双暗刻", 2))
+const FAN_SI_AN_KE: u32 = 64; // 四暗刻（64 番）— 出处：src/fans.rs:391 的 v.push(f("四暗刻", 64))
+const FAN_DUAN_YAO: u32 = 2; // 断幺（2 番）— 出处：src/fans.rs:245 的 v.push(f("断幺", 2))
+const FAN_QING_YI_SE: u32 = 24; // 清一色（24 番）— 出处：src/fans.rs:225 的 v.push(f("清一色", 24))
+const FAN_LV_YI_SE: u32 = 88; // 绿一色（88 番）— 出处：src/fans.rs:327 的 v.push(f("绿一色", 88))
+const FAN_YI_SE_SAN_JIE_GAO: u32 = 24; // 一色三节高（24 番）— 出处：src/fans.rs:483 的 v.push(f("一色三节高", 24))
+const FAN_QUAN_DA: u32 = 24; // 全大（24 番）— 出处：src/fans.rs:757 的 v.push(f("全大", 24))
+const FAN_QUAN_XIAO: u32 = 24; // 全小（24 番）— 出处：src/fans.rs:761 的 v.push(f("全小", 24))
+const FAN_DA_YU_WU: u32 = 12; // 大于五（12 番）— 出处：src/fans.rs:768 的 v.push(f("大于五", 12))
+const FAN_XIAO_YU_WU: u32 = 12; // 小于五（12 番）— 出处：src/fans.rs:771 的 v.push(f("小于五", 12))
+
 // ============================ DL-2：R-01 三态 ============================
 
 /// R-01 回归（锁死原缺陷 C）：`can_win()` 必须门控绝张栏。
@@ -93,7 +111,7 @@ fn r01_conditional_last_and_unconditional_control() {
     assert!(w6.can_last);
     assert_eq!(w6.verdict(), WinVerdict::NoWin, "{:?}", names(w6));
     // 库级确证：6条 行的 base=2 完全来自 四归一2（而非算术推测）
-    assert_eq!(fan_value(w6, "四归一"), 2, "{:?}", names(w6));
+    assert_eq!(fan_value(w6, "四归一"), FAN_SI_GUI_YI, "{:?}", names(w6));
 
     // B 对照：暗牌换成 77s ⇒ concealed[7条]==2 ⇒ g_last=false ⇒ 无条件可和
     let c2 = parse_hand("77s 东东");
@@ -241,8 +259,8 @@ fn r11_zuhelong_triplet_fan_discriminants() {
     let an5 = analyze(&c, &[Meld::kan(27, false)], 27, 27);
     let w5 = by_name(&an5, "5筒");
     assert_eq!((w5.normal, w5.tsumo), (21, 23), "{:?}", names(w5));
-    assert_eq!(fan_value(w5, "圈风刻"), 2, "{:?}", names(w5));
-    assert_eq!(fan_value(w5, "门风刻"), 2, "{:?}", names(w5));
+    assert_eq!(fan_value(w5, "圈风刻"), FAN_QUAN_FENG_KE, "{:?}", names(w5));
+    assert_eq!(fan_value(w5, "门风刻"), FAN_MEN_FENG_KE, "{:?}", names(w5));
     assert!(!has_fan(w5, "无字"), "含字牌 ⇒ 无字失效: {:?}", names(w5));
     assert!(!has_fan(w5, "幺九刻"), "圈/门风刻与幺九刻互斥: {:?}", names(w5));
 
@@ -250,13 +268,13 @@ fn r11_zuhelong_triplet_fan_discriminants() {
     let an5b = analyze(&c, &[Meld::kan(27, false)], 28, 29); // round=南 seat=西
     let w5b = by_name(&an5b, "5筒");
     assert_eq!((w5b.normal, w5b.tsumo), (18, 20), "{:?}", names(w5b));
-    assert_eq!(fan_value(w5b, "幺九刻"), 1, "{:?}", names(w5b));
+    assert_eq!(fan_value(w5b, "幺九刻"), FAN_YAO_JIU_KE, "{:?}", names(w5b));
 
     // M5e：暗杠 中（箭牌）⇒ 箭刻2（19/21）
     let an5e = analyze(&c, &[Meld::kan(31, false)], 27, 27);
     let w5e = by_name(&an5e, "5筒");
     assert_eq!((w5e.normal, w5e.tsumo), (19, 21), "{:?}", names(w5e));
-    assert_eq!(fan_value(w5e, "箭刻"), 2, "{:?}", names(w5e));
+    assert_eq!(fan_value(w5e, "箭刻"), FAN_JIAN_KE, "{:?}", names(w5e));
 }
 
 /// R-11 结构边界：`m > 1` 时组合龙不生成（`detect_zuhelong` 的 `m>1` 早退）。
@@ -352,7 +370,7 @@ fn t2b1_shuang_an_ke() {
     let c = parse_hand("111m 23m 456m 999s 55p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "7万");
-    assert_eq!(fan_value(w, "双暗刻"), 2, "{:?}", names(w));
+    assert_eq!(fan_value(w, "双暗刻"), FAN_SHUANG_AN_KE, "{:?}", names(w));
 }
 
 /// DL-3 · 四暗刻（64 番）
@@ -361,7 +379,7 @@ fn t2b1_si_an_ke() {
     let c = parse_hand("111m222m333m444m 5m");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "5万");
-    assert_eq!(fan_value(w, "四暗刻"), 64, "{:?}", names(w));
+    assert_eq!(fan_value(w, "四暗刻"), FAN_SI_AN_KE, "{:?}", names(w));
     assert!(has_fan(w, "四暗刻"), "{:?}", names(w));
 }
 
@@ -371,7 +389,7 @@ fn t2b1_si_gui_yi() {
     let c = parse_hand("111m 23m 456m 999s 55p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "1万");
-    assert_eq!(fan_value(w, "四归一"), 2, "{:?}", names(w));
+    assert_eq!(fan_value(w, "四归一"), FAN_SI_GUI_YI, "{:?}", names(w));
 }
 
 /// DL-3 · 断幺（2 番）
@@ -385,11 +403,11 @@ fn t2b1_duan_yao() {
     let w = by_name(&an, "8条");
 
     // 逐番种
-    assert_eq!(fan_value(w, "断幺"), 2, "{:?}", names(w));
-    assert_eq!(fan_value(w, "清一色"), 24, "{:?}", names(w));
-    assert_eq!(fan_value(w, "绿一色"), 88, "{:?}", names(w));
-    assert_eq!(fan_value(w, "四暗刻"), 64, "{:?}", names(w));
-    assert_eq!(fan_value(w, "一色三节高"), 24, "{:?}", names(w));
+    assert_eq!(fan_value(w, "断幺"), FAN_DUAN_YAO, "{:?}", names(w));
+    assert_eq!(fan_value(w, "清一色"), FAN_QING_YI_SE, "{:?}", names(w));
+    assert_eq!(fan_value(w, "绿一色"), FAN_LV_YI_SE, "{:?}", names(w));
+    assert_eq!(fan_value(w, "四暗刻"), FAN_SI_AN_KE, "{:?}", names(w));
+    assert_eq!(fan_value(w, "一色三节高"), FAN_YI_SE_SAN_JIE_GAO, "{:?}", names(w));
 
     // 互斥护栏：绿一色（无发）可计清一色、但不得计混一色；四暗刻吞 碰碰和/双暗刻；
     // 清一色与断幺均吞 无字；四暗刻不再计 门前清
@@ -410,7 +428,7 @@ fn t2b1_quan_da() {
     let c = parse_hand("789m 789m 789s 99s 88p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "9条");
-    assert_eq!(fan_value(w, "全大"), 24, "{:?}", names(w));
+    assert_eq!(fan_value(w, "全大"), FAN_QUAN_DA, "{:?}", names(w));
 }
 
 /// DL-3 · 全小（24 番）
@@ -419,7 +437,7 @@ fn t2b1_quan_xiao() {
     let c = parse_hand("111m222s333p111s 2p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "1筒");
-    assert_eq!(fan_value(w, "全小"), 24, "{:?}", names(w));
+    assert_eq!(fan_value(w, "全小"), FAN_QUAN_XIAO, "{:?}", names(w));
 }
 
 /// DL-3 · 大于五（12 番）——只在**无全大**时出现
@@ -428,7 +446,7 @@ fn t2b1_da_yu_wu() {
     let c = parse_hand("789m 789m 789s 99s 88p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "6条");
-    assert_eq!(fan_value(w, "大于五"), 12, "{:?}", names(w));
+    assert_eq!(fan_value(w, "大于五"), FAN_DA_YU_WU, "{:?}", names(w));
     assert!(!has_fan(w, "全大"), "{:?}", names(w));
 }
 
@@ -438,6 +456,6 @@ fn t2b1_xiao_yu_wu() {
     let c = parse_hand("111m222s333p111s 2p");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "4筒");
-    assert_eq!(fan_value(w, "小于五"), 12, "{:?}", names(w));
+    assert_eq!(fan_value(w, "小于五"), FAN_XIAO_YU_WU, "{:?}", names(w));
     assert!(!has_fan(w, "全小"), "{:?}", names(w));
 }
