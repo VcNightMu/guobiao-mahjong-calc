@@ -89,7 +89,7 @@ pub fn parse_hand(s: &str) -> Counts {
             }
             'm' | '万' => {
                 for &d in &digits {
-                    if d >= 1 && d <= 9 {
+                    if (1..=9).contains(&d) {
                         c[d - 1] += 1;
                     }
                 }
@@ -98,7 +98,7 @@ pub fn parse_hand(s: &str) -> Counts {
             }
             's' | '条' => {
                 for &d in &digits {
-                    if d >= 1 && d <= 9 {
+                    if (1..=9).contains(&d) {
                         c[9 + d - 1] += 1;
                     }
                 }
@@ -107,7 +107,7 @@ pub fn parse_hand(s: &str) -> Counts {
             }
             'p' | '筒' => {
                 for &d in &digits {
-                    if d >= 1 && d <= 9 {
+                    if (1..=9).contains(&d) {
                         c[18 + d - 1] += 1;
                     }
                 }
