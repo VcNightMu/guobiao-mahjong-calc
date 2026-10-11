@@ -184,8 +184,12 @@ fn main() {
     let an = analyze(&concealed, &melds, round, seat);
 
     let n = total(&concealed);
-    println!("暗牌 {} 张 | 副露 {} 副 | {}", n, an.meld_count,
-        if an.menqing { "门清" } else { "非门清" });
+    println!(
+        "暗牌 {} 张 | 副露 {} 副 | {}",
+        n,
+        an.meld_count,
+        if an.menqing { "门清" } else { "非门清" }
+    );
 
     if an.structural_waits.is_empty() {
         println!("未听牌（无和牌型）");
@@ -195,7 +199,10 @@ fn main() {
     let wait_str: Vec<String> = an.structural_waits.iter().map(|&t| tile_name(t)).collect();
     println!("结构听牌: {}", wait_str.join(" "));
     println!();
-    println!("{:<6}{:>8}{:>8}{:>10}{:>12}   够和", "和牌张", "点和", "自摸", "点和绝张", "自摸绝张");
+    println!(
+        "{:<6}{:>8}{:>8}{:>10}{:>12}   够和",
+        "和牌张", "点和", "自摸", "点和绝张", "自摸绝张"
+    );
     let mut has_non_win = false;
     for w in an.waits.iter() {
         let verdict = w.verdict();
@@ -225,7 +232,11 @@ fn main() {
             tile_name(w.tile),
             w.normal,
             w.tsumo,
-            if w.can_last { w.last.to_string() } else { "—".to_string() },
+            if w.can_last {
+                w.last.to_string()
+            } else {
+                "—".to_string()
+            },
             if w.can_last {
                 w.tsumo_last.to_string()
             } else {
@@ -241,8 +252,11 @@ fn main() {
     println!();
     for w in an.waits.iter() {
         // 番表明细：未听牌行在本函数更早处已 return，循环内均为听牌行——除未听牌外全部打印明细
-        let names: Vec<String> =
-            w.fans.iter().map(|f| format!("{}{}", f.name, f.value)).collect();
+        let names: Vec<String> = w
+            .fans
+            .iter()
+            .map(|f| format!("{}{}", f.name, f.value))
+            .collect();
         println!("{}: {}", tile_name(w.tile), names.join(" "));
     }
 }
