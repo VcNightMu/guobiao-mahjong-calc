@@ -1,0 +1,215 @@
+//! R-07 批 4：其余 10 个零覆盖番种覆盖兜底（DL-3）
+//!
+//! 覆盖：`五门齐`6、`全带幺`4、`全带五`16、`全求人`6、`全中`24、`全双刻`24、`自摸`1、`全不靠`12、`七星不靠`24
+//! —— 以及 `和绝张` 的**API 限制观察**（见文件末尾；已按 B2 升级，未改 `src/`）。
+
+use gbmj::calc::{analyze, Analysis, WaitResult};
+use gbmj::model::Meld;
+use gbmj::tiles::*;
+
+fn by_name<'a>(an: &'a Analysis, name: &str) -> &'a WaitResult {
+    an.waits
+        .iter()
+        .find(|w| tile_name(w.tile) == name)
+        .unwrap_or_else(|| panic!("无此和牌张: {}", name))
+}
+
+fn has(w: &WaitResult, n: &str) -> bool {
+    w.fans.iter().any(|f| f.name == n)
+}
+
+fn val(w: &WaitResult, n: &str) -> u32 {
+    w.fans.iter().filter(|f| f.name == n).map(|f| f.value).sum()
+}
+
+fn has_t(w: &WaitResult, n: &str) -> bool {
+    w.fans_tsumo.iter().any(|f| f.name == n)
+}
+
+fn val_t(w: &WaitResult, n: &str) -> u32 {
+    w.fans_tsumo.iter().filter(|f| f.name == n).map(|f| f.value).sum()
+}
+
+fn names(w: &WaitResult) -> Vec<String> {
+    w.fans.iter().map(|f| f.name.to_string()).collect()
+}
+
+fn names_t(w: &WaitResult) -> Vec<String> {
+    w.fans_tsumo.iter().map(|f| f.name.to_string()).collect()
+}
+
+// ==================== 花色整手番 ====================
+
+/// `五门齐`（6）：万/条/筒/风/箭俱全；顺带核对 圈风刻+门风刻（东=圈=门）与 `花龙`。
+#[test]
+fn r07b4_wu_men_qi() {
+    let h = parse_hand("123m 456s 789p 东东东 中");
+    let an = analyze(&h, &[], 27, 27);
+    let w = by_name(&an, "中");
+    for (n, v) in [("五门齐", 6), ("圈风刻", 2), ("门风刻", 2), ("花龙", 8), ("单钓将", 1), ("门前清", 2)] {
+        assert!(has(w, n), "缺 {}: {:?}", n, names(w));
+        assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
+    }
+}
+
+/// `全带幺`（4）：每副面子与将牌都含幺九或字牌。
+#[test]
+fn r07b4_quan_dai_yao() {
+    let h = parse_hand("123m 789m 111s 999p 东");
+    let an = analyze(&h, &[], 27, 27);
+    let w = by_name(&an, "东");
+    for (n, v) in [("全带幺", 4), ("双暗刻", 2), ("老少副", 1), ("单钓将", 1), ("门前清", 2)] {
+        assert!(has(w, n), "缺 {}: {:?}", n, names(w));
+        assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
+    }
+    assert_eq!(
+        w.fans.iter().filter(|f| f.name == "幺九刻").count(),
+        2,
+        "应有两处幺九刻: {:?}",
+        names(w)
+    );
+}
+
+/// `全带五`（16）：每副面子与将牌都含 5；应吞 `断幺`/`无字`（互斥表 `:932`）。
+#[test]
+fn r07b4_quan_dai_wu() {
+    let h = parse_hand("345m 456s 567p 555m 5s");
+    let an = analyze(&h, &[], 27, 27);
+    let w = by_name(&an, "5条");
+    for (n, v) in [("全带五", 16), ("三色三步高", 6), ("四归一", 2), ("单钓将", 1), ("门前清", 2)] {
+        assert!(has(w, n), "缺 {}: {:?}", n, names(w));
+        assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
+    }
+    for n in ["断幺", "无字"] {
+        assert!(!has(w, n), "全带五 应吞 {}: {:?}", n, names(w));
+    }
+}
+
+/// `全中`（24）：全部 4/5/6；应吞 `断幺`/`无字`（互斥表 `:930`）。
+#[test]
+fn r07b4_quan_zhong() {
+    let h = parse_hand("456m 456s 456p 55m 66s");
+    let an = analyze(&h, &[], 27, 27);
+    let w = by_name(&an, "5万");
+    for (n, v) in [("全中", 24), ("三色三同顺", 8), ("四归一", 2), ("门前清", 2)] {
+        assert!(has(w, n), "缺 {}: {:?}", n, names(w));
+        assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
+    }
+    for n in ["断幺", "无字"] {
+        assert!(!has(w, n), "全中 应吞 {}: {:?}", n, names(w));
+    }
+}
+
+/// `全双刻`（24）：全部双数刻子 + 双数将；应吞 `碰碰和`/`断幺`（互斥表 `:925`）。
+/// 点炮为 `三暗刻`、自摸为 `四暗刻`（四暗刻吞 碰碰和/三暗刻）。
+#[test]
+fn r07b4_quan_shuang_ke() {
+    let h = parse_hand("222m 444s 666p 88m 22s");
+    let an = analyze(&h, &[], 27, 27);
+    let w = by_name(&an, "8万");
+    for (n, v) in [("全双刻", 24), ("三暗刻", 16), ("门前清", 2)] {
+        assert!(has(w, n), "缺 {}: {:?}", n, names(w));
+        assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
+    }
+    for n in ["碰碰和", "断幺"] {
+        assert!(!has(w, n), "全双刻 应吞 {}: {:?}", n, names(w));
+    }
+    // 自摸分支：四暗刻 成立并吞 碰碰和/三暗刻
+    assert!(has_t(w, "四暗刻"), "自摸应四暗刻: {:?}", names_t(w));
+    assert_eq!(val_t(w, "全双刻"), 24);
+    assert!(!has_t(w, "碰碰和"), "四暗刻应吞碰碰和: {:?}", names_t(w));
+}
+
+// ==================== 和法与副露番 ====================
+
+/// `全求人`（6）：4 副**明**副露 + 单钓，**仅荣和**成立；自摸时反而不计（互斥/成立条件差异）。
+#[test]
+fn r07b4_quan_qiu_ren() {
+    let h = parse_hand("5p");
+    let melds = vec![
+        Meld::chi(0),   // 吃 123万
+        Meld::pon(13),  // 碰 5条
+        Meld::pon(24),  // 碰 8筒
+        Meld::pon(17),  // 碰 9条
+    ];
+    let an = analyze(&h, &melds, 27, 27);
+    let w = by_name(&an, "5筒");
+    for (n, v) in [("全求人", 6), ("幺九刻", 1), ("无字", 1)] {
+        assert!(has(w, n), "缺 {}: {:?}", n, names(w));
+        assert_eq!(val(w, n), v, "{} 番值: {:?}", n, names(w));
+    }
+    assert!(!has(w, "门前清"), "非门清: {:?}", names(w));
+    assert!(!has(w, "单钓将"), "全求人 应吞 单钓将: {:?}", names(w));
+    // 自摸：全求人不成立，改为 单钓将 + 自摸
+    assert!(!has_t(w, "全求人"), "全求人仅荣和: {:?}", names_t(w));
+    assert!(has_t(w, "单钓将") && has_t(w, "自摸"), "自摸应 单钓将+自摸: {:?}", names_t(w));
+}
+
+/// `自摸`（1）：**非门清**手自摸得 `自摸`；门清手改计 `不求人`（此处以非门清手锁 `自摸` 之名）。
+#[test]
+fn r07b4_zi_mo() {
+    let h = parse_hand("123m 456s 789p 9s");
+    let an = analyze(&h, &[Meld::kan(22, true)], 27, 27);
+    let w = by_name(&an, "9条");
+    assert!(!has(w, "自摸"), "点和不得计自摸: {:?}", names(w));
+    assert!(has_t(w, "自摸"), "自摸应计自摸: {:?}", names_t(w));
+    assert_eq!(val_t(w, "自摸"), 1);
+    assert!(!has_t(w, "不求人"), "非门清不计不求人: {:?}", names_t(w));
+    // 门清对照：应以 不求人 取代 自摸
+    let h2 = parse_hand("789m 789m 789s 99s 88p");
+    let an2 = analyze(&h2, &[], 27, 27);
+    let w2 = by_name(&an2, "9条");
+    assert!(has_t(w2, "不求人") && !has_t(w2, "自摸"), "门清自摸应为不求人: {:?}", names_t(w2));
+}
+
+// ==================== 不靠系 ====================
+
+/// `全不靠`（12）：三门针织牌 + 字牌；听 9筒 时同时成立 `组合龙`（12）。
+#[test]
+fn r07b4_quan_bu_kao() {
+    let h = parse_hand("147m 258s 36p 东南西北中");
+    let an = analyze(&h, &[], 27, 27);
+    let w9 = by_name(&an, "9筒");
+    assert!(has(w9, "全不靠") && val(w9, "全不靠") == 12, "{:?}", names(w9));
+    assert!(has(w9, "组合龙") && val(w9, "组合龙") == 12, "全不靠+组合龙 可并列: {:?}", names(w9));
+    // 听字牌（发/白）时只有 全不靠
+    let wf = by_name(&an, "发");
+    assert!(has(wf, "全不靠") && !has(wf, "组合龙"), "{:?}", names(wf));
+}
+
+/// `七星不靠`（24）：全不靠 + 七种字牌齐全。
+#[test]
+fn r07b4_qi_xing_bu_kao() {
+    let h = parse_hand("147m 258s 东南西北中发白");
+    let an = analyze(&h, &[], 27, 27);
+    for t in ["3筒", "6筒", "9筒"] {
+        let w = by_name(&an, t);
+        assert!(has(w, "七星不靠") && val(w, "七星不靠") == 24, "{}: {:?}", t, names(w));
+        assert!(!has(w, "全不靠"), "七星不靠应吞全不靠: {:?}", names(w));
+    }
+}
+
+// ==================== 观察：`和绝张` 无公开番表（API 限制，B2 已升级） ====================
+
+/// **观察（B2 已升级）**：`WaitResult` 只公开 `fans`（点和）与 `fans_tsumo`（自摸）两张番表；
+/// 绝张两栏（点和绝张 / 自摸绝张）的番表在 `src/calc.rs:239-240` 被 `let (lt, _) = score(...)` **丢弃**
+/// ⇒ **无法**对 `和绝张` 做名字级断言（无 src 改动不可解）。
+///
+/// 本用例改为**数值护栏**：对 `can_last == true` 的方向，绝张栏应比同方式常规栏**多 4 番**
+/// （点炮 `L = N + 4`、自摸 `TL = T + 4`，与既有口径一致）。
+/// **建议**：若要求 `和绝张` 具备名字级覆盖，需在 `WaitResult` 增加 `fans_last`/`fans_tsumo_last`
+/// （属 `src/` 改动，**由 Lead/开发决定，测试方未改**）。
+#[test]
+fn r07b4_observation_he_jue_zhang_has_no_public_fan_list() {
+    let h = parse_hand("123m123m 456s 789p 9p");
+    let an = analyze(&h, &[], 27, 27);
+    let w = by_name(&an, "6筒");
+    assert!(w.can_last, "该方向应可绝张: {:?}", w);
+    assert_eq!(w.last, w.normal + 4, "点炮绝张 = 点和 + 4（和绝张 4 番）: {:?}", w);
+    assert_eq!(
+        w.tsumo_last,
+        w.tsumo + 4,
+        "自摸绝张 = 自摸 + 4（和绝张 4 番）: {:?}",
+        w
+    );
+}

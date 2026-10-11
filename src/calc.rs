@@ -87,6 +87,18 @@ pub struct WaitResult {
     pub fans: Vec<Fan>,
     /// 自摸时的完整番表（与 fans 可能因暗刻/自摸类番而不同）
     pub fans_tsumo: Vec<Fan>,
+    /// 点和绝张时的完整番表（与 last 数值同源）
+    ///
+    /// 取值语义：**无条件按 score(WinMode::LastTile) 的结果填充**，与 last 数值同源同规则——
+    /// 即使 can_last == false（该张已在暗牌里握着、绝张世界不成立），本字段仍照常计算并存表，
+    /// 不会因 can_last 为 false 而清空；能否适用由消费方按 can_last / verdict() 判断，
+    /// 与今天 last / tsumo_last 数值在 can_last == false 时照样存储、由展示层决定显示 `—` 的用法一致。
+    pub fans_last: Vec<Fan>,
+    /// 自摸绝张时的完整番表（与 tsumo_last 数值同源）
+    ///
+    /// 取值语义同 fans_last：**无条件按 score(WinMode::TsumoLast) 的结果填充**，与 tsumo_last
+    /// 数值一一对应，不因 can_last == false 而清空；适用性由消费方按 can_last / verdict() 判断。
+    pub fans_tsumo_last: Vec<Fan>,
     pub special: bool,
 }
 
@@ -217,8 +229,12 @@ pub fn analyze(
         let mut best = [0u32; 4]; // normal, tsumo, last, tsumo_last
         let mut best_fans: Vec<Fan> = Vec::new();
         let mut best_fans_tsumo: Vec<Fan> = Vec::new();
+        let mut best_fans_last: Vec<Fan> = Vec::new();
+        let mut best_fans_tsumo_last: Vec<Fan> = Vec::new();
         let mut best_normal = i64::MIN;
         let mut best_tsumo = i64::MIN;
+        let mut best_last = i64::MIN;
+        let mut best_tsumo_last = i64::MIN;
         let mut special = false;
 
         for d in decomps.iter() {
@@ -236,8 +252,8 @@ pub fn analyze(
             };
             let (n, nf) = score(&ctx, WinMode::Normal);
             let (ts, tf) = score(&ctx, WinMode::Tsumo);
-            let (lt, _) = score(&ctx, WinMode::LastTile);
-            let (tl, _) = score(&ctx, WinMode::TsumoLast);
+            let (lt, lf) = score(&ctx, WinMode::LastTile);
+            let (tl, tlf) = score(&ctx, WinMode::TsumoLast);
             best[0] = best[0].max(n);
             best[1] = best[1].max(ts);
             best[2] = best[2].max(lt);
@@ -251,6 +267,14 @@ pub fn analyze(
                 best_tsumo = ts as i64;
                 best_fans_tsumo = tf;
             }
+            if (lt as i64) > best_last {
+                best_last = lt as i64;
+                best_fans_last = lf;
+            }
+            if (tl as i64) > best_tsumo_last {
+                best_tsumo_last = tl as i64;
+                best_fans_tsumo_last = tlf;
+            }
         }
 
         waits.push(WaitResult {
@@ -262,6 +286,8 @@ pub fn analyze(
             can_last: concealed[t] == 0,
             fans: best_fans,
             fans_tsumo: best_fans_tsumo,
+            fans_last: best_fans_last,
+            fans_tsumo_last: best_fans_tsumo_last,
             special,
         });
     }
