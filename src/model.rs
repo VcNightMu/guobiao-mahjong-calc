@@ -1,7 +1,7 @@
 //! 输入数据模型：副露、门清判定
 
 use crate::decompose::{Set, SetKind};
-use crate::tiles::{tile_name, total, Counts, NUM_TILES};
+use crate::tiles::{tile_name, total, Counts};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MeldKind {
@@ -92,9 +92,9 @@ pub fn validate_counts(c: &Counts, melds: &[Meld]) -> Result<(), InputError> {
             all[t] = all[t].saturating_add(1);
         }
     }
-    for t in 0..NUM_TILES {
-        if all[t] > 4 {
-            return Err(InputError::Over4(t, all[t]));
+    for (t, &v) in all.iter().enumerate() {
+        if v > 4 {
+            return Err(InputError::Over4(t, v));
         }
     }
     let expected = 13u32.saturating_sub(3 * melds.len() as u32);
