@@ -20,10 +20,20 @@ pub struct Set {
 
 impl Set {
     pub fn run(tile: usize) -> Self {
-        Set { kind: SetKind::Run, tile, is_kan: false, open: false }
+        Set {
+            kind: SetKind::Run,
+            tile,
+            is_kan: false,
+            open: false,
+        }
     }
     pub fn triplet(tile: usize) -> Self {
-        Set { kind: SetKind::Triplet, tile, is_kan: false, open: false }
+        Set {
+            kind: SetKind::Triplet,
+            tile,
+            is_kan: false,
+            open: false,
+        }
     }
     pub fn is_run(&self) -> bool {
         self.kind == SetKind::Run
@@ -61,10 +71,18 @@ pub struct Decomp {
 
 impl Decomp {
     pub fn standard(pair: usize, sets: Vec<Set>) -> Self {
-        Decomp { pair: Some(pair), sets, special: None }
+        Decomp {
+            pair: Some(pair),
+            sets,
+            special: None,
+        }
     }
     pub fn special(s: Special) -> Self {
-        Decomp { pair: None, sets: Vec::new(), special: Some(s) }
+        Decomp {
+            pair: None,
+            sets: Vec::new(),
+            special: Some(s),
+        }
     }
 }
 
