@@ -375,3 +375,72 @@ fn plan_golden_baseline_honor_and_mirrors() {
         ],
     );
 }
+// ==================== T3-06：目标物理可达性（暗牌 ± drop/need + 副露已占 ≤ 4） ====================
+
+/// T3-06：`--plan` 的每个方向，其目标在「暗牌 ± drop/need + 副露已占」下每张 ≤4。
+fn assert_targets_feasible(hand: &str, melds: &[Meld], dirs: &[Direction]) {
+    let h = parse_hand(hand);
+    let mut mpt = [0u8; 34];
+    for m in melds {
+        for t in m.tiles() {
+            mpt[t] = mpt[t].saturating_add(1);
+        }
+    }
+    for d in dirs {
+        for t in 0..34usize {
+            let dropped = d.drop.iter().filter(|&&x| x == t).count() as u8;
+            let needed = d.need.iter().filter(|&&x| x == t).count() as u8;
+            let target = h[t].saturating_sub(dropped).saturating_add(needed);
+            assert!(
+                target.saturating_add(mpt[t]) <= 4,
+                "方向 {} 目标在 {} 需 {} 张（>4）",
+                d.name,
+                tile_name(t),
+                target
+            );
+        }
+    }
+}
+
+#[test]
+fn plan_targets_are_physically_reachable_with_kans() {
+    let hand = "5p";
+    let melds = vec![
+        Meld::kan(0, true),
+        Meld::kan(8, true),
+        Meld::kan(9, true),
+        Meld::kan(17, true),
+    ];
+    let ds = plan(&parse_hand(hand), &melds, 2);
+    assert_targets_feasible(hand, &melds, &ds);
+    if let Some(d) = find(&ds, "清幺九") {
+        assert!(
+            !names(&d.need).contains("1万"),
+            "清幺九 不得要求已被杠占满的 1万：{:?}",
+            d
+        );
+    }
+}
+
+#[test]
+fn plan_targets_never_exceed_four_copies_without_melds() {
+    let hand = "1111m 222m 333m 44m 5m";
+    let ds = plan(&parse_hand(hand), &[], 2);
+    assert_targets_feasible(hand, &[], &ds);
+    for d in &ds {
+        assert!(
+            !names(&d.need).contains("1万 1万"),
+            "不得给出需 6 张 1万 的目标：{:?}",
+            d
+        );
+    }
+}
+
+#[test]
+fn plan_keeps_reachable_qingyaojiu_direction() {
+    let hand = "111m 999m 111s 99s 中中";
+    let ds = plan(&parse_hand(hand), &[], 2);
+    let m = get(&ds, "清幺九");
+    assert_eq!(m.distance, 2, "可达方向不得被误杀：{:?}", m);
+    assert_targets_feasible(hand, &[], &ds);
+}

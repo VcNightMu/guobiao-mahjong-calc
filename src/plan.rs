@@ -142,6 +142,17 @@ fn has_five_gates(t: &Counts, melds: &[Meld]) -> bool {
         && (31..=33).any(|x| c[x] > 0)
 }
 
+/// T3-06：候选目标可达性——目标牌张 + 副露/杠已占张数 不得超过每种 4 张。
+fn target_feasible(target: &Counts, melds: &[Meld]) -> bool {
+    let mut mpt = [0u8; NUM_TILES];
+    for m in melds {
+        for t in m.tiles() {
+            mpt[t] = mpt[t].saturating_add(1);
+        }
+    }
+    (0..NUM_TILES).all(|t| target[t].saturating_add(mpt[t]) <= 4)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn rec(
     i: usize,
@@ -191,7 +202,7 @@ fn rec(
                 }
             }
             let c = cov + gain(hand, cur, p, 2);
-            if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
+            if target_feasible(&t, melds) && best.as_ref().is_none_or(|(bc, _)| c > *bc) {
                 *best = Some((c, t));
             }
         }
@@ -764,7 +775,8 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                         }
                         t[p] = t[p].saturating_add(2);
                         let c = cover(hand, &t);
-                        if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
+                        if target_feasible(&t, melds) && best.as_ref().is_none_or(|(bc, _)| c > *bc)
+                        {
                             best = Some((c, t));
                         }
                     }
@@ -1080,10 +1092,13 @@ pub fn quandaiwu(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> {
     }
     let mut best: Option<(u32, Counts)> = None;
     let mut cur = counts();
-    go_qdw(0, left, &sets, &mut cur, 0, hand, &mut best);
+    go_qdw(0, left, &sets, &mut cur, 0, hand, melds, &mut best);
     best
 }
 
+// go_qdw 的 8 个参数全为原始类型/不可变借用（递归深度优先搜索的内部辅助函数），
+// 仅因 T3-06 增加了「副露已占张数」所需的 melds 形参而达到 8 个；拆结构体不值得，故显式 allow。
+#[allow(clippy::too_many_arguments)]
 fn go_qdw(
     i: usize,
     left: usize,
@@ -1091,6 +1106,7 @@ fn go_qdw(
     cur: &mut Counts,
     cov: u32,
     hand: &Counts,
+    melds: &[Meld],
     best: &mut Option<(u32, Counts)>,
 ) {
     if left == 0 {
@@ -1099,7 +1115,7 @@ fn go_qdw(
             let mut t = *cur;
             t[p] = t[p].saturating_add(2);
             let c = cov + gain(hand, cur, p, 2);
-            if best.as_ref().is_none_or(|(bc, _)| c > *bc) {
+            if target_feasible(&t, melds) && best.as_ref().is_none_or(|(bc, _)| c > *bc) {
                 *best = Some((c, t));
             }
         }
@@ -1112,7 +1128,7 @@ fn go_qdw(
             g += gain(hand, cur, t, 1);
             cur[t] += 1;
         }
-        go_qdw(k, left - 1, sets, cur, cov + g, hand, best);
+        go_qdw(k, left - 1, sets, cur, cov + g, hand, melds, best);
         for &t in s.iter() {
             cur[t] -= 1;
         }
