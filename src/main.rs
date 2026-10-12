@@ -68,6 +68,7 @@ fn main() {
     let mut plan_mode = false;
     let mut round_set = false;
     let mut seat_set = false;
+    let mut meld_seen = false;
 
     let mut i = 0;
     while i < args.len() {
@@ -79,9 +80,41 @@ fn main() {
                     die(&format!("缺少参数: {}", a));
                 }
                 let c = parse_or_die(&args[i]);
-                let t = match first_tile(&c) {
-                    Some(t) => t,
-                    None => die(&format!("{} 后面没有有效牌", a)),
+                let n = total(&c);
+                let t = if a == "--chi" {
+                    // 吃有两种合法写法：① 单张 = 该顺子首张（如 `--chi 7p`）；② 三张连续（如 `--chi 234m`）。
+                    // 两者都要求整副顺子落在同一门内、且不越界到字牌区（`--chi 8p` 会造出「8筒 9筒 东」⇒ 必须拒绝）。
+                    let ts: Vec<usize> = (0..NUM_TILES).filter(|&x| c[x] > 0).collect();
+                    let ok = if n == 1 && ts.len() == 1 {
+                        let t0 = ts[0];
+                        suit(t0) != 3 && t0 % 9 <= 6
+                    } else {
+                        n == 3
+                            && ts.len() == 3
+                            && ts[1] == ts[0] + 1
+                            && ts[2] == ts[1] + 1
+                            && suit(ts[0]) == suit(ts[2])
+                            && suit(ts[0]) != 3
+                    };
+                    if !ok {
+                        die(&format!(
+                            "副露参数非法：吃需同花色三张连续（或该顺子首张，如 234m / 7p；收到 {}）",
+                            args[i]
+                        ));
+                    }
+                    ts[0]
+                } else {
+                    // 碰/杠：必须恰好 1 张（多牌 token 不得静默取首张）
+                    if n != 1 {
+                        die(&format!(
+                            "副露参数非法：碰/杠需恰好 1 张牌（收到 {}）",
+                            args[i]
+                        ));
+                    }
+                    match first_tile(&c) {
+                        Some(t) => t,
+                        None => die(&format!("{} 后面没有有效牌", a)),
+                    }
                 };
                 let meld = match a {
                     "--chi" => Meld::chi(t),
@@ -90,6 +123,7 @@ fn main() {
                     _ => Meld::kan(t, false),
                 };
                 melds.push(meld);
+                meld_seen = true;
             }
             "--round" => {
                 i += 1;
@@ -129,6 +163,12 @@ fn main() {
             other => {
                 if other.starts_with('-') {
                     die(&format!("未知参数: {}", other));
+                }
+                if meld_seen {
+                    die(&format!(
+                        "副露选项之后不能再给散牌（手牌须写在所有选项之前）：{}",
+                        other
+                    ));
                 }
                 hand.push_str(other);
                 hand.push(' ');
