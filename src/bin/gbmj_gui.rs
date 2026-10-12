@@ -209,6 +209,15 @@ impl App {
                 self.hand = parse_hand("123m 456m 789m 123s"); // 12 张（应 10）
                 self.melds = vec![Meld::kan(26, false)]; // 暗杠 9筒
             }
+            Ok("23") => {
+                // R3：吃累积中点「×」删一副露 ⇒ `pending_chi` / `hint` 必须清空；
+                // 期望读图：无「吃：…（再点 N 张）」进度行、无提示行、模式高亮仍在「吃」（半复位裁定）、不 panic。
+                self.hand = parse_hand("123m 456m 789m 123s 5s"); // 13 张（删完副露后正好）
+                self.melds = vec![Meld::pon(0)]; // 待删的那一组（碰 1万）
+                self.mode = MeldMode::Chi;
+                self.click_tile(0); // 吃：1万 ⇒ 产生 pending_chi=[0] 与进度 hint
+                self.remove_meld(0); // 与 UI「×」同一条代码路径
+            }
             _ => {
                 self.hand = parse_hand("555p666p777p 555s 6s");
             }
@@ -251,6 +260,18 @@ impl App {
             // 副露 >4 组（None）或张数不符 ⇒ 不计算，绝不再把 5 组副露送进 analyze
             _ => self.analysis = None,
         }
+    }
+
+    /// 删除第 i 组副露：与「清空」保持一致的清理集合（`pending_chi`/`hint` 必须清），
+    /// 但**按既有半复位裁定不复位 `mode`**。UI 的「×」与 `GBMJ_DEMO=23` 都走这里。
+    fn remove_meld(&mut self, i: usize) {
+        if i >= self.melds.len() {
+            return;
+        }
+        self.melds.remove(i);
+        self.pending_chi.clear();
+        self.hint.clear();
+        self.dirty = true;
     }
 
     fn click_tile(&mut self, t: usize) {
@@ -386,8 +407,7 @@ impl App {
                     });
                 }
                 if let Some(i) = remove {
-                    self.melds.remove(i);
-                    self.dirty = true;
+                    self.remove_meld(i);
                 }
                 if self.melds.is_empty() {
                     ui.weak("（无副露）");
