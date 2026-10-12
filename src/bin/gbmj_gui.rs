@@ -116,25 +116,25 @@ impl App {
                 self.hand = parse_hand("123m 456s 789p 1p");
             }
             Ok("11") => {
-                // 守卫 :159「{牌} 已用满 4 张」：手牌 1万×4（used==4），None 模式再点 1万
+                // 覆盖守卫「{牌} 已用满 4 张」（click_tile 的 MeldMode::None 分支）：手牌 1万×4（used==4），None 模式再点 1万
                 self.hand = parse_hand("1111m 234m 567m 99s 5p");
                 self.mode = MeldMode::None;
                 self.click_tile(0); // 1万
             }
             Ok("12") => {
-                // 守卫 :167「碰 {牌} 会超过 4 张上限」：2万 已占 2 张，Pon 模式再点它 ⇒ 2+3>4
+                // 覆盖守卫「碰 {牌} 会超过 4 张上限」（click_tile 的 MeldMode::Pon 分支）：2万 已占 2 张，Pon 模式再点它 ⇒ 2+3>4
                 self.hand = parse_hand("22m 345m 678m 123s 99s");
                 self.mode = MeldMode::Pon;
                 self.click_tile(1); // 2万
             }
             Ok("13") => {
-                // 守卫 :177「杠 {牌} 会超过 4 张上限」：2万 已占 1 张，明杠再点它 ⇒ 1+4>4（暗杠共用同一守卫与文案）
+                // 覆盖守卫「杠 {牌} 会超过 4 张上限」（click_tile 的 MingKan | AnKan 分支）：2万 已占 1 张，明杠再点它 ⇒ 1+4>4（暗杠共用同一守卫与文案）
                 self.hand = parse_hand("2m 345m 678m 123s 999s");
                 self.mode = MeldMode::MingKan;
                 self.click_tile(1); // 2万
             }
             Ok("14") => {
-                // 守卫 :211「吃：需同花色三张连续」：Chi 模式依次点 1万/3万/5万（同花色但不连续）
+                // 覆盖守卫「吃：需同花色三张连续（如 2万3万4万）」（click_tile 的 Chi 形状校验）：Chi 模式依次点 1万/3万/5万（同花色但不连续）
                 self.hand = parse_hand("123m 456m 789m 123s 5s");
                 self.mode = MeldMode::Chi;
                 self.click_tile(0); // 1万
@@ -142,7 +142,7 @@ impl App {
                 self.click_tile(4); // 5万
             }
             Ok("15") => {
-                // 守卫 :208「吃 超出 4 张上限」：2万 已占 4 张，Chi 点 2万3万4万（形状合法但 2万再 +1 超 4）
+                // 覆盖守卫「吃 超出 4 张上限」（click_tile 的 Chi 四张上限校验）：2万 已占 4 张，Chi 点 2万3万4万（形状合法但 2万再 +1 超 4）
                 self.hand = parse_hand("2222m 34m 567m 99s 55p");
                 self.mode = MeldMode::Chi;
                 self.click_tile(1); // 2万
