@@ -187,6 +187,39 @@ fn san_an_ke_zero() {
         "明碰不得充当暗刻源: {:?}",
         ds_pon.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
     );
+
+    // T74：`Carrier::Concealed` 正例——暗杠不是「被承载」，而是由 `ankan` 单独扣除（need3 = 3 - ankan），
+    // 故「暗杠 + 2 暗刻」仍应给出 三暗刻。
+    let h_kan = parse_hand("222m333m99s55p");
+    assert_eq!(total(&h_kan), 10, "10 张暗牌 + 1 副暗杠");
+    let ds_kan = plan(&h_kan, &[Meld::kan(0, false)], 2);
+    let san = find(&ds_kan, "三暗刻")
+        .unwrap_or_else(|| panic!("暗杠 + 2 暗刻 应仍有三暗刻（T74）: {:?}", ds_kan));
+    assert_eq!(san.value, 16, "{:?}", san);
+    assert_eq!(san.distance, 0, "{:?}", san);
+
+    // T79/F7a：`ankan == 3`（need3 = 0）时方向**仍应生成**——`combos(full, 0)` 返回 `[[]]` ⇒ `forced = []`，
+    // 方向给出「差0 + 该补的将牌」。修复前 `if ankan < 3` 把整块跳过 ⇒ 恒缺。
+    let h3 = parse_hand("5567p");
+    assert_eq!(total(&h3), 4, "4 张暗牌 + 3 副暗杠");
+    let ds3 = plan(
+        &h3,
+        &[
+            Meld::kan(0, false),
+            Meld::kan(1, false),
+            Meld::kan(2, false),
+        ],
+        2,
+    );
+    let s3 = find(&ds3, "三暗刻")
+        .unwrap_or_else(|| panic!("3 副暗杠（need3=0）应仍有三暗刻（T79/F7a）: {:?}", ds3));
+    assert_eq!(s3.value, 16, "{:?}", s3);
+    assert_eq!(s3.distance, 0, "{:?}", s3);
+    assert_eq!(
+        s3.need.iter().filter(|&&t| t == 22).count(),
+        1,
+        "need 应为 1 张 5筒: {s3:?}"
+    );
 }
 
 #[test]
@@ -205,6 +238,39 @@ fn si_an_ke_zero() {
         find(&ds4, "四暗刻").is_some(),
         "四张同牌应可作暗刻源（T52/F5）: {:?}",
         ds4.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
+    );
+
+    // T74：`Carrier::Concealed` 正例——「暗杠 + 3 暗刻」应给出 四暗刻（暗杠由 `ankan` 计入）。
+    let h_kan = parse_hand("222m333m444m9s");
+    assert_eq!(total(&h_kan), 10, "10 张暗牌 + 1 副暗杠");
+    let ds_kan = plan(&h_kan, &[Meld::kan(18, false)], 2);
+    let si = find(&ds_kan, "四暗刻")
+        .unwrap_or_else(|| panic!("暗杠 + 3 暗刻 应有四暗刻（T74）: {:?}", ds_kan));
+    assert_eq!(si.value, 64, "{:?}", si);
+    assert_eq!(si.distance, 0, "{:?}", si);
+
+    // T79/F7b：`ankan == 4`（need4 = 0）时方向**仍应生成**（`combos(full, 0) = [[]]` ⇒ `forced = []`）。
+    // 修复前 `if ankan < 4` 把整块跳过 ⇒ 恒缺；引擎默认模式该手确实计 `四暗刻64`。
+    let h4k = parse_hand("5p");
+    assert_eq!(total(&h4k), 1, "1 张暗牌 + 4 副暗杠");
+    let ds4k = plan(
+        &h4k,
+        &[
+            Meld::kan(0, false),
+            Meld::kan(1, false),
+            Meld::kan(2, false),
+            Meld::kan(3, false),
+        ],
+        2,
+    );
+    let s4k = find(&ds4k, "四暗刻")
+        .unwrap_or_else(|| panic!("4 副暗杠（need4=0）应仍有四暗刻（T79/F7b）: {:?}", ds4k));
+    assert_eq!(s4k.value, 64, "{:?}", s4k);
+    assert_eq!(s4k.distance, 0, "{:?}", s4k);
+    assert_eq!(
+        s4k.need.iter().filter(|&&t| t == 22).count(),
+        1,
+        "need 应为 1 张 5筒: {s4k:?}"
     );
 }
 
@@ -270,6 +336,94 @@ fn da_san_yuan_and_xiao_san_yuan() {
         "吃 123m 不得充当 111m 刻子: {:?}",
         tk
     );
+
+    // ---- T74：杠承载（明杠/暗杠）充当「刻子型」强制面子 ----
+    // 依据：`meld_carries` 对刻子型 forced 接受 `Pon | Kan`，与 `fans.rs::trips_of` 只过滤
+    // `is_triplet()`（杠的 kind 亦为 Triplet）一致 ⇒ 明杠/暗杠都能承载一副刻子面子。
+    let kan_cases: [(&str, &str, Vec<Meld>, u32); 4] = [
+        // 明杠 1筒 承载 三同刻 的 111筒
+        ("三同刻", "111m111s99p55p", vec![Meld::kan(18, true)], 16),
+        // 暗杠 北 承载 三风刻 的 北北北
+        (
+            "三风刻",
+            "南南南西西西99p55p",
+            vec![Meld::kan(30, false)],
+            12,
+        ),
+        // 暗杠 东 承载 大四喜 的 东东东
+        (
+            "大四喜",
+            "南南南西西西北北北中",
+            vec![Meld::kan(27, false)],
+            88,
+        ),
+        // 双明杠 中/发 承载 大三元 的两副箭刻
+        (
+            "大三元",
+            "白白白东东5m5m",
+            vec![Meld::kan(31, true), Meld::kan(32, true)],
+            88,
+        ),
+    ];
+    for (name, hand, melds, value) in kan_cases {
+        let dirs = plan(&parse_hand(hand), &melds, 2);
+        let d = find(&dirs, name)
+            .unwrap_or_else(|| panic!("{} 应由杠承载后出现（T74）: {:?}", name, dirs));
+        assert_eq!(d.value, value, "{} 番值: {:?}", name, d);
+        assert!(d.distance <= 2, "{} 距离: {:?}", name, d);
+    }
+    // ---- T74 反例：杠不得承载「顺子型」强制面子 ----
+    // 两手的 1万/9万 已被杠占满 4 张 ⇒ 顺子 123m / 789m 物理不可达，清龙必须不出现；
+    // 若 `meld_carries` 误把杠当作顺子面子（少一副顺子），该方向就会冒出来。
+    let kan_run_neg: [(&str, Vec<Meld>, &str); 2] = [
+        ("456m789m11p22p", vec![Meld::kan(0, true)], "1万明杠"),
+        ("123m456m11p22p", vec![Meld::kan(8, false)], "9万暗杠"),
+    ];
+    for (hand, melds, label) in kan_run_neg {
+        let dirs = plan(&parse_hand(hand), &melds, 2);
+        assert!(
+            find(&dirs, "清龙").is_none(),
+            "{label}：杠不得承载顺子型强制面子，清龙不得出现: {:?}",
+            dirs.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
+        );
+    }
+
+    // ---- T75：多副露「分别承载」同一骨架番的多个强制面子 ----
+    // 修复前 `plan()` 有一条「碰/杠 ≥ 2 ⇒ 骨架一概跳过」的前置守卫（其前提是强制面子只能由暗牌成形），
+    // F2 之后强制面子可由副露承载 ⇒ 该守卫造成假阴性：2 个碰各承载一个强制刻子时方向恒缺。
+    // 复现 A：碰 1m / 碰 2m 分别承载 111m / 222m，暗牌 333m/444m 成形 + 1筒作将 ⇒ 一色四节高 差0、need = 1 张 1筒。
+    // 同类 1：4 个碰全部承载 111m/222m/333m/444m ⇒ 一色四节高 仍应出现（4 副露形态）。
+    let t75: [(&str, &str, Vec<Meld>, u32); 2] = [
+        (
+            "一色四节高",
+            "333m444m1p",
+            vec![Meld::pon(0), Meld::pon(1)],
+            48,
+        ),
+        (
+            "一色四节高",
+            "1p",
+            vec![Meld::pon(0), Meld::pon(1), Meld::pon(2), Meld::pon(3)],
+            48,
+        ),
+    ];
+    for (name, hand, melds, value) in t75 {
+        let dirs = plan(&parse_hand(hand), &melds, 2);
+        let d = find(&dirs, name)
+            .unwrap_or_else(|| panic!("{name} 应由多副露分别承载后出现（T75）: {dirs:?}"));
+        assert_eq!(d.value, value, "{name} 番值: {d:?}");
+        assert_eq!(d.distance, 0, "{name} 距离: {d:?}");
+        assert_eq!(
+            d.need.iter().filter(|&&t| t == 18).count(),
+            1,
+            "{name} 的 need 应为 1 张 1筒: {d:?}"
+        );
+    }
+    // 同类 2：三色三节高（碰1m / 碰2s 分别承载 111m / 222s）⇒ 修复前恒缺。
+    let ds_ss = plan(&parse_hand("333p444p1m"), &[Meld::pon(0), Meld::pon(10)], 2);
+    let ss = find(&ds_ss, "三色三节高").expect("三色三节高 应由 2 副露承载后出现（T75）");
+    assert_eq!(ss.value, 8, "{ss:?}");
+    assert_eq!(ss.distance, 1, "{ss:?}");
 }
 
 #[test]

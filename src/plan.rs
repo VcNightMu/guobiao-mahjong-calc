@@ -394,6 +394,8 @@ pub fn best_forced(
 }
 
 /// 七对：目标 7 个对子（4 张当两对）
+/// 结构性必然（T78 审计）：七对的和牌型恰为「7 个对子、不含任何面子（顺子/刻子）」，而任何副露都是一个
+/// 面子 ⇒ 有副露时不存在七对和牌型，故此早退不是粗粒度剪枝。
 pub fn seven_pairs(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> {
     if !melds.is_empty() || total(hand) != 13 {
         return None;
@@ -424,6 +426,7 @@ pub fn seven_pairs(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> {
 }
 
 /// 连七对：同一门花色连续 7 张各一对
+/// 结构性必然（T78 审计）：同七对——和牌型由 7 个对子构成、不含任何面子 ⇒ 有副露即不相容。
 pub fn seven_pairs_straight(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> {
     if !melds.is_empty() || total(hand) != 13 {
         return None;
@@ -445,6 +448,8 @@ pub fn seven_pairs_straight(hand: &Counts, melds: &[Meld]) -> Option<(u32, Count
 }
 
 /// 十三幺：13 种幺九牌各一张 + 其中一种作将
+/// 结构性必然（T78 审计）：和牌型由「13 种各 1 张 + 其中 1 张重复」构成，全是单张/一对、不含任何面子
+/// ⇒ 有副露即不相容。
 pub fn thirteen_orphans(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> {
     if !melds.is_empty() || total(hand) != 13 {
         return None;
@@ -468,6 +473,8 @@ pub fn thirteen_orphans(hand: &Counts, melds: &[Meld]) -> Option<(u32, Counts)> 
 }
 
 /// 全不靠 / 七星不靠：三花色各取 147/258/369 之一（互不错位）+ 字牌
+/// 结构性必然（T78 审计）：全不靠要求 14 张**两两不同**且同门内任意两张不相邻（见 `is_bu_kao` 的
+/// `x > 1 ⇒ false` 与相邻性检查）⇒ 任何副露（三张相同或同门三连）都会立刻破坏该形态。
 pub fn bu_kao(hand: &Counts, melds: &[Meld], seven_stars: bool) -> Option<(u32, Counts)> {
     if !melds.is_empty() || total(hand) != 13 {
         return None;
@@ -593,11 +600,11 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     }
 
     // ── 骨架系：顺子/刻子被番种钉死 ──
-    // 副露里已经有两个碰/杠时，骨架一概放不下（4 副面子装不下 3 个强制面子），直接跳过。
-    // 本守卫不只管顺子骨架（清龙/花龙/一色各式步高/一色各式同顺/三色同顺/双龙会），
-    // 也门控同一段里的刻子骨架（一色三节高/三色三节高/一色四节高）。
-    let pungs = melds.iter().filter(|m| m.kind != MeldKind::Chi).count();
-    if pungs < 2 {
+    // T75：**移除**旧的「碰/杠 ≥ 2 ⇒ 骨架一概放不下」前置守卫——F2 之后强制面子**可由副露承载**
+    // （`Carrier` 匹配），2 个碰仍可能放下 4 个强制刻子（2 副露承载 + 2 个暗牌面子），4 个碰甚至能全部承载；
+    // 故可行性一律交给 `best_forced` 的 `hand_forced.len() <= used` 早退判定（更弱也更准确）。
+    // 下面保留一层裸块只是为不动约 200 行缩进；语义上这里已无守卫。
+    {
         let perm3 = [
             [0, 1, 2],
             [0, 2, 1],
@@ -815,6 +822,11 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
             }
         }
         // 组合龙：147/258/369 九张不能错位 + 一副面子 + 将（可带一副副露）
+        // 结构性必然（T78 审计，附张数推导）：组合龙的和牌分解固定为「9 张针织 + 1 个面子 + 将」，
+        // 而 9 张针织**必须全部由暗牌提供**——针织在每门内取 {147}/{258}/{369}，同门内三张互不相邻
+        // 且两两不同 ⇒ 针织内部构不成任何面子；而「额外的 1 个面子」位至多由一副副露占用。
+        // 故暗牌位需求恒为 9（针织）+ 2（将）= 11；和牌态暗牌张数 = 14 − 3m（杠只会更少）
+        // ⇒ 需 14 − 3m ≥ 11 ⇒ m ≤ 1。m ≥ 2 时只剩 ≤8 个暗牌位，结构上放不下 9 张针织。
         if melds.len() <= 1 {
             for perm in PERMS.iter() {
                 let knit = knit_tiles(*perm);
@@ -867,7 +879,10 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         .count();
     // >= 3：四张同牌同样能提供一副暗刻（余张由 drop/need 处理）——`== 3` 会漏掉这类手（T52/F5）。
     let full: Vec<usize> = (0..NUM_TILES).filter(|&t| hand[t] >= 3).collect();
-    if ankan < 3 {
+    // T79/F7a：`ankan == 3` 时 `need3 == 0`，`combos(full, 0)` 返回 `[[]]`（见 `combos` 的 k==0 分支）
+    // ⇒ `forced = []` 同样能生成正确方向（差 0～max_dist、need 为手内该补的牌），故守卫放宽为 `<= 3`。
+    // 仅 `ankan == 4` 仍跳过：那时引擎按 if/else 记 四暗刻 而非 三暗刻（`fans.rs` 暗刻统计 4 ⇒ 四暗刻）。
+    if ankan <= 3 {
         let need3 = 3usize.saturating_sub(ankan);
         if full.len() >= need3 {
             for c in combos(&full, need3) {
@@ -885,22 +900,22 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
             }
         }
     }
-    if ankan < 4 {
-        let need4 = 4usize.saturating_sub(ankan);
-        if full.len() >= need4 {
-            for c in combos(&full, need4) {
-                let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
-                push_forced_concealed(
-                    &mut out,
-                    hand,
-                    melds,
-                    "四暗刻".into(),
-                    64,
-                    &forced,
-                    None,
-                    max_dist,
-                );
-            }
+    // T79/F7b：`ankan == 4` 时 `need4 == 0`，同样由 `combos(full, 0) = [[]]` 给出 `forced = []`
+    // ⇒ 方向应照常生成（本例「四暗刻 差0 补:5筒」）。`ankan <= 4` 恒真（副露上限 4 副），故不再设守卫。
+    let need4 = 4usize.saturating_sub(ankan);
+    if full.len() >= need4 {
+        for c in combos(&full, need4) {
+            let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
+            push_forced_concealed(
+                &mut out,
+                hand,
+                melds,
+                "四暗刻".into(),
+                64,
+                &forced,
+                None,
+                max_dist,
+            );
         }
     }
     // 明暗皆可的刻子系（碰/杠/点和补成都可以）
