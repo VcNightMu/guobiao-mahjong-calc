@@ -402,3 +402,6 @@ f2-rs-sanfengke-kan-bei	crafted-for-coverage#f2-rs=三风刻;meld=kan-bei;round=
 f2-rs-xiaosixi-north-east	crafted-for-coverage#f2-rs=小四喜;meld=pon-dong;round=north;seat=east	same-whole	whole	0	0	False	False	E3B0C44298FC1C14	E3B0C44298FC1C14	2A00430AC7144400	2A00430AC7144400
 f7-3ankan-5567p	crafted-for-coverage#F7-concealed-kans=3;hand=5567p	UNEXPECTED	whole	0	0	False	False	E3B0C44298FC1C14	E3B0C44298FC1C14	D8EA377CEF1839A1	0653396C1E852398
 f7-4ankan-5p	crafted-for-coverage#F7-concealed-kans=4;hand=5p	UNEXPECTED	whole	0	0	False	False	E3B0C44298FC1C14	E3B0C44298FC1C14	948956EE3217B87A	EDD253487CC85AEE
+f8-open-chi-nine	crafted-for-coverage#F8-nine-gates-menqing;meld=chi-123m	UNEXPECTED	section	0	0	True	True	8A21B558F5BA5401	0408A5BB4D58BB51	599E8A935BA852E8	9FAB1A827C5288D6
+f8-open-chi-nine-plan	crafted-for-coverage#F8-nine-gates-menqing;meld=chi-123m;plan	same-whole	whole	0	0	False	False	E3B0C44298FC1C14	E3B0C44298FC1C14	078A637658DC6B84	078A637658DC6B84
+f8-open-pon-nine	crafted-for-coverage#F8-nine-gates-menqing;meld=pon-1m	UNEXPECTED	section	0	0	True	True	0AE75800E30AFDDA	B322DEAA8622F122	32044B1F8417CA3B	AD737CD5B528B120

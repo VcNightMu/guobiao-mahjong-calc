@@ -402,3 +402,6 @@ f2-rs-sanfengke-kan-bei	crafted-for-coverage#f2-rs=三风刻;meld=kan-bei;round=
 f2-rs-xiaosixi-north-east	crafted-for-coverage#f2-rs=小四喜;meld=pon-dong;round=north;seat=east	diff:F2-carrier-forms	南南南西西西北北5m5m|--pon|东|--round|北|--seat|东|--plan
 f7-3ankan-5567p	crafted-for-coverage#F7-concealed-kans=3;hand=5567p	diff:F7-concealed-kans	5567p|--ankan|1m|--ankan|9m|--ankan|1s|--plan
 f7-4ankan-5p	crafted-for-coverage#F7-concealed-kans=4;hand=5p	diff:F7-concealed-kans	5p|--ankan|1m|--ankan|9m|--ankan|1s|--ankan|9s|--plan
+f8-open-chi-nine	crafted-for-coverage#F8-nine-gates-menqing;meld=chi-123m	diff:F8-nine-gates-menqing	111m|456m|789m|9m|--chi|123m
+f8-open-chi-nine-plan	crafted-for-coverage#F8-nine-gates-menqing;meld=chi-123m;plan	diff:F8-nine-gates-menqing	111m|456m|789m|9m|--chi|123m|--plan
+f8-open-pon-nine	crafted-for-coverage#F8-nine-gates-menqing;meld=pon-1m	diff:F8-nine-gates-menqing	1234567899m|--pon|1m

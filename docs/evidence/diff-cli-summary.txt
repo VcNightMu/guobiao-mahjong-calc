@@ -1,24 +1,24 @@
 diff-cli summary
-timestamp            : 2026-10-12T22:17:47+08:00
-old binary           : C:\Users\Administrator\AppData\Local\Temp\t80a\target\debug\gbmj.exe
-old binary mtime     : 2026-10-12T22:12:39
-old binary sha256    : E9854C44F479F081220677FFADE3C3135405497624988BEA7B54EEF4B9646325
+timestamp            : 2026-10-12T22:31:15+08:00
+old binary           : C:\Users\Administrator\AppData\Local\Temp\t82a\target\debug\gbmj.exe
+old binary mtime     : 2026-10-12T22:29:02
+old binary sha256    : 72E16A92EEC24C664E3A078D49F7C8FDE421982E41D2CEE80C06FC3B5DF93A9B
 new binary           : F:\AllCodes\guobiao-mahjong-calc\target\debug\gbmj.exe
-new binary mtime     : 2026-10-12T22:05:41
-new binary sha256    : 135BBEE31D5C2D7A0A34248EF2B86CF778F02F5F95C7A46CE4D41B2DA85E213C
+new binary mtime     : 2026-10-12T22:29:31
+new binary sha256    : D135F94FC70265985C7F69215F5192C219038C9EF77911E393447764C9FA13D2
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
-cases total          : 403
+cases total          : 406
 zero-diff            : 335
-expected-diff        : 68
+expected-diff        : 71
 UNEXPECTED-diff      : 0
 verdict-mismatch     : 0   (expected-diff case that was identical)
 
 top-5 slowest cases (max of old/new ms):
-  plan-10 old=3744ms new=3916ms
-  plan-04 old=3333ms new=3502ms
-  f5-sianke-quad-4tiles old=2703ms new=2960ms
-  plan-05 old=1379ms new=1472ms
-  plan-08 old=1324ms new=1221ms
+  plan-10 old=3827ms new=3764ms
+  plan-04 old=3681ms new=3354ms
+  f5-sianke-quad-4tiles old=3417ms new=2973ms
+  plan-05 old=1666ms new=1510ms
+  plan-08 old=1314ms new=1215ms
 
 noise-strip rule     : stdout/stderr redirected to files; lines matching the localised at-position banner, the localised invoking banner, "At line", "+ CategoryInfo", "+ FullyQualifiedErrorId" or "NativeCommandError" are removed (Base64-encoded zh patterns inside the script)
 result table         : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-results.tsv

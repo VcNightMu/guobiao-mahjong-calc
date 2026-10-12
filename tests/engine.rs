@@ -60,6 +60,44 @@ fn nine_gates_recognized() {
         assert!(has(w, "九莲宝灯"), "{:?}", names(w));
         assert!(w.can_win());
     }
+
+    // T81/F8（用户裁定「九莲要门清」）：带**明副露**的手不得再计 九莲宝灯。
+    // 反例 1（明吃 123m）：9万 行应保留 清龙16 / 四归一2，但不得含 九莲宝灯（修复前误计 88）。
+    let c2 = parse_hand("111m 456m 789m 9m");
+    let an2 = analyze(&c2, &[gbmj::model::Meld::chi(0)], 27, 27);
+    assert!(!an2.waits.is_empty(), "该明吃手应有结构听牌");
+    for w in &an2.waits {
+        assert!(!has(w, "九莲宝灯"), "明吃手不得计 九莲宝灯: {:?}", names(w));
+    }
+    let w9 = an2
+        .waits
+        .iter()
+        .find(|w| w.tile == 8)
+        .expect("应有 9万 听牌行");
+    assert!(has(w9, "清龙"), "反例手应保留 清龙: {:?}", names(w9));
+    assert!(has(w9, "四归一"), "反例手应保留 四归一: {:?}", names(w9));
+
+    // 反例 2（明碰 1m）：同样不得计 九莲宝灯。
+    let c3 = parse_hand("1234567899m");
+    let an3 = analyze(&c3, &[gbmj::model::Meld::pon(0)], 27, 27);
+    assert!(!an3.waits.is_empty(), "该明碰手应有结构听牌");
+    for w in &an3.waits {
+        assert!(!has(w, "九莲宝灯"), "明碰手不得计 九莲宝灯: {:?}", names(w));
+    }
+
+    // 边界（T81 报告）：**暗杠算门清**（`breaks_menqing` 只把 吃/碰/明杠 视为破门清），
+    // 但九莲判据另有 `total(all) == 14`，而杠会多出第 4 张 ⇒ 暗杠手同样计不出九莲（实测 0 次）。
+    // 故 `plan.rs` 的九莲 `melds.is_empty()` 与引擎口径**一致**（不构成 F9 漏向）。
+    let c4 = parse_hand("2345678999m");
+    let an4 = analyze(&c4, &[gbmj::model::Meld::kan(0, false)], 27, 27);
+    assert!(!an4.waits.is_empty(), "该暗杠手应有结构听牌");
+    for w in &an4.waits {
+        assert!(
+            !has(w, "九莲宝灯"),
+            "暗杠手也不应计 九莲宝灯（total(all) != 14）: {:?}",
+            names(w)
+        );
+    }
 }
 
 #[test]

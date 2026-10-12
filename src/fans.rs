@@ -357,6 +357,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     }
 
     // 九莲宝灯（单花色 + 1112345678999 + 任意一张）
+    // T81/F8（用户裁定「九莲要门清」）：补门清守卫，否则「明吃/明碰 + 九莲计数」会被误计 88。
+    // 门清口径与引擎既有定义一致：`calc.rs` 的 `menqing = !breaks_menqing(melds)`，而 `breaks_menqing`
+    // （`model.rs`）把 **吃 / 碰 / 明杠** 视为破门清、**暗杠不破门清** ⇒ 直接用 `ctx.menqing` 即可，
+    // 无需改函数签名（`collect_standard(ctx)` 已持有 `WinCtx`）。
+    // 注：杠手即便门清也计不出九莲——本判据另有 `total(all) == 14`，而杠会多出第 4 张（见 T81 报告）。
     for s in 0..3usize {
         let b = s * 9;
         let mut others = 0u32;
@@ -365,7 +370,8 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
                 others += n as u32;
             }
         }
-        if others == 0
+        if ctx.menqing
+            && others == 0
             && all[b] >= 3
             && all[b + 8] >= 3
             && (1..=7).all(|i| all[b + i] >= 1)
