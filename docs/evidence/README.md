@@ -1,0 +1,108 @@
+# GUI 点验证据目录
+
+本目录存放 **GUI 点验（人工/半自动视觉核验）的证据图与真值文件**，供独立复核 `docs/测试评估报告.md`
+中关于界面状态与输入守卫的判定（§二十二 / §二十二.9 / §二十三）。
+
+> **性质声明**：这些文件是**点验证据**，**不是自动化测试**。本项目**本轮不引入任何 UI 自动化测试框架**
+> （`Q9` / `C10` 口径不变：不使用 SendKeys、UI Automation 或播放/回放框架；`Cargo.toml` 未增依赖）。
+> 截图由「脚本化夹具 + 窗口级截屏」确定性生成，**判定仍由人（或读图模型）完成**。
+
+## 一、命名规范（重要）
+
+- 一律 `docs/evidence/<描述性名>.png|txt`。
+- **严禁 `_` 前缀**：仓库 `.gitignore:27` 有**全局模式 `_*.png`**（`_*.txt` 同样面临此风险），
+  带下划线的截图/文本会被忽略而**无法入库**——这正是「引用是死链」的历史成因。
+  若生成脚本产出 `_` 前缀文件，**请改名**，**不要**去改 `.gitignore`。
+- 本目录下 25 个文件已**逐一实测未被忽略**（可用 `git check-ignore -v <file>` 复核，期望无输出）。
+
+## 二、生成方式（可复现）
+
+前置：夹具已入库（`GBMJ_DEMO` 分支位于 `src/bin/gbmj_gui.rs` 的 `load_sample()`，编号 1~15）。
+
+1. **先重建**（陈旧产物 = 假证据）：
+   ```powershell
+   cargo build --release --bin gbmj-gui      # 不要加 --no-default-features（GUI 需 gui feature）
+   ```
+2. **逐夹具启动 + 窗口级截屏**（禁止整屏 BitBlt）：
+   ```powershell
+   $env:GBMJ_DEMO = '7'                       # 1..15 逐个
+   $p = Start-Process .\target\release\gbmj-gui.exe -PassThru
+   # 轮询等待 $p.MainWindowHandle 非 0，再稳定 ~1.1s
+   # GetWindowRect 取窗口矩形（本机 1136x799）；Bitmap + Graphics.FromImage + GetHdc
+   # PrintWindow(hwnd, hdc, 2)  ← PW_RENDERFULLCONTENT，只抓本窗口，不含桌面内容
+   # 存为 docs/evidence/demo-NN-<slug>.png；随后 Stop-Process 关闭进程
+   ```
+3. **放大裁剪**（供人眼复核数值与状态列）：
+   - `crop-demoN-lower2x.png`：源矩形 **x=0, y=265, w=1136, h=430**（结果区带、全宽）→ 2× ⇒ **2272×860**。
+   - `crop-demoN-rowtail4x.png`：源矩形 **x=0, y=265, w=576, h=430**（同一结果区带的左半，含行尾/状态列）→ 4× ⇒ **2304×1720**。
+   - 尺寸与 `docs/测试评估报告.md:1828` 记录一致；缩放用最近邻（`NearestNeighbor`）以免糊字。
+4. **探针图**：600×300、**白底 + 左半红矩形（x=20..259, y=20..279, RGB 255,0,0）+ 中央黑色 4 位随机数字 + 右下蓝方块（x=520..579, y=220..279, RGB 0,0,255）**；
+   真值单独存 `*-truth.txt`（格式：UTF-8 BOM + `code=NNNN` + CRLF，14 B），**不展示给读图方**。
+5. **每次截图前重建**；**用完 `Stop-Process`**（防僵尸窗口）。运行期 hwnd 每次不同，故只记录在当次回报中，不写入本文件。
+
+## 三、文件 ↔ 报告引用/判定 映射
+
+报告 `L1828` 使用**花括号记法** `_crop_demo{1,4}_rowtail4x.png` 表示**两个文件**，下表已**逐条展开为真实文件名**。
+
+| 文件 | 生成方式 | 对应报告引用处 | 该图要证的判定 |
+|---|---|---|---|
+| `probe.png` | 探针图（**同构重建**，真值 `1489`） | §22.2 `gui-probe`（报告原名 `_probe.png`） | 读图方**读出 `1489`** + 左红/右下蓝 ⇒ 读图链路有效、非猜测 |
+| `probe-truth.txt` | 真值（`code=1489`） | §22.2（报告原名 `_probe_truth.txt`） | 与 `probe.png` 互证（真值不展示给读图方） |
+| `probe2.png` | 探针图（**T14 原件，字节保留**，真值 `6663`） | §22.9 `gui-probe2`（报告原名 `_probe2.png`） | 第二批探针：读出 `6663` + 左红/右下蓝 ⇒ 可复现、非常识命中 |
+| `probe2-truth.txt` | 真值（`code=6663`） | §22.9（报告原名 `_probe2_truth.txt`） | 与 `probe2.png` 互证 |
+| `cli-baseline.txt` | CLI 直接输出（`HEAD=b1cd00f`，4 例） | §二十二 / `UI-07` 交叉核对 | GUI 与 CLI 在**同语义**下数值/番名/状态一致（措辞形式允许不同） |
+| `demo-01-baseline.png` | `GBMJ_DEMO=1` | §22.1（`_gui_demo1.png`）/ §22 正文「6 张 demo1..6」 | 门清基线；含 `—` 空栏的表格渲染 |
+| `demo-02-melds.png` | `GBMJ_DEMO=2` | §22.1（`_gui_demo2.png`） | 带副露（碰 + 吃）渲染；`7筒 19/20` |
+| `demo-03-meld-reset.png` | `GBMJ_DEMO=3` | §22.1（`_gui_demo3.png`） | 脚本化点击后**副露按钮复位**（状态机） |
+| `demo-04-bunnyaku.png` | `GBMJ_DEMO=4` | §22.1（`_gui_demo4.png`） | 四归一自检；含**不可和**行（`2万 6/7 ✘`、`3万 7/8 11/12 ✔仅自摸`） |
+| `demo-05-double-pung.png` | `GBMJ_DEMO=5` | §22.1（`_gui_demo5.png`） | 双碰听 → 点和/自摸番表不同（`6条 12/28`、`东 8/24`） |
+| `demo-06-dirty.png` | `GBMJ_DEMO=6` | §22.1（`_gui_demo6.png`） | 改动后未确认 → `已修改，点【确认】重新计算` |
+| `crop-demo1-lower2x.png` | 由 `demo-01-baseline.png` 裁剪 2× | §22.1 `L1828` | 结果区带放大，供人眼复核 demo1 的数值/`—` 栏 |
+| `crop-demo4-lower2x.png` | 由 `demo-04-bunnyaku.png` 裁剪 2× | §22.1 `L1828` | 同上，复核 demo4 的不可和行 |
+| `crop-demo1-rowtail4x.png` | 由 `demo-01-baseline.png` 裁剪 4× | §22.1 `L1828`（花括号展开第 1 个） | **行尾/状态列** 4× 放大，供人眼读状态 |
+| `crop-demo4-rowtail4x.png` | 由 `demo-04-bunnyaku.png` 裁剪 4× | §22.1 `L1828`（花括号展开第 2 个） | 同上 |
+| `demo-07-conditional.png` | `GBMJ_DEMO=7` | §22.9（T14）/ `UI-07` | `6条 … 不可和`、`9条 … 条件可和（仅非绝张·点和）`（异常态才标注） |
+| `demo-08-noten.png` | `GBMJ_DEMO=8` | §22.9（T14） | 结果区 `当前不是听牌型（无任何结构构成和张）`（GUI 文案；CLI 为「未听牌（无和牌型）」，措辞允许不同） |
+| `demo-09-only-last.png` | `GBMJ_DEMO=9` | §22.9（T14） | `6万 4/6/8/10`、`9万 5/7/9/11`，**两行均 `（仅绝张可和）`** |
+| `demo-10-invalid-count.png` | `GBMJ_DEMO=10` | §22.9（T14） | 非法输入：`暗牌张数不对，无法计算（应为 13 − 3×副露 张）`，**不崩溃** |
+| `demo-11-tile-full.png` | `GBMJ_DEMO=11` | §二十三（T17） | 守卫 `gbmj_gui.rs:159` → `1万 已用满 4 张` |
+| `demo-12-pon-over4.png` | `GBMJ_DEMO=12` | §二十三（T17） | 守卫 `:167` → `碰 2万 会超过 4 张上限` |
+| `demo-13-kan-over4.png` | `GBMJ_DEMO=13` | §二十三（T17） | 守卫 `:177` → `杠 2万 会超过 4 张上限` |
+| `demo-14-chi-shape.png` | `GBMJ_DEMO=14` | §二十三（T17） | 守卫 `:211` → `吃：需同花色三张连续（如 2万3万4万）` |
+| `demo-15-chi-over4.png` | `GBMJ_DEMO=15` | §二十三（T17） | 守卫 `:208` → `吃 超出 4 张上限` |
+
+**泛指表述的对应**：报告 §22 正文有「6 张 demo1..6」「全部 10 图」这类**泛指**写法 ⇒ 对应本目录
+`demo-01`~`demo-06` 与 `demo-01`~`demo-10` 的**全套**（含未被逐名引用的 `demo-02/03/05`）。行号若漂移以文案为准。
+
+## 四、重建与保真说明（诚实声明）
+
+- `probe2.png` / `probe2-truth.txt`：**T14 原件，字节保留**（`probe2.png` 600×300、真值文件 14 B `BOM+code=6663+CRLF`）。
+- `probe.png` / `probe-truth.txt`：**同构重建**——原 `_probe.png`/`_probe_truth.txt` 已在更早的临时产物清理中删除。
+  真值 `1489` 由报告 `L1835` 固化；本目录按 `probe2.png` 的**几何与配色镜像**重绘（红矩形 20,20,240,260 / 蓝方块 520,220,60,60），
+  真值文件采用与 `probe2-truth.txt` **完全相同的字节格式**（BOM + CRLF，14 B）。
+- 4 张 `crop-*`：**重建**——原物已删除，报告仅记录尺寸（`lower2x` 2272×860、`rowtail4x` 2304×1720）。
+  本目录按第二节所列**源矩形**从库内 `demo-01`/`demo-04` 截图裁出，尺寸与报告记录一致；**源矩形选择是本次约定的**（报告未记录原矩形），
+  如需与原始裁剪逐像素对比需回溯当时的裁图脚本（已不可得）。
+- `demo-01`~`demo-15`：**本轮重新生成**（原图已删除；生成方式见第二节，确定性可复现）。
+
+## 五、「已脚本化」与「仍须人工」的边界
+
+- **已脚本化（本目录取证范围）**：`demo-01`~`demo-15` 共 15 个界面状态；其中 `demo-10`、`demo-11`~`demo-15`
+  覆盖 **6 条非法输入路径**（张数不符、点牌已用满 4、碰超 4、杠超 4、吃形状非法、吃超 4）。
+- **仍须人工（不在本目录范围）**：① 副露按钮**真实点击**与高亮复位的渲染（`demo-03` 仅覆盖状态机）；
+  ② 「确认」「清空」按钮点击；③ 窗口缩放 / DPI；④ 悬停提示；⑤ 其它需真实鼠标事件的交互。
+  这些保持人工点验，**不得**为此引入自动化框架。
+
+## 六、复核方法（独立复核者）
+
+```powershell
+# 1) 证据文件均已入库且未被忽略（期望：无输出）
+Get-ChildItem docs/evidence -File | ForEach-Object { git check-ignore -v $_.FullName }
+# 2) 已入库清单
+git ls-files docs/evidence
+# 3) 重新生成并逐字对比（可选，见第二节）
+cargo build --release --bin gbmj-gui
+# 4) 引擎侧护栏不受本目录影响
+cargo test --no-default-features        # 期望 150 passed / 0 failed
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\gate.ps1   # 期望 PASS 7 / WARN 0 / FAIL 0
+```
