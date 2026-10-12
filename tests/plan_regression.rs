@@ -332,11 +332,7 @@ fn plan_golden_baseline_with_honor() {
 /// 全带五/三色三同顺/十三幺）。
 #[test]
 fn plan_golden_baseline_unrelated_patterns() {
-    assert_golden(
-        "123m 456s 789p 11m 22s",
-        vec![],
-        &["花龙|8|0|1万||", "三色三步高|6|1|4万,6筒|9筒|"],
-    );
+    assert_golden("123m 456s 789p 11m 22s", vec![], &["花龙|8|0|1万||"]);
     assert_golden(
         "147m 258s 369p 147p 东",
         vec![],

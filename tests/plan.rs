@@ -124,6 +124,17 @@ fn san_se_san_bu_gao_zero() {
     let ds = plan(&h, &[], 2);
     let d = find(&ds, "三色三步高").expect("应有三色三步高");
     assert_eq!(d.distance, 0, "{:?}", d);
+
+    // T52/F1 反控：d=2（递增二位）不被计番侧认定 ⇒ plan 不得给出该方向。
+    // 该手的三色三步高 witness 只能是 (n=2,d=2) 的 234m/456s/678p + 111m + 22s。
+    let h2 = parse_hand("123m 456s 789p 11m 22s");
+    assert_eq!(total(&h2), 13);
+    let ds2 = plan(&h2, &[], 2);
+    assert!(
+        find(&ds2, "三色三步高").is_none(),
+        "d=2（递增二位）不被计番认定（T52/F1），不得给出该方向: {:?}",
+        ds2.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -156,6 +167,16 @@ fn san_an_ke_zero() {
     let ds = plan(&h, &[], 2);
     let d = find(&ds, "三暗刻").expect("应有三暗刻");
     assert_eq!(d.distance, 0, "{:?}", d);
+
+    // T52/F5 反控：四张同牌（1111m）同样能提供一副暗刻，不得因 `hand[t] == 3` 被排除。
+    let h4 = parse_hand("1111m222m333m99s5p");
+    assert_eq!(total(&h4), 13);
+    let ds4 = plan(&h4, &[], 2);
+    assert!(
+        find(&ds4, "三暗刻").is_some(),
+        "四张同牌应可作暗刻源（T52/F5）: {:?}",
+        ds4.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -165,6 +186,16 @@ fn si_an_ke_zero() {
     let ds = plan(&h, &[], 2);
     let d = find(&ds, "四暗刻").expect("应有四暗刻");
     assert_eq!(d.distance, 0, "{:?}", d);
+
+    // T52/F5 反控：四暗刻的四副暗刻同样允许「四张同牌」提供其中一副。
+    let h4 = parse_hand("1111m222m333m444m");
+    assert_eq!(total(&h4), 13);
+    let ds4 = plan(&h4, &[], 2);
+    assert!(
+        find(&ds4, "四暗刻").is_some(),
+        "四张同牌应可作暗刻源（T52/F5）: {:?}",
+        ds4.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
+    );
 }
 
 #[test]

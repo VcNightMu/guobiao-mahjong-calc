@@ -199,6 +199,29 @@ fn r13_jiulian_covers_pure_suit_only() {
     let m = get(&ds, "混一色(万门)");
     assert_eq!(m.distance, 1, "{:?}", m);
     assert!(m.covered_by.is_empty(), "{:?}", m);
+
+    // ---- T49 追加：**同门通配边界**（一方有后缀、一方无）（仍在既有函数内，不新增 #[test]）----
+    // 规则位置：`src/plan.rs` 的 `split_suffix()` / `covered_by_coverer()` ——
+    //   双方都带后缀 ⇒ 后缀必须相同；**至少一方无后缀 ⇒ 通配**（可匹配任意门）。
+    // 本例 = 通配方向：coverer `绿一色`（**无**门后缀）覆盖 `混一色(条门)`（**有**后缀）。
+    let hw = parse_hand("234s 666s 888s 发发发 2s");
+    assert_eq!(total(&hw), 13);
+    let dw = plan(&hw, &[], 2);
+    let lv = get(&dw, "绿一色");
+    assert_eq!(lv.distance, 0, "绿一色 应为差0（充当 coverer）: {:?}", lv);
+    assert!(lv.covered_by.is_empty(), "coverer 自身不应被标注: {:?}", lv);
+    assert_eq!(
+        coverers(get(&dw, "混一色(条门)")),
+        vec!["绿一色".to_string()],
+        "无后缀 coverer 应通配覆盖带后缀方向: {:?}",
+        get(&dw, "混一色(条门)")
+    );
+    // 反例：`碰碰和` 是本次方向之一，且**不在** `绿一色` 的 drop 名单内 ⇒ 不得被标注。
+    let pph = get(&dw, "碰碰和");
+    assert!(pph.covered_by.is_empty(), "非覆盖对不应被标注: {:?}", pph);
+    // 注：**「双方都有后缀 ⇒ 后缀必须相同」的反例**见本文件既有用例
+    // `r13_jiulian_covers_pure_suit_only`（`九莲宝灯(万门)` 覆盖 `清一色(万门)`，
+    // 但**不**覆盖 `混一色(万门)`）—— 此处不重复造。
 }
 
 // ==================== 覆盖对「来源已自动化」的结构性断言 ====================

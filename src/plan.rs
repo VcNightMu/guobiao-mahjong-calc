@@ -531,7 +531,9 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
     }
 
     // ── 骨架系：顺子/刻子被番种钉死 ──
-    // 副露里已经有两个碰/杠时，顺子系骨架一概放不下（4 副面子装不下 3 个强制顺子），直接跳过
+    // 副露里已经有两个碰/杠时，骨架一概放不下（4 副面子装不下 3 个强制面子），直接跳过。
+    // 本守卫不只管顺子骨架（清龙/花龙/一色各式步高/一色各式同顺/三色同顺/双龙会），
+    // 也门控同一段里的刻子骨架（一色三节高/三色三节高/一色四节高）。
     let pungs = melds.iter().filter(|m| m.kind != MeldKind::Chi).count();
     if pungs < 2 {
         let perm3 = [
@@ -582,20 +584,20 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
                 }
             }
         }
+        // 计番侧（fans.rs 的三色三步高块）只认「三门顺子数字依次 +1」：三值排序后必须连续，
+        // 递增二位（d=2）不构成该番。plan 不得给出计番不认的方向（T52/F1），故此处只生成 d=1。
         for p in perm3.iter() {
-            for d in 1..=2usize {
-                for n in 1..=(7 - 2 * d) {
-                    push_forced(
-                        &mut out,
-                        hand,
-                        melds,
-                        "三色三步高".into(),
-                        6,
-                        &[run(p[0], n), run(p[1], n + d), run(p[2], n + 2 * d)],
-                        None,
-                        max_dist,
-                    );
-                }
+            for n in 1..=5usize {
+                push_forced(
+                    &mut out,
+                    hand,
+                    melds,
+                    "三色三步高".into(),
+                    6,
+                    &[run(p[0], n), run(p[1], n + 1), run(p[2], n + 2)],
+                    None,
+                    max_dist,
+                );
             }
         }
         for (s, sname) in SUIT_NAME.iter().enumerate() {
@@ -801,7 +803,8 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         .iter()
         .filter(|m| m.kind == MeldKind::Kan && !m.open)
         .count();
-    let full: Vec<usize> = (0..NUM_TILES).filter(|&t| hand[t] == 3).collect();
+    // >= 3：四张同牌同样能提供一副暗刻（余张由 drop/need 处理）——`== 3` 会漏掉这类手（T52/F5）。
+    let full: Vec<usize> = (0..NUM_TILES).filter(|&t| hand[t] >= 3).collect();
     if ankan < 3 {
         let need3 = 3usize.saturating_sub(ankan);
         if full.len() >= need3 {
