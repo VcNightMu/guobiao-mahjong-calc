@@ -86,6 +86,11 @@
 | `t24-h5-hand-candidate1/2/3.png` | T24 代跑（悬停手牌区 3 处） | **§二十六** | candidate1/2 实测 tooltip **`点击移除一张`**（含悬停高亮框）；candidate3 无 |
 | `t24-m1-synth-click-hover-only.png` / `t24-m2-synth-click-confirm-{before,after}.png` | T24 代跑（**合成点击无效**留证） | **§二十六** | 证明 `PostMessage` 无效、`mouse_event` 仅产生**悬停态**变化（**不构成激活**）⇒ 该项**仍需人工** |
 | `t24-r1-resize-800x600.png` / `t24-r2-resize-1280x900.png` | T24 代跑（`SetWindowPos`） | **§二十六** | 两档尺寸布局正常、无裁切/重叠、文字可读（L3 双图确认） |
+| `demo-23-delete-meld-pending.png` | `GBMJ_DEMO=23`（T32 批；真人点击路径见 `docs/GUI人工点验清单.md` 的 **R3 专项**） | **§三十二**（T31/T32 R3 修复验证） | `×` 删副露后的状态：副露区「（无副露）」、**吃按钮仍高亮**、**无进度行**、**无红/黄提示行**（L3 盲转写 + 像素双证） |
+| `diff-cli-cases.tsv` | T34 生成（测试方 / `scripts/diff-cli.ps1` 的输入） | **§三十三**（T34 差分覆盖扩展） | **可重复差分用例集：269 例**（`id ⇥ 来源 ⇥ 期望 ⇥ args`；来源含 BASELINE 9 / GBMJ_DEMO 21 / `tests/*.rs` 143 / 全番型样本 73 / `--plan` 10 / 预期差异 5 / 手工构造 7 + 更正 1，均可追溯） |
+| `diff-cli-results.tsv` | T34 生成（`diff-cli.ps1` 输出） | **§三十三** | **逐例差分结果**（verdict / exitOld-New / stdout·stderr 的 sha / 耗时）⇒ 末轮 **264 零差异 + 5 预期差异 + 0 意外差异**（exit 0） |
+| `diff-cli-summary.txt` | T34 生成（`diff-cli.ps1` 输出） | **§三十三** | **差分摘要**：旧/新二进制路径 + mtime + sha256、用例总数、零/预期/意外计数、最慢 5 例、噪声剥离规则说明 |
+| `diff-cli-fan-coverage.txt` | T34 生成（测试方重放全部用例后实测 stdout） | **§三十三** | **番型覆盖清单**：分母 A=73（静态表）/ B=77（含 4 个动态番名），**覆盖 71/73**，未覆盖 2 项及结构性原因 + 全文清单 |
 
 **泛指表述的对应**：报告 §22 正文有「6 张 demo1..6」「全部 10 图」这类**泛指**写法 ⇒ 对应本目录
 `demo-01`~`demo-06` 与 `demo-01`~`demo-10` 的**全套**；其中 `demo-02/03/05` **仅被 §22 泛指覆盖**（无单列结论，已在表中如实标注）；
@@ -126,6 +131,6 @@ git ls-files docs/evidence
 # 3) 重新生成并逐字对比（可选，见第二节）
 cargo build --release --bin gbmj-gui
 # 4) 引擎侧护栏不受本目录影响
-cargo test --no-default-features        # 期望 150 passed / 0 failed
+cargo test --no-default-features        # 期望 159 passed / 0 failed
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\gate.ps1   # 期望 PASS 8 / WARN 0 / FAIL 0
 ```
