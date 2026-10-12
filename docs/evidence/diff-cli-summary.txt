@@ -1,24 +1,24 @@
 diff-cli summary
-timestamp            : 2026-10-12T22:31:15+08:00
-old binary           : C:\Users\Administrator\AppData\Local\Temp\t82a\target\debug\gbmj.exe
-old binary mtime     : 2026-10-12T22:29:02
-old binary sha256    : 72E16A92EEC24C664E3A078D49F7C8FDE421982E41D2CEE80C06FC3B5DF93A9B
-new binary           : F:\AllCodes\guobiao-mahjong-calc\target\debug\gbmj.exe
-new binary mtime     : 2026-10-12T22:29:31
-new binary sha256    : D135F94FC70265985C7F69215F5192C219038C9EF77911E393447764C9FA13D2
+timestamp            : 2026-10-12T23:12:52+08:00
+old binary           : C:\Users\Administrator\AppData\Local\Temp\t83\oldref\debug\gbmj.exe
+old binary mtime     : 2026-10-12T23:08:20
+old binary sha256    : B08C9A2A6F4060BF4BF37E3C188DB13CCA99383A556D681540878E83F5CB7258
+new binary           : C:\Users\Administrator\AppData\Local\Temp\t83\new\debug\gbmj.exe
+new binary mtime     : 2026-10-12T23:02:57
+new binary sha256    : 8828769B51C3F10363B33C7848031412DE161C5D262600B3FAFDCDB34A8F4053
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
-cases total          : 406
-zero-diff            : 335
+cases total          : 454
+zero-diff            : 383
 expected-diff        : 71
 UNEXPECTED-diff      : 0
 verdict-mismatch     : 0   (expected-diff case that was identical)
 
 top-5 slowest cases (max of old/new ms):
-  plan-10 old=3827ms new=3764ms
-  plan-04 old=3681ms new=3354ms
-  f5-sianke-quad-4tiles old=3417ms new=2973ms
-  plan-05 old=1666ms new=1510ms
-  plan-08 old=1314ms new=1215ms
+  plan-10 old=3435ms new=3382ms
+  plan-04 old=3134ms new=3105ms
+  f5-sianke-quad-4tiles old=2370ms new=2485ms
+  plan-05 old=1320ms new=1380ms
+  plan-08 old=1274ms new=1157ms
 
 noise-strip rule     : stdout/stderr redirected to files; lines matching the localised at-position banner, the localised invoking banner, "At line", "+ CategoryInfo", "+ FullyQualifiedErrorId" or "NativeCommandError" are removed (Base64-encoded zh patterns inside the script)
-result table         : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-results.tsv
+result table         : docs\evidence\diff-cli-results.tsv
