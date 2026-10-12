@@ -101,6 +101,8 @@ fn push_triplet_fans(
             v.push(f("幺九刻", 1));
         }
     }
+    // 「3 个风刻 + 风将」按定义即 `小四喜`（`大四喜` 为其上位），故此守卫在风将时**不计** `三风刻`，
+    // 避免与 小四喜/大四喜 重复计番（用户已裁定维持现状，勿改条件）。
     if wind_tri == 3 && !pair.map(is_wind).unwrap_or(false) && !big4 {
         v.push(f("三风刻", 12));
     }
@@ -175,6 +177,9 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
             } else if ctx.melds.len() == 1 {
                 Some(ctx.melds[0].to_set())
             } else {
+                // 防御性死分支：`detect_zuhelong` 的 `sets: vec![]` 形态只在 `m == 1` 时产出，
+                // 而计番侧 `ctx.melds` 与 `winning_decomps` 的 `melds` 同源 ⇒ 此刻必有 `melds.len() == 1`，
+                // 故本分支不可达；保留作保底，勿据此改计番逻辑。
                 None
             };
             if let Some(s) = fourth {
@@ -234,7 +239,7 @@ fn collect_special(ctx: &WinCtx, sp: Special) -> Vec<Fan> {
         Special::SevenPairs | Special::SevenPairsStraight => {
             if nsuit == 1 && !honor {
                 v.push(f("清一色", 24));
-                v.push(f("无字", 1));
+                // 无字 由本分支下方的 `if !honor` 统一处理，勿在此重复 push（既有一处重复，数值上无害但冗余）
             } else if nsuit == 1 && honor {
                 v.push(f("混一色", 6));
             } else if nsuit == 0 {
@@ -294,7 +299,11 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
     let mut v: Vec<Fan> = Vec::new();
     let all = ctx.all;
     let d = ctx.decomp;
-    let pair = d.pair.unwrap();
+    // 不变量：`collect_standard` 只服务标准型分解（`Decomp::special` 走 `collect_special`），
+    // 而标准型必有将；此处按防御式写法处理，避免 `unwrap` 在破坏不变量时 panic。
+    let Some(pair) = d.pair else {
+        return v;
+    };
     let runs = runs_of(d);
     let trips = trips_of(d);
     let suits = suits_present(all);
@@ -1016,6 +1025,8 @@ pub const EXCLUSIONS: &[(&str, &[&str])] = &[
 /// 这些关系**不在** EXCLUSIONS（drop 表）里——计番上是「分支根本不进入」而非「算出后再剔除」；
 /// 因此**保留原 if/else 分支语义不动**，仅在此登记覆盖关系供 R-13 导出。
 /// 三对分别对应：清幺九/混幺九 二选一、一色四节高/一色三节高 best==4/==3、一色四步高/一色三步高 best==4/==3。
+/// **本表仅为声明式导出（供 `coverage_pairs()` / R-13 自动导出覆盖对），不参与运行期剔除** ——
+/// 三对关系在计番侧都是「if/else 分支二选一」，故运行期本就不需要剔除；删除本表会让 `coverage_pairs()` 丢覆盖对、并破坏 R-13 用例。
 pub const BRANCH_EXCLUSIONS: &[(&str, &[&str])] = &[
     ("清幺九", &["混幺九"]),
     ("一色四节高", &["一色三节高"]),

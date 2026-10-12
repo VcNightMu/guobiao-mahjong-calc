@@ -158,6 +158,9 @@ fn target_feasible(target: &Counts, melds: &[Meld]) -> bool {
     (0..NUM_TILES).all(|t| target[t].saturating_add(mpt[t]) <= 4)
 }
 
+// rec 的 11 个参数为原始类型/小型 Copy 值与借用（usize×2、u32、bool、Option<usize>、Filter、&Counts、&[Meld]、
+// &[[usize; 3]]，另有 &mut Counts 与 &mut Option<(u32, Counts)> 两处可变借用），均为递归搜索内部辅助函数所需；拆结构体不值得，
+// 且本轮以「行为分毫不变」为最高优先，故显式 allow。
 #[allow(clippy::too_many_arguments)]
 fn rec(
     i: usize,

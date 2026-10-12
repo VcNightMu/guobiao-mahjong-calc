@@ -18,11 +18,11 @@ path = "src/bin/gbmj_gui.rs"
 required-features = ["gui"]
 
 [features]
-default = ["gui"]
+# 默认**不**启用 GUI：这样 `cargo build` / `cargo test` 不会拉入 eframe 及其
+# 传递依赖（libloading / parking_lot_core / windows-sys 等）。需要 GUI 时必须显式
+# 指定 `--features gui`，例如 `cargo build --release --bin gbmj-gui --features gui`。
+default = []
 gui = ["dep:eframe"]
 
 [dependencies]
 eframe = { version = "0.36", default-features = false, features = ["glow", "default_fonts"], optional = true }
-
-[profile.release]
-opt-level = 3
