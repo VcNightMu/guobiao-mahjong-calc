@@ -37,6 +37,8 @@ fn val_of(v: &[Fan], n: &str) -> u32 {
 
 // 和绝张（4 番）— 出处：src/fans.rs 的 f("和绝张", 4)（两处）
 const FAN_HE_JUE_ZHANG: u32 = 4;
+// 无番和（8 番，和法番）— 出处：src/fans.rs 的 extra.push(f("无番和", 8))
+const FAN_WU_FAN_HE: u32 = 8;
 
 /// **主用例**：`can_last == true` 的行（DEFECTC 的 `6条`）——
 /// `fans_last` 必须**含 `和绝张` 且值 4**，且**恰为「点和番表 + 和绝张」**（同源组合）。
@@ -129,7 +131,7 @@ fn juezhang_no_wufanhe_on_last_path() {
 
     assert!(w.can_last, "{:?}", w);
     assert!(
-        has_of(&w.fans, "无番和") && val_of(&w.fans, "无番和") == 8,
+        has_of(&w.fans, "无番和") && val_of(&w.fans, "无番和") == FAN_WU_FAN_HE,
         "点和为无番和8: {:?}",
         names_of(&w.fans)
     );
@@ -145,7 +147,12 @@ fn juezhang_no_wufanhe_on_last_path() {
         "无番和仅点和，不得出现在绝张路径: {:?}",
         names_of(&w.fans_last)
     );
-    assert_eq!((w.normal, w.last), (8, 4), "N=8 / L=4（L ≠ N+4 的例外）");
+    // 8 = 无番和8（仅点和路径成立）；4 = 和绝张4（绝张路径仅此一项，不含无番和）
+    assert_eq!(
+        (w.normal, w.last),
+        (FAN_WU_FAN_HE, FAN_HE_JUE_ZHANG),
+        "N=8 / L=4（L ≠ N+4 的例外）"
+    );
     assert_eq!(
         w.last, FAN_HE_JUE_ZHANG,
         "L 必须为 4（绝张路径：和绝张4 起）"

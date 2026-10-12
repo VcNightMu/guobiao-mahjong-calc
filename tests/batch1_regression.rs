@@ -55,6 +55,18 @@ const FAN_BU_QIU_REN: u32 = 4; // 不求人（4 番，和法番）— 出处：s
 const FAN_MEN_QIAN_QING: u32 = 2; // 门前清（2 番，和法番）— 出处：src/fans.rs 的 f("门前清", 2)
 const FAN_LIAN_LIU: u32 = 1; // 连六（1 番）— 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
 const FAN_WU_ZI: u32 = 1; // 无字（1 番）— 出处：src/fans.rs 的 f("无字", 1)
+const FAN_QUE_YI_MEN: u32 = 1; // 缺一门（1 番）— 出处：src/fans.rs 的 v.push(f("缺一门", 1))
+const FAN_ZI_MO: u32 = 1; // 自摸（1 番，和法番）— 出处：src/fans.rs 的 extra.push(f("自摸", 1))
+const FAN_ZUHE_LONG: u32 = 12; // 组合龙（12 番）— 出处：src/fans.rs 的 v.push(f("组合龙", 12))
+const FAN_AN_GANG: u32 = 2; // 暗杠（2 番）— 出处：src/fans.rs 的 v.push(f("暗杠", 2))（push_kan_fans 的 ankan == 1 分支）
+const FAN_MING_GANG: u32 = 1; // 明杠（1 番）— 出处：src/fans.rs 的 v.push(f("明杠", 1))（push_kan_fans 的明杠分支）
+const FAN_DAN_DIAO_JIANG: u32 = 1; // 单钓将（1 番）— 出处：src/fans.rs 的 v.push(f("单钓将", 1))
+const FAN_HE_JUE_ZHANG: u32 = 4; // 和绝张（4 番，和法番）— 出处：src/fans.rs 的 extra.push(f("和绝张", 4))
+const FAN_WU_FAN_HE: u32 = 8; // 无番和（8 番，和法番）— 出处：src/fans.rs 的 extra.push(f("无番和", 8))
+const FAN_XIAO_SAN_YUAN: u32 = 64; // 小三元（64 番）— 出处：src/fans.rs 的 v.push(f("小三元", 64))
+const FAN_ZI_YI_SE: u32 = 64; // 字一色（64 番）— 出处：src/fans.rs 的 v.push(f("字一色", 64))
+const FAN_YI_BAN_GAO: u32 = 1; // 一般高（1 番）— 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
+const FAN_XI_XIANG_FENG: u32 = 1; // 喜相逢（1 番）— 出处：动态生成（src/fans.rs 的 for name in ["一般高","喜相逢","连六","老少副"]）
 
 // ============================ DL-2：R-01 三态 ============================
 
@@ -67,13 +79,31 @@ fn r01_guards_three_state_no_win_when_last_hidden() {
     assert_eq!(total(&c), 13);
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "3条");
-    assert_eq!((w.normal, w.tsumo), (5, 7), "{:?}", names(w));
+    // 5 = 幺九刻1 + 缺一门1 + 无字1 + 门前清2；7 = 同上但门前清2 → 不求人4（自摸路径）
+    assert_eq!(
+        (w.normal, w.tsumo),
+        (
+            FAN_YAO_JIU_KE + FAN_QUE_YI_MEN + FAN_WU_ZI + FAN_MEN_QIAN_QING,
+            FAN_YAO_JIU_KE + FAN_QUE_YI_MEN + FAN_WU_ZI + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w)
+    );
     assert!(!w.can_last, "暗牌含 1 张 3条 ⇒ 绝张不成立");
     assert_eq!(w.verdict(), WinVerdict::NoWin, "{:?}", names(w));
     assert!(!w.can_win(), "三点和/自摸均 <8 且绝张栏隐藏 ⇒ 不得可和");
     // 同手 6条：自摸 8 番可和，未受波及
     let w6 = by_name(&an, "6条");
-    assert_eq!((w6.normal, w6.tsumo), (6, 8), "{:?}", names(w6));
+    // 6 = 幺九刻1 + 连六1 + 缺一门1 + 无字1 + 门前清2；8 = 换不求人4
+    assert_eq!(
+        (w6.normal, w6.tsumo),
+        (
+            FAN_YAO_JIU_KE + FAN_LIAN_LIU + FAN_QUE_YI_MEN + FAN_WU_ZI + FAN_MEN_QIAN_QING,
+            FAN_YAO_JIU_KE + FAN_LIAN_LIU + FAN_QUE_YI_MEN + FAN_WU_ZI + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w6)
+    );
     assert!(w6.can_last);
     assert_eq!(w6.verdict(), WinVerdict::Win);
 }
@@ -95,9 +125,15 @@ fn r01_conditional_last_and_unconditional_control() {
 
     // 9条：base=0 ⇒ 8/1/4/5，非绝张世界可和、绝张世界不可和 ⇒ 条件可和
     let w9 = by_name(&an, "9条");
+    // (normal, tsumo, last, tsumo_last) = (无番和8, 自摸1, 和绝张4, 自摸+和绝张)；base=0 ⇒ 仅点和为无番和8（R-01 三态要害：自摸1 < 8 ⇒ 自摸不可和）
     assert_eq!(
         (w9.normal, w9.tsumo, w9.last, w9.tsumo_last),
-        (8, 1, 4, 5),
+        (
+            FAN_WU_FAN_HE,
+            FAN_ZI_MO,
+            FAN_HE_JUE_ZHANG,
+            FAN_ZI_MO + FAN_HE_JUE_ZHANG
+        ),
         "{:?}",
         names(w9)
     );
@@ -108,9 +144,15 @@ fn r01_conditional_last_and_unconditional_control() {
 
     // 6条：和牌张使 6条 达 4 张且未成杠 ⇒ 四归一2 ⇒ base=2 ⇒ 不可和
     let w6 = by_name(&an, "6条");
+    // (四归一2, +自摸1, +和绝张4, +自摸+和绝张)
     assert_eq!(
         (w6.normal, w6.tsumo, w6.last, w6.tsumo_last),
-        (2, 3, 6, 7),
+        (
+            FAN_SI_GUI_YI,
+            FAN_SI_GUI_YI + FAN_ZI_MO,
+            FAN_SI_GUI_YI + FAN_HE_JUE_ZHANG,
+            FAN_SI_GUI_YI + FAN_ZI_MO + FAN_HE_JUE_ZHANG,
+        ),
         "{:?}",
         names(w6)
     );
@@ -123,9 +165,15 @@ fn r01_conditional_last_and_unconditional_control() {
     let c2 = parse_hand("77s 东东");
     let an2 = analyze(&c2, &melds, 27, 27);
     let w7 = by_name(&an2, "7条");
+    // 同 w9 组成：(无番和8, 自摸1, 和绝张4, 自摸+和绝张)；B 对照分支同式
     assert_eq!(
         (w7.normal, w7.tsumo, w7.last, w7.tsumo_last),
-        (8, 1, 4, 5),
+        (
+            FAN_WU_FAN_HE,
+            FAN_ZI_MO,
+            FAN_HE_JUE_ZHANG,
+            FAN_ZI_MO + FAN_HE_JUE_ZHANG
+        ),
         "{:?}",
         names(w7)
     );
@@ -143,11 +191,17 @@ fn r01_holding_three_copies_is_never_last_tile() {
     let w = by_name(&an, "1万");
     assert_eq!(total(&c), 13);
     assert!(!w.can_last, "暗牌已握 3 张 1万 ⇒ 不是绝张");
+    // 10 = 双暗刻2 + 幺九刻1 ×2 + 连六1 + 无字1 + 四归一2 + 门前清2（×2 = 幺九刻出现次数）
+    // 12 = 同上换自摸路径（门前清2 → 不求人4）
+    // 按 v0.2.0 口径：含两次同番的组合保持字面量，不写 FAN + FAN / FAN * 2
     assert_eq!((w.normal, w.tsumo), (10, 12), "{:?}", names(w));
     assert_eq!(w.verdict(), WinVerdict::Win, "由点和 10 番支撑");
     // 7万 暗牌 0 张 ⇒ 绝张假设成立，两栏参与
     let w7 = by_name(&an, "7万");
     assert!(w7.can_last);
+    // 12 = 双暗刻2 + 幺九刻1 ×2 + 连六1 + 无字1 + 门前清2 + 和绝张4（×2 = 幺九刻出现次数）
+    // 14 = 同上换自摸路径（门前清2 → 不求人4）
+    // 按 v0.2.0 口径：含两次同番的组合保持字面量，不写 FAN + FAN / FAN * 2
     assert_eq!((w7.last, w7.tsumo_last), (12, 14), "{:?}", names(w7));
 }
 
@@ -262,7 +316,26 @@ fn r11_zuhelong_with_ankan_includes_kan_and_triplet_fans() {
     let an = analyze(&c, &melds, 27, 27);
     assert!(an.menqing, "暗杠不破门清");
     let w = by_name(&an, "5筒");
-    assert_eq!((w.normal, w.tsumo), (19, 21), "{:?}", names(w));
+    // 19 = 组合龙12 + 暗杠2 + 幺九刻1 + 单钓将1 + 无字1 + 门前清2；21 = 同上但门前清2 → 不求人4（自摸路径）
+    assert_eq!(
+        (w.normal, w.tsumo),
+        (
+            FAN_ZUHE_LONG
+                + FAN_AN_GANG
+                + FAN_YAO_JIU_KE
+                + FAN_DAN_DIAO_JIANG
+                + FAN_WU_ZI
+                + FAN_MEN_QIAN_QING,
+            FAN_ZUHE_LONG
+                + FAN_AN_GANG
+                + FAN_YAO_JIU_KE
+                + FAN_DAN_DIAO_JIANG
+                + FAN_WU_ZI
+                + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w)
+    );
     for f in ["组合龙", "暗杠", "幺九刻", "单钓将", "无字", "门前清"] {
         assert!(has_fan(w, f), "缺 {} : {:?}", f, names(w));
     }
@@ -276,7 +349,21 @@ fn r11_zuhelong_with_mingkan_is_not_menqing() {
     let an = analyze(&c, &melds, 27, 27);
     assert!(!an.menqing, "明杠破门清");
     let w = by_name(&an, "5筒");
-    assert_eq!((w.normal, w.tsumo), (16, 17), "{:?}", names(w));
+    // 16 = 组合龙12 + 明杠1 + 幺九刻1 + 单钓将1 + 无字1（明杠破门清 ⇒ 无门前清）；17 = 同上 + 自摸1
+    assert_eq!(
+        (w.normal, w.tsumo),
+        (
+            FAN_ZUHE_LONG + FAN_MING_GANG + FAN_YAO_JIU_KE + FAN_DAN_DIAO_JIANG + FAN_WU_ZI,
+            FAN_ZUHE_LONG
+                + FAN_MING_GANG
+                + FAN_YAO_JIU_KE
+                + FAN_DAN_DIAO_JIANG
+                + FAN_WU_ZI
+                + FAN_ZI_MO
+        ),
+        "{:?}",
+        names(w)
+    );
     for f in ["组合龙", "明杠", "幺九刻"] {
         assert!(has_fan(w, f), "缺 {} : {:?}", f, names(w));
     }
@@ -292,14 +379,42 @@ fn r11_zuhelong_triplet_fan_discriminants() {
     // M4：明杠 2筒（非幺九） ⇒ 15/16，无幺九刻
     let an4 = analyze(&c, &[Meld::kan(19, true)], 27, 27);
     let w4 = by_name(&an4, "5筒");
-    assert_eq!((w4.normal, w4.tsumo), (15, 16), "{:?}", names(w4));
+    // 15 = 组合龙12 + 明杠1 + 单钓将1 + 无字1（非幺九杠 ⇒ 无幺九刻）；16 = 同上 + 自摸1
+    assert_eq!(
+        (w4.normal, w4.tsumo),
+        (
+            FAN_ZUHE_LONG + FAN_MING_GANG + FAN_DAN_DIAO_JIANG + FAN_WU_ZI,
+            FAN_ZUHE_LONG + FAN_MING_GANG + FAN_DAN_DIAO_JIANG + FAN_WU_ZI + FAN_ZI_MO
+        ),
+        "{:?}",
+        names(w4)
+    );
     assert!(!has_fan(w4, "幺九刻"), "2筒非幺九: {:?}", names(w4));
     assert!(has_fan(w4, "无字"), "{:?}", names(w4));
 
     // M5：暗杠 东（默认 round=东 seat=东）⇒ 圈风刻2 + 门风刻2，且 无字 失效
     let an5 = analyze(&c, &[Meld::kan(27, false)], 27, 27);
     let w5 = by_name(&an5, "5筒");
-    assert_eq!((w5.normal, w5.tsumo), (21, 23), "{:?}", names(w5));
+    // 21 = 组合龙12 + 暗杠2 + 圈风刻2 + 门风刻2 + 单钓将1 + 门前清2（含字牌 ⇒ 无字失效）；23 = 同上换不求人4
+    assert_eq!(
+        (w5.normal, w5.tsumo),
+        (
+            FAN_ZUHE_LONG
+                + FAN_AN_GANG
+                + FAN_QUAN_FENG_KE
+                + FAN_MEN_FENG_KE
+                + FAN_DAN_DIAO_JIANG
+                + FAN_MEN_QIAN_QING,
+            FAN_ZUHE_LONG
+                + FAN_AN_GANG
+                + FAN_QUAN_FENG_KE
+                + FAN_MEN_FENG_KE
+                + FAN_DAN_DIAO_JIANG
+                + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w5)
+    );
     assert_eq!(fan_value(w5, "圈风刻"), FAN_QUAN_FENG_KE, "{:?}", names(w5));
     assert_eq!(fan_value(w5, "门风刻"), FAN_MEN_FENG_KE, "{:?}", names(w5));
     assert!(!has_fan(w5, "无字"), "含字牌 ⇒ 无字失效: {:?}", names(w5));
@@ -312,13 +427,31 @@ fn r11_zuhelong_triplet_fan_discriminants() {
     // M5b：东 既非圈风也非门风 ⇒ 降为 幺九刻1（18/20）
     let an5b = analyze(&c, &[Meld::kan(27, false)], 28, 29); // round=南 seat=西
     let w5b = by_name(&an5b, "5筒");
-    assert_eq!((w5b.normal, w5b.tsumo), (18, 20), "{:?}", names(w5b));
+    // 18 = 组合龙12 + 暗杠2 + 幺九刻1 + 单钓将1 + 门前清2；20 = 同上换不求人4
+    assert_eq!(
+        (w5b.normal, w5b.tsumo),
+        (
+            FAN_ZUHE_LONG + FAN_AN_GANG + FAN_YAO_JIU_KE + FAN_DAN_DIAO_JIANG + FAN_MEN_QIAN_QING,
+            FAN_ZUHE_LONG + FAN_AN_GANG + FAN_YAO_JIU_KE + FAN_DAN_DIAO_JIANG + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w5b)
+    );
     assert_eq!(fan_value(w5b, "幺九刻"), FAN_YAO_JIU_KE, "{:?}", names(w5b));
 
     // M5e：暗杠 中（箭牌）⇒ 箭刻2（19/21）
     let an5e = analyze(&c, &[Meld::kan(31, false)], 27, 27);
     let w5e = by_name(&an5e, "5筒");
-    assert_eq!((w5e.normal, w5e.tsumo), (19, 21), "{:?}", names(w5e));
+    // 19 = 组合龙12 + 暗杠2 + 箭刻2 + 单钓将1 + 门前清2；21 = 同上换不求人4
+    assert_eq!(
+        (w5e.normal, w5e.tsumo),
+        (
+            FAN_ZUHE_LONG + FAN_AN_GANG + FAN_JIAN_KE + FAN_DAN_DIAO_JIANG + FAN_MEN_QIAN_QING,
+            FAN_ZUHE_LONG + FAN_AN_GANG + FAN_JIAN_KE + FAN_DAN_DIAO_JIANG + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w5e)
+    );
     assert_eq!(fan_value(w5e, "箭刻"), FAN_JIAN_KE, "{:?}", names(w5e));
 }
 
@@ -362,7 +495,29 @@ fn r12_zipaiyise_excludes_hunyaojiu() {
     let c = parse_hand("东东东 南南南 中中中 发发发 白");
     let an = analyze(&c, &[], 27, 27);
     let w = by_name(&an, "白");
-    assert_eq!((w.normal, w.tsumo), (197, 198), "{:?}", names(w));
+    // 197 = 小三元64 + 字一色64 + 四暗刻64 + 圈风刻2 + 门风刻2 + 单钓将1
+    //       （三个 64 番是三个不同番：小三元 / 字一色 / 四暗刻，不得合并）
+    // 198 = 上式 + 自摸1
+    assert_eq!(
+        (w.normal, w.tsumo),
+        (
+            FAN_XIAO_SAN_YUAN
+                + FAN_ZI_YI_SE
+                + FAN_SI_AN_KE
+                + FAN_QUAN_FENG_KE
+                + FAN_MEN_FENG_KE
+                + FAN_DAN_DIAO_JIANG,
+            FAN_XIAO_SAN_YUAN
+                + FAN_ZI_YI_SE
+                + FAN_SI_AN_KE
+                + FAN_QUAN_FENG_KE
+                + FAN_MEN_FENG_KE
+                + FAN_DAN_DIAO_JIANG
+                + FAN_ZI_MO
+        ),
+        "{:?}",
+        names(w)
+    );
     assert!(has_fan(w, "字一色"), "{:?}", names(w));
     assert!(!has_fan(w, "混幺九"), "字一色吞混幺九: {:?}", names(w));
 }
@@ -374,7 +529,29 @@ fn r12_quanda_excludes_dayuwu() {
     let an = analyze(&c, &[], 27, 27);
 
     let w9 = by_name(&an, "9条");
-    assert_eq!((w9.normal, w9.tsumo), (31, 33), "{:?}", names(w9));
+    // 31 = 幺九刻1 + 一般高1 + 喜相逢1 + 全大24 + 四归一2 + 门前清2
+    // 33 = 上式换不求人4（-门前清2 +不求人4）
+    assert_eq!(
+        (w9.normal, w9.tsumo),
+        (
+            FAN_YAO_JIU_KE
+                + FAN_YI_BAN_GAO
+                + FAN_XI_XIANG_FENG
+                + FAN_QUAN_DA
+                + FAN_SI_GUI_YI
+                + FAN_MEN_QIAN_QING,
+            FAN_YAO_JIU_KE
+                + FAN_YI_BAN_GAO
+                + FAN_XI_XIANG_FENG
+                + FAN_QUAN_DA
+                + FAN_SI_GUI_YI
+                + FAN_MEN_QIAN_QING
+                - FAN_MEN_QIAN_QING
+                + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w9)
+    );
     assert!(
         has_fan(w9, "全大") && !has_fan(w9, "大于五"),
         "{:?}",
@@ -382,7 +559,19 @@ fn r12_quanda_excludes_dayuwu() {
     );
 
     let w8 = by_name(&an, "8筒");
-    assert_eq!((w8.normal, w8.tsumo), (28, 30), "{:?}", names(w8));
+    // 28 = 一般高1 + 喜相逢1 + 全大24 + 门前清2
+    // 30 = 上式换不求人4（-门前清2 +不求人4）
+    assert_eq!(
+        (w8.normal, w8.tsumo),
+        (
+            FAN_YI_BAN_GAO + FAN_XI_XIANG_FENG + FAN_QUAN_DA + FAN_MEN_QIAN_QING,
+            FAN_YI_BAN_GAO + FAN_XI_XIANG_FENG + FAN_QUAN_DA + FAN_MEN_QIAN_QING
+                - FAN_MEN_QIAN_QING
+                + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w8)
+    );
     assert!(
         has_fan(w8, "全大") && !has_fan(w8, "大于五"),
         "{:?}",
@@ -391,7 +580,19 @@ fn r12_quanda_excludes_dayuwu() {
 
     // 控制行：6条 行含 6条（非 7/8/9）⇒ 不成全大 ⇒ 大于五 12 照计、分值不变
     let w6 = by_name(&an, "6条");
-    assert_eq!((w6.normal, w6.tsumo), (16, 18), "{:?}", names(w6));
+    // T2 取证实测番表：["幺九刻","一般高","大于五","门前清"]（无全大，故 大于五12 照计）
+    // 16 = 幺九刻1 + 一般高1 + 大于五12 + 门前清2
+    // 18 = 上式 - 门前清2 + 不求人4
+    assert_eq!(
+        (w6.normal, w6.tsumo),
+        (
+            FAN_YAO_JIU_KE + FAN_YI_BAN_GAO + FAN_DA_YU_WU + FAN_MEN_QIAN_QING,
+            FAN_YAO_JIU_KE + FAN_YI_BAN_GAO + FAN_DA_YU_WU + FAN_MEN_QIAN_QING - FAN_MEN_QIAN_QING
+                + FAN_BU_QIU_REN
+        ),
+        "{:?}",
+        names(w6)
+    );
     assert!(
         has_fan(w6, "大于五") && !has_fan(w6, "全大"),
         "{:?}",
@@ -406,6 +607,9 @@ fn r12_quanxiao_excludes_xiaoyuwu() {
     let an = analyze(&c, &[], 27, 27);
 
     let w1 = by_name(&an, "1筒");
+    // 46 = 三暗刻16 + 幺九刻1 ×2 + 双同刻2 + 全小24 + 门前清2（×2 = 幺九刻出现次数）
+    // 48 = 同上换自摸路径（门前清2 → 不求人4）
+    // 按 v0.2.0 口径：含两次同番的组合保持字面量，不写 FAN + FAN / FAN * N
     assert_eq!((w1.normal, w1.tsumo), (46, 48), "{:?}", names(w1));
     assert!(
         has_fan(w1, "全小") && !has_fan(w1, "小于五"),
@@ -414,6 +618,9 @@ fn r12_quanxiao_excludes_xiaoyuwu() {
     );
 
     let w2 = by_name(&an, "2筒");
+    // 100 = 四暗刻64 + 幺九刻1 ×2 + 双同刻2 + 三色三节高8 + 全小24（×2 = 幺九刻出现次数）
+    // 101 = 同上 + 自摸1
+    // 按 v0.2.0 口径：含两次同番的组合保持字面量，不写 FAN + FAN / FAN * N
     assert_eq!((w2.normal, w2.tsumo), (100, 101), "{:?}", names(w2));
     assert!(
         has_fan(w2, "全小") && !has_fan(w2, "小于五"),
@@ -423,6 +630,10 @@ fn r12_quanxiao_excludes_xiaoyuwu() {
 
     // 控制行：4筒 行含 4筒 ⇒ 不成全小 ⇒ 小于五 12 照计、分值不变
     let w4 = by_name(&an, "4筒");
+    // T2 取证实测番表：["三暗刻","幺九刻","幺九刻","双同刻","小于五","门前清"]（无全小，故 小于五12 照计）
+    // 34 = 三暗刻16 + 幺九刻1 ×2 + 双同刻2 + 小于五12 + 门前清2（×2 = 幺九刻出现次数）
+    // 36 = 同上换自摸路径（门前清2 → 不求人4）
+    // 按 v0.2.0 口径：含两次同番的组合保持字面量，不写 FAN + FAN / FAN * N
     assert_eq!((w4.normal, w4.tsumo), (34, 36), "{:?}", names(w4));
     assert!(
         has_fan(w4, "小于五") && !has_fan(w4, "全小"),
