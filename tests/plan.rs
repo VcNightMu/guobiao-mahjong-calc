@@ -2,6 +2,10 @@ use gbmj::model::Meld;
 use gbmj::plan::{plan, Direction};
 use gbmj::tiles::*;
 
+// 说明（**刻意**，非疏漏）：本文件内 `plan(…, 2)` 的 `2` 是**契约护栏**用的字面量，与
+// `src/plan.rs` 的 `MAX_DIST = 2` 同值却**不改为常量引用**——那个常量一旦被改动，
+// 这里的快照断言必须立刻失败报警，而不是静默跟随。
+
 fn find<'a>(ds: &'a [Direction], kw: &str) -> Option<&'a Direction> {
     ds.iter().find(|d| d.name.contains(kw))
 }

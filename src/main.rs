@@ -1,5 +1,6 @@
 use gbmj::calc::analyze;
 use gbmj::model::{validate_counts, Meld};
+use gbmj::plan::MAX_DIST;
 use gbmj::tiles::*;
 
 fn first_tile(c: &Counts) -> Option<usize> {
@@ -47,7 +48,7 @@ fn help() {
            --round 东     圈风\n\
            --seat  南     门风\n\
          扫描:\n\
-           --plan        未听牌方向扫描（离各番种还差几张，最多 2 张）\n\
+           --plan        未听牌方向扫描（离各番种还差几张，最多 {MAX_DIST} 张）\n\
          \n\
          例: gbmj 123456789m 11p 白白 --round 东 --seat 南"
     );
@@ -148,14 +149,14 @@ fn main() {
     }
 
     if plan_mode {
-        let dirs = gbmj::plan::plan(&concealed, &melds, 2);
+        let dirs = gbmj::plan::plan(&concealed, &melds, MAX_DIST);
         println!(
-            "暗牌 {} 张 | 副露 {} 副   方向扫描（离某个番种还差几张，最多 2 张）",
+            "暗牌 {} 张 | 副露 {} 副   方向扫描（离某个番种还差几张，最多 {MAX_DIST} 张）",
             total(&concealed),
             melds.len()
         );
         if dirs.is_empty() {
-            println!("  没有 2 张以内能凑到的番种方向");
+            println!("  没有 {MAX_DIST} 张以内能凑到的番种方向");
             return;
         }
         for d in dirs.iter() {

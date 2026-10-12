@@ -15,6 +15,11 @@ use crate::tiles::*;
 
 pub const SUIT_NAME: [&str; 3] = ["万", "条", "筒"];
 
+/// 方向扫描的默认搜索半径（**策略常量**）：CLI 的 `--plan` 只列出距离不超过它的方向。
+/// 与 `plan()` 的 `max_dist` 参数同义。测试侧**刻意**保留字面量作为契约护栏：
+/// 一旦本值变动，方向快照族会立刻失败报警，而不是静默跟随。
+pub const MAX_DIST: u32 = 2;
+
 #[derive(Clone, Debug)]
 pub struct Direction {
     pub name: String,
