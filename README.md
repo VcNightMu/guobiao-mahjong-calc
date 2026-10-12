@@ -106,8 +106,7 @@ gbmj <手牌> [副露...] --plan
 | `scripts/check-utf8.ps1` | 全仓 UTF-8 门禁（本地执行） |
 | `docs/` | 项目文档、开发/测试方案、评估报告、接手简报，以及 `BASELINE_旧二进制行为基准.txt`（行为基准） |
 | `听牌算番方案-v0.1.md` | 早期方案稿（JS 时代的文档） |
-| `界面格式-v0.1.md` / `mockup.html` | 界面规格与早期 HTML 示意（现已由 gbmj-gui 实现） |
-| `preview-serve.js` | 早期本地静态预览服务脚本（Node `http`，监听 8791 端口；根目录写死为旧路径 `F:/ArkCodes/国标算番器`，访问 `/` 时返回 `mockup.html`；已停止维护） |
+| `界面格式-v0.1.md` | 界面规格（同期 HTML 示意 `mockup.html` 与预览脚本 `preview-serve.js` 属 JS 时代遗留，已由 `gbmj-gui` 取代，**T25 按用户裁定删除**） |
 
 ## 进度
 
