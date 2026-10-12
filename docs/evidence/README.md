@@ -131,6 +131,6 @@ git ls-files docs/evidence
 # 3) 重新生成并逐字对比（可选，见第二节）
 cargo build --release --bin gbmj-gui
 # 4) 引擎侧护栏不受本目录影响
-cargo test --no-default-features        # 期望 159 passed / 0 failed
+cargo test --no-default-features        # 期望 160 passed / 0 failed
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\gate.ps1   # 期望 PASS 8 / WARN 0 / FAIL 0
 ```
