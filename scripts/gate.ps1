@@ -18,6 +18,9 @@
     Advisory items (WARN by default, FAIL only with -Strict*):
       5 fmt:          cargo fmt --all -- --check        (-SkipFmt / -StrictFmt)
                       NEVER runs cargo fmt (never reformats sources).
+      8 line-ref:     advisory scan of comments under src\ for source line-number
+                      references (:NNN / LNNN / the CJK 'di NNN hang' form).
+                      Reports only; never blocking.
 
     Backward compatibility: -StrictClippy is still accepted as a no-op alias (clippy became
     blocking by default once all lint findings were fixed), so older command lines keep working.
@@ -45,11 +48,13 @@ function ConvertFrom-B64Utf8 {
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
 
-# Non-ASCII strings as Base64(UTF-8): clippy notices + the docs baseline file name.
+# Non-ASCII strings as Base64(UTF-8): clippy notices + docs baseline name + line-ref scan.
 $MsgClippyBlocking = ConvertFrom-B64Utf8 'Y2xpcHB5IOmYu+aWreS4re+8muWPkeeOsCB7MH0g5p2hIGxpbnTvvIjor7fkv67lpI3vvJvkuLTml7bmlL7lrr3lj6/nlKggLUxlbmllbnRDbGlwcHnvvIk='
 $MsgClippyLenient  = ConvertFrom-B64Utf8 'LUxlbmllbnRDbGlwcHnvvJrmnKzmrKEgezB9IOadoSBsaW50IOS7heaPkOekuuOAgeS4jemYu+aWrQ=='
 $MsgFmtPending    = ConvertFrom-B64Utf8 '5b6F6KOB5a6a77ya6ZyA5YWI5L+u5aSN5qC85byP5beu5byC77yIezB9IOS4quaWh+S7tiAvIHsxfSDlpITniYfmrrXvvIzmnKzku7vliqHlhpnojIPlm7TlpJbvvIk='
 $DocBaselineName  = ConvertFrom-B64Utf8 'ZG9jc1xCQVNFTElORV/ml6fkuozov5vliLbooYzkuLrln7rlh4YudHh0'
+$LineRefPat = ConvertFrom-B64Utf8 '56ysXHMqWzAtOV17Miw0fVxzKuihjA=='
+$MsgLineRef = ConvertFrom-B64Utf8 'c3JjIOS4iyB7MH0g5aSE5rOo6YeK5ZCr6KGM5Y+35byV55So77yI5bu66K6u5pS55Li65YaF5a655byV55So77yM6KeB5omL5YaMIMKnOS4z77yJ'
 
 $RepoRoot     = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $GateDataDir  = Join-Path $RepoRoot 'scripts\gate-data'
@@ -159,7 +164,7 @@ if ($UpdateBaseline) {
 
 # ---------------------------------------------------------------- 1. build
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host "[1/7] build: cargo build --no-default-features"
+Write-Host "[1/8] build: cargo build --no-default-features"
 Push-Location $RepoRoot
 try { $buildOut = & cargo build --no-default-features 2>&1; $buildExit = $LASTEXITCODE }
 finally { Pop-Location }
@@ -182,7 +187,7 @@ if ($buildExit -eq 0 -and $warnCount -eq 0) {
 
 # ---------------------------------------------------------------- 2. test list lock
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host "[2/7] test-list lock: cargo test --no-default-features -- --list"
+Write-Host "[2/8] test-list lock: cargo test --no-default-features -- --list"
 $curNames = @(Get-CargoTestNames)
 $Baseline = Read-BaselineJson
 if ($null -eq $Baseline) {
@@ -209,7 +214,7 @@ if ($null -eq $Baseline) {
 
 # ---------------------------------------------------------------- 3. test result
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host "[3/7] test result: cargo test --no-default-features"
+Write-Host "[3/8] test result: cargo test --no-default-features"
 Push-Location $RepoRoot
 try { $testOut = & cargo test --no-default-features 2>&1; $testExit = $LASTEXITCODE }
 finally { Pop-Location }
@@ -235,11 +240,11 @@ if ($failed -eq 0 -and $required -gt 0 -and $passed -ge $required) {
 # ---------------------------------------------------------------- 4. clippy (blocking by default)
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 if ($SkipClippy) {
-    Write-Host "[4/7] clippy: skipped (-SkipClippy)"
+    Write-Host "[4/8] clippy: skipped (-SkipClippy)"
     Write-Detail "basis: skipped by -SkipClippy"
     Add-Result 'clippy (blocking, skipped)' 'WARN' $sw.Elapsed.TotalSeconds
 } else {
-    Write-Host "[4/7] clippy: cargo clippy --no-default-features --all-targets -- -D warnings"
+    Write-Host "[4/8] clippy: cargo clippy --no-default-features --all-targets -- -D warnings"
     Push-Location $RepoRoot
     try { $clipOut = & cargo clippy --no-default-features --all-targets -- -D warnings 2>&1; $clipExit = $LASTEXITCODE }
     finally { Pop-Location }
@@ -278,11 +283,11 @@ if ($SkipClippy) {
 # ---------------------------------------------------------------- 5. fmt (advisory)
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 if ($SkipFmt) {
-    Write-Host "[5/7] fmt: skipped (-SkipFmt)"
+    Write-Host "[5/8] fmt: skipped (-SkipFmt)"
     Write-Detail "basis: skipped by -SkipFmt (cargo fmt is never executed by this gate)"
     Add-Result 'fmt (advisory)' 'WARN' $sw.Elapsed.TotalSeconds
 } else {
-    Write-Host "[5/7] fmt check: cargo fmt --all -- --check (never runs cargo fmt)"
+    Write-Host "[5/8] fmt check: cargo fmt --all -- --check (never runs cargo fmt)"
     Push-Location $RepoRoot
     try { $fmtOut = & cargo fmt --all -- --check 2>&1; $fmtExit = $LASTEXITCODE }
     finally { Pop-Location }
@@ -316,7 +321,7 @@ if ($SkipFmt) {
 
 # ---------------------------------------------------------------- 6. utf8 gate
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host "[6/7] utf8 gate: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-utf8.ps1"
+Write-Host "[6/8] utf8 gate: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-utf8.ps1"
 if (-not (Test-Path -LiteralPath $Utf8Script)) {
     Write-Detail ("basis: script not found: {0}" -f $Utf8Script) 'Red'
     Add-Result 'utf8 gate (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds
@@ -330,7 +335,7 @@ if (-not (Test-Path -LiteralPath $Utf8Script)) {
 
 # ---------------------------------------------------------------- 7. functional baseline 9/9
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host ("[7/7] functional baseline: {0} vs target\debug\gbmj.exe" -f $DocBaselineName)
+Write-Host ("[7/8] functional baseline: {0} vs target\debug\gbmj.exe" -f $DocBaselineName)
 if (-not (Test-Path -LiteralPath $DocBaseline)) {
     Write-Detail ("basis: docs baseline not found: {0}" -f $DocBaseline) 'Red'
     Add-Result 'functional baseline (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds
@@ -384,6 +389,33 @@ if (-not (Test-Path -LiteralPath $DocBaseline)) {
     Write-Detail ("basis: cases = {0}; pass = {1}; fail = {2} (requirement: 9/9 line-exact, LF-normalized, trailing blank lines ignored)" -f $caseCount, $passCount, ($caseCount - $passCount))
     if ($caseCount -eq 9 -and $passCount -eq 9) { Add-Result 'functional baseline (blocking)' 'PASS' $sw.Elapsed.TotalSeconds }
     else { Add-Result 'functional baseline (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds }
+}
+
+# ---------------------------------------------------------------- 8. line-ref scan (advisory)
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+Write-Host "[8/8] line-ref scan: comments under src\ referencing :NNN / LNNN / line NNN"
+$LineRefPattern = ":[0-9]{3,4}\b|\bL[0-9]{3,4}\b|$LineRefPat"
+$srcRoot = Join-Path $RepoRoot 'src'
+$srcFiles = @()
+if (Test-Path -LiteralPath $srcRoot) { $srcFiles = @(Get-ChildItem -LiteralPath $srcRoot -Recurse -File -Filter '*.rs') }
+$refHits = New-Object System.Collections.Generic.List[string]
+foreach ($sf in $srcFiles) {
+    $rel = $sf.FullName.Substring($RepoRoot.Length + 1).Replace('\', '/')
+    $n = 0
+    foreach ($line in [System.IO.File]::ReadAllLines($sf.FullName)) {
+        $n++
+        if ($line -notmatch '//') { continue }
+        if ($line -match $LineRefPattern) { [void]$refHits.Add(("{0}:{1}  {2}" -f $rel, $n, $line.Trim())) }
+    }
+}
+if ($refHits.Count -eq 0) {
+    Write-Detail ("basis: no line-number reference in comments of {0} src file(s)" -f @($srcFiles).Count)
+    Add-Result 'line-ref scan (advisory)' 'PASS' $sw.Elapsed.TotalSeconds
+} else {
+    Write-Detail ($MsgLineRef -f $refHits.Count) 'Yellow'
+    foreach ($h in $refHits) { Write-Detail ("  " + $h) 'Yellow' }
+    Write-Detail "basis: advisory only (never blocking); prefer content references (handbook 9.3)"
+    Add-Result 'line-ref scan (advisory)' 'WARN' $sw.Elapsed.TotalSeconds
 }
 
 # ---------------------------------------------------------------- summary
