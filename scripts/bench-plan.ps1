@@ -26,10 +26,20 @@
        moved 165.1-209.2 ms (up to ~26%) because concurrent builds/tests perturb windows.
     b. -Runs 9 did NOT stabilise the median on this box: 9-run windows spread wider
        (168.1-209.2 ms) than 5-run windows (165.1-183.9 ms); a longer window has more
-       chances to catch a load spike. Keep -Runs 5 as the default and compare `min` across
-       windows; use -Runs 9 only when a distribution is wanted.
+       chances to catch a load spike. Keep -Runs 5 as the default; use -Runs 9 only when a
+       distribution is wanted.
     c. Small-cost cases (< ~20 ms; `147m258s369p5p` ~13-15 ms) are dominated by process
-       start-up noise (raw spread ~13-18 ms, +-20%): read `min`, not the median.
+       start-up noise (raw spread ~13-18 ms, +-20%): read `min` within one window, not the
+       median.
+    d. `outlines` is a coarse proxy. Three proxies were measured (direction count,
+       structural waits x directions, forced-skeleton direction count) and NONE ordered
+       the samples monotonically with time; two hands with the same direction count
+       (10) differed by ~45 ms. Do not read a complexity bound into these numbers.
+    e. How to compare two runs: WITHIN one window use `min` to judge reachability (is the
+       hand's cost in the expected class?), but ACROSS windows compare ORDER OF MAGNITUDE
+       only. The verifier (T53) measured the same hand's `min` drifting 3.9-7.4 ms between
+       two windows on this box, so `min` must NOT be used as an absolute threshold or a
+       tight pass/fail bound; treat a delta that does not move the magnitude as noise.
     d. `outlines` is a coarse proxy. Three proxies were measured (direction count,
        structural waits x directions, forced-skeleton direction count) and NONE ordered
        the samples monotonically with time; two hands with the same direction count
@@ -222,7 +232,10 @@ foreach ($r in $results) {
 # count is only a proxy and is NOT guaranteed to correlate monotonically with time.
 Write-Host ""
 Write-Host "note: 'outlines' is a coarse proxy; measured proxies (direction count, waits x directions,"
-Write-Host "      forced-skeleton direction count) were NOT monotone with time -- compare 'min', not the median."
+Write-Host "      forced-skeleton direction count) were NOT monotone with time."
+Write-Host "note: timing deltas: judge `min` WITHIN one window; ACROSS windows compare ORDER OF MAGNITUDE"
+Write-Host "      only -- the same hand's `min` drifted 3.9-7.4 ms between windows, so it is NEVER an"
+Write-Host "      absolute threshold (a delta that does not move the magnitude is noise)."
 
 $bench = [pscustomobject]@{
     version   = 1

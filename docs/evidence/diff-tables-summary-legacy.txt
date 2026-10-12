@@ -1,0 +1,16 @@
+diff-tables summary
+timestamp            : 2026-10-12T21:15:40+08:00
+mode                 : cross-binary
+old binary           : C:\Users\Administrator\AppData\Local\Temp\t71wt\target\debug\gbmj.exe
+old binary sha256    : 6DC769451937D79E42CEE3BFDD7841625FEADFE7241E474E4AF893271428AF44
+new binary           : F:\AllCodes\guobiao-mahjong-calc\target\debug\gbmj.exe
+new binary sha256    : 15FF07C0DC30585169D8413414F6ADAE9ECD9352EFBD80D51612C8F6C044E5D2
+case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
+switch appended      : --dump-tables
+cases total          : 374
+zero-diff            : 0
+expected-legacy      : 374   (old side has no banner: its four tables are unobtainable from that build)
+UNEXPECTED-diff      : 0
+verdict-mismatch     : 0
+compared scope       : the section that follows the diagnostic banner only (default output is covered by diff-cli.ps1)
+result table         : C:\Users\ADMINI~1\AppData\Local\Temp\t71leg\diff-tables-results.tsv

@@ -41,6 +41,11 @@
         ^\s*\+\s*CategoryInfo
         ^\s*\+\s*FullyQualifiedErrorId
         NativeCommandError
+        ^\s*At .*\.ps1:\d+ char:\d+\s*$      (T65/T57: English-locale caller banner)
+        ^\s*\+\s*&                            (T65/T57: echoed source line of the native call)
+        ^\s*\+\s*~+\s*$                       (T65/T57: caret underline)
+      Real stderr text (e.g. "cuo wu: an pai zhang shu bu fu ...") never matches these
+      patterns and is therefore preserved.
       Both binaries are launched identically, so any residue affects both sides equally;
       the rule is applied anyway so that the comparison is script-independent.
 
@@ -108,10 +113,19 @@ $zhInv = ConvertFrom-B64Utf8 '6LCD55So'
 $noisePatterns = @(
     ('^\s*\+?\s*' + $zhPos),
     ('^\s*' + $zhUse + '.+?' + $zhInv),
-    '^\s*At line[: ]',
+    '^\s*At line:\d+ char:\d+\s*$',
     '^\s*\+\s*CategoryInfo',
     '^\s*\+\s*FullyQualifiedErrorId',
-    'NativeCommandError'
+    'NativeCommandError',
+    # T65/T57 additions (minimal): Windows PowerShell 5.1 caller context that is NOT
+    # locale-localised and NOT stable across script revisions:
+    #   "At C:\...\script.ps1:6 char:1"  (English-locale caller banner; the line number
+    #                                     changes whenever the script's own source moves)
+    #   "+ & $exe @argv 1>$outFile 2>$errFile"  (echoed source line of the native call)
+    #   "+ ~~~~~~~~~~~~~~~~~~~~~~~~"            (caret underline; length follows the source line)
+    '^\s*At .*\.ps1:\d+ char:\d+\s*$',
+    '^\s*\+\s*&',
+    '^\s*\+\s*~+\s*$'
 )
 
 function Get-StableText([string]$path) {

@@ -1,24 +1,24 @@
 diff-cli summary
-timestamp            : 2026-10-12T20:17:12+08:00
-old binary           : C:\Users\Administrator\AppData\Local\Temp\t55wt\target\release\gbmj.exe
-old binary mtime     : 2026-10-12T20:15:41
-old binary sha256    : 176C9948F5D957587663A44F3E0DC4B628C83A2AC7269B812F917868EB8CE9F6
+timestamp            : 2026-10-12T21:11:15+08:00
+old binary           : C:\Users\Administrator\AppData\Local\Temp\t65wt\target\release\gbmj.exe
+old binary mtime     : 2026-10-12T20:58:47
+old binary sha256    : 3BD68ECD6A4EBD22466105C2E91CFDD0EB8180751A7BEDFE35A14A2EF6924D8E
 new binary           : F:\AllCodes\guobiao-mahjong-calc\target\release\gbmj.exe
-new binary mtime     : 2026-10-12T20:15:06
-new binary sha256    : 8308E5501A6455CA70B10CB37DCC64D4A285E8F36D7839925DBB9AD83B56B1DD
+new binary mtime     : 2026-10-12T21:03:13
+new binary sha256    : B1DC8B4311D86675DB6B965008C24035E1B6F909197A692A9AD519EA6FF02C2B
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
-cases total          : 350
-zero-diff            : 330
-expected-diff        : 20
+cases total          : 374
+zero-diff            : 334
+expected-diff        : 40
 UNEXPECTED-diff      : 0
 verdict-mismatch     : 0   (expected-diff case that was identical)
 
 top-5 slowest cases (max of old/new ms):
-  plan-10 old=217ms new=193ms
-  baseline-GUARD75 old=211ms new=157ms
-  plan-04 old=186ms new=184ms
-  f5-sianke-quad-4tiles old=167ms new=169ms
-  plan-05 old=91ms new=93ms
+  f5-sianke-quad-4tiles old=196ms new=219ms
+  plan-10 old=217ms new=202ms
+  plan-04 old=194ms new=192ms
+  plan-05 old=102ms new=104ms
+  plan-08 old=91ms new=83ms
 
 noise-strip rule     : stdout/stderr redirected to files; lines matching the localised at-position banner, the localised invoking banner, "At line", "+ CategoryInfo", "+ FullyQualifiedErrorId" or "NativeCommandError" are removed (Base64-encoded zh patterns inside the script)
-result table         : C:\Users\ADMINI~1\AppData\Local\Temp\t55rel\diff-cli-results.tsv
+result table         : C:\Users\ADMINI~1\AppData\Local\Temp\t66rel\diff-cli-results.tsv

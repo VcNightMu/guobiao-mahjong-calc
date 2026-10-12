@@ -1,24 +1,24 @@
 diff-cli summary
-timestamp            : 2026-10-12T20:16:27+08:00
-old binary           : C:\Users\Administrator\AppData\Local\Temp\t55wt\target\debug\gbmj.exe
-old binary mtime     : 2026-10-12T20:15:39
-old binary sha256    : DE1008FC41327D0C53E1073144B1E1D61B7B7B36E44273F61A044E050A0B0591
+timestamp            : 2026-10-12T21:10:13+08:00
+old binary           : C:\Users\Administrator\AppData\Local\Temp\t65wt\target\debug\gbmj.exe
+old binary mtime     : 2026-10-12T21:01:34
+old binary sha256    : E3304FAF2A49D898E4B0019950E1AD3D0D13B9007076DFF151960AA1D2E67DC7
 new binary           : F:\AllCodes\guobiao-mahjong-calc\target\debug\gbmj.exe
-new binary mtime     : 2026-10-12T20:15:04
-new binary sha256    : 4DB6C007891DFDB7E3CDBE8FE933831F02E4EE9206CCA1F09BB7A6313E7BE9DC
+new binary mtime     : 2026-10-12T21:01:21
+new binary sha256    : 15FF07C0DC30585169D8413414F6ADAE9ECD9352EFBD80D51612C8F6C044E5D2
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
-cases total          : 350
-zero-diff            : 330
-expected-diff        : 20
+cases total          : 374
+zero-diff            : 334
+expected-diff        : 40
 UNEXPECTED-diff      : 0
 verdict-mismatch     : 0   (expected-diff case that was identical)
 
 top-5 slowest cases (max of old/new ms):
-  plan-10 old=3192ms new=2943ms
-  plan-04 old=2820ms new=2757ms
-  f5-sianke-quad-4tiles old=2096ms new=2189ms
-  plan-05 old=1176ms new=1235ms
-  plan-08 old=972ms new=1030ms
+  plan-10 old=3505ms new=3511ms
+  f5-sianke-quad-4tiles old=3062ms new=3226ms
+  plan-04 old=2952ms new=2931ms
+  plan-05 old=1379ms new=1429ms
+  f5-sananke-quad-4tiles old=1189ms new=821ms
 
 noise-strip rule     : stdout/stderr redirected to files; lines matching the localised at-position banner, the localised invoking banner, "At line", "+ CategoryInfo", "+ FullyQualifiedErrorId" or "NativeCommandError" are removed (Base64-encoded zh patterns inside the script)
 result table         : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-results.tsv

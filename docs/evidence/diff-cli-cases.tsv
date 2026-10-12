@@ -332,7 +332,7 @@ illegal-pon-loose	crafted-for-coverage#illegal-input	diff:R4-no-loose-tiles-afte
 illegal-chi-z-extra	crafted-for-coverage#illegal-input	diff:R4-no-loose-tiles-after-meld-option	123m456s789p东东东5p|--pon|1m|2m|3m
 illegal-hand-14	crafted-for-coverage#hand 14 tiles	same	123m456s789p东东东55p
 illegal-hand-10-nomeld	crafted-for-coverage#hand 10 tiles no meld	same	123m456s789p
-illegal-hand-empty	crafted-for-coverage#empty hand	same	
+illegal-hand-empty	crafted-for-coverage#empty hand; T65 attribution: new usage text adds --dump-tables (in-flight T60)	diff:T60-dump-tables-usage-added	
 illegal-hand-six	crafted-for-coverage#more than 4 of one tile	same	111111m456s789p
 illegal-hand-junk	crafted-for-coverage#non-tile hand	same	abc
 illegal-hand-zero-tile	crafted-for-coverage#tile index 0	same	0m123456789s
@@ -348,3 +348,27 @@ f2-santongke-pon-1p	T55/F2-正例: 三同刻	diff:F2-meld-carrier-open-runs-and-
 f2-sanfengke-pon-bei	T55/F2-正例: 三风刻	diff:F2-meld-carrier-open-runs-and-triplets	南南南西西西99p55p|--pon|北|--plan
 f2-yiseshuanglonghui-chi4	T55/F2-正例: 一色双龙会（4 吃）	diff:F2-meld-carrier-open-runs-and-triplets	5m|--chi|123m|--chi|123m|--chi|789m|--chi|789m|--plan
 f2-negative-pon-not-concealed	T55/F2-反例对照: 明碰不得充当暗刻源 ⇒ 两侧都不出现 三暗刻/四暗刻	same	111m222m333m99s5p|--pon|1m|--plan
+f2-open-01-清龙	crafted-for-coverage#f2-open=清龙;meld=chi-123m	diff:F2-open-meld-carrier	456m789m11p22s|--chi|123m|--plan
+f2-open-02-花龙	crafted-for-coverage#f2-open=花龙;meld=chi-123m	diff:F2-open-meld-carrier	456s789p11m22p|--chi|123m|--plan
+f2-open-03-一色三步高	crafted-for-coverage#f2-open=一色三步高;meld=chi-123m	diff:F2-open-meld-carrier	234m345m11p22s|--chi|123m|--plan
+f2-open-04-三色三步高	crafted-for-coverage#f2-open=三色三步高;meld=chi-123m	diff:F2-open-meld-carrier	234s345p11m22s|--chi|123m|--plan
+f2-open-05-一色三同顺	crafted-for-coverage#f2-open=一色三同顺;meld=chi-123m	diff:F2-open-meld-carrier	123m123m11p22s|--chi|123m|--plan
+f2-open-06-三色三同顺	crafted-for-coverage#f2-open=三色三同顺;meld=chi-123m	diff:F2-open-meld-carrier	123s123p11m22s|--chi|123m|--plan
+f2-open-07-一色三节高	crafted-for-coverage#f2-open=一色三节高;meld=pon-1m	diff:F2-open-meld-carrier	222m333m11p22s|--pon|1m|--plan
+f2-open-08-三色三节高	crafted-for-coverage#f2-open=三色三节高;meld=pon-1m	diff:F2-open-meld-carrier	222s333p555m9s|--pon|1m|--plan
+f2-open-09-一色四同顺	crafted-for-coverage#f2-open=一色四同顺;meld=chi-123m-x2	diff:F2-open-meld-carrier	123m123m1p|--chi|123m|--chi|123m|--plan
+f2-open-10-一色四节高	crafted-for-coverage#f2-open=一色四节高;meld=pon-1m+pon-2m	same	333m444m1p|--pon|1m|--pon|2m|--plan
+f2-open-11-一色四步高	crafted-for-coverage#f2-open=一色四步高;meld=chi-123m+chi-234m	diff:F2-open-meld-carrier	345m456m1p|--chi|123m|--chi|234m|--plan
+f2-open-12-一色双龙会	crafted-for-coverage#f2-open=一色双龙会;meld=chi-123m-x2+chi-789m-x2	diff:F2-open-meld-carrier	5m|--chi|123m|--chi|123m|--chi|789m|--chi|789m|--plan
+f2-open-13-三色双龙会	crafted-for-coverage#f2-open=三色双龙会;meld=chi-123m+chi-789m	diff:F2-open-meld-carrier	123s789s1p|--chi|123m|--chi|789m|--plan
+f2-open-14-三同刻	crafted-for-coverage#f2-open=三同刻;meld=pon-1p	diff:F2-open-meld-carrier	111m111s99p55p|--pon|1p|--plan
+f2-open-15-三风刻	crafted-for-coverage#f2-open=三风刻;meld=pon-bei	diff:F2-open-meld-carrier	南南南西西西99p55p|--pon|北|--plan
+f2-open-16-双箭刻	crafted-for-coverage#f2-open=双箭刻;meld=pon-zhong	diff:F2-open-meld-carrier	发发发111m99s55p|--pon|中|--plan
+f2-open-17-大三元	crafted-for-coverage#f2-open=大三元;meld=pon-zhong+pon-fa	diff:F2-open-meld-carrier	白白白东东5m5m|--pon|中|--pon|发|--plan
+f2-open-18-小三元	crafted-for-coverage#f2-open=小三元;meld=pon-zhong	diff:F2-open-meld-carrier	发发发白白111m22s|--pon|中|--plan
+f2-open-19-大四喜	crafted-for-coverage#f2-open=大四喜;meld=pon-dong	diff:F2-open-meld-carrier	南南南西西西北北北中|--pon|东|--plan
+f2-open-20-小四喜	crafted-for-coverage#f2-open=小四喜;meld=pon-dong	diff:F2-open-meld-carrier	南南南西西西北北5m5m|--pon|东|--plan
+f2-neg2-chi-not-triplet	crafted-for-coverage#f2-negative: chi must not act as a triplet face	same	111s111p99m55m|--chi|123m|--plan
+f2-neg3-menqing-pon-source	crafted-for-coverage#f2-negative: menqing spot check (pon meld)	same	147m258s369p5p|--pon|5p|--plan
+f2-neg4-ankan-source	crafted-for-coverage#f2-negative: ankan source for triplet fans	same	111m222m333m99s5p|--ankan|1m|--plan
+f2-neg5-no-meld-control	crafted-for-coverage#f2-negative: same hand without any meld (control)	same	111m222m333m99s5p|--plan
