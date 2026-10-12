@@ -342,3 +342,9 @@ f1-sanse-sanbugao-d1-kept	T53/F1-正控: d=1 仍必须出现	same	123m234s345p11
 f5-sananke-quad-4tiles	T53/F5-正控: 4 张同牌充当暗刻源 ⇒ 新增三暗刻行	diff:F5-quad-now-counted-as-anke	1111m222m333m99s5p|--plan
 f5-sianke-quad-4tiles	T53/F5-正控: 同前 ⇒ 新增四暗刻行	diff:F5-quad-now-counted-as-anke	1111m222m333m444m|--plan
 f5-negative-no-quad	T53/F5-阴性对照: 无 4 张同牌 ⇒ 旧新逐字一致	same	111m222m333m99s5p5p|--plan
+f2-dasixi-pon-dong	T55/F2-正例: 明碰东 承载强制面子 ⇒ 大四喜应出现	diff:F2-meld-carrier-open-runs-and-triplets	南南南西西西北北北中|--pon|东|--plan
+f2-dasanyuan-pon-zhong-fa	T55/F2-正例: 大三元	diff:F2-meld-carrier-open-runs-and-triplets	白白白东东5m5m|--pon|中|--pon|发|--plan
+f2-santongke-pon-1p	T55/F2-正例: 三同刻	diff:F2-meld-carrier-open-runs-and-triplets	111m111s99p55p|--pon|1p|--plan
+f2-sanfengke-pon-bei	T55/F2-正例: 三风刻	diff:F2-meld-carrier-open-runs-and-triplets	南南南西西西99p55p|--pon|北|--plan
+f2-yiseshuanglonghui-chi4	T55/F2-正例: 一色双龙会（4 吃）	diff:F2-meld-carrier-open-runs-and-triplets	5m|--chi|123m|--chi|123m|--chi|789m|--chi|789m|--plan
+f2-negative-pon-not-concealed	T55/F2-反例对照: 明碰不得充当暗刻源 ⇒ 两侧都不出现 三暗刻/四暗刻	same	111m222m333m99s5p|--pon|1m|--plan

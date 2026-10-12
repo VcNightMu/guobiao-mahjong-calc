@@ -250,7 +250,17 @@ pub fn best_standard(
     allow_runs: bool,
     five_gates: bool,
 ) -> Option<(u32, Counts)> {
-    best_forced(hand, melds, f, allow_runs, five_gates, &[], None)
+    // 无强制面子 ⇒ `Carrier` 取哪个都不影响行为（匹配循环只在 `forced` 非空时有意义）。
+    best_forced(
+        hand,
+        melds,
+        f,
+        allow_runs,
+        five_gates,
+        &[],
+        None,
+        Carrier::Open,
+    )
 }
 
 // 骨架系用的小工具：run = 同门顺子，trip = 同门刻子
@@ -265,8 +275,39 @@ fn is_run3(s: &[usize; 3]) -> bool {
     !(s[0] == s[1] && s[1] == s[2])
 }
 
+/// 「强制面子能否由**现有副露**承载」（T54/F2）。策略依据取自 `src/fans.rs`（**对齐引擎，不对齐个人对国标的印象**）：
+/// 和牌分解的面子集合 = 副露 `Meld::to_set()` ∪ 暗牌分解（`calc.rs::winning_decomps` 把两者并在一起），
+/// 故一副副露在计番侧**等价于同形的那一个面子**：吃等价于顺子面子（供 `run(s,n)` 型强制面子）；
+/// 碰 / 明杠 / 暗杠等价于刻子面子（`fans.rs::trips_of` 收 `Set::is_triplet()`，杠的 kind 也是 Triplet）。
+/// **唯一例外是暗刻系**（`三暗刻 / 四暗刻`）：`fans.rs` 的暗刻统计要求面子满足 `!open || (is_kan && !open)`
+/// ⇒ 明碰/明杠不可承载；暗杠虽可承载，但本模块已用 `ankan` 单独扣除（见刻子系注释），再匹配会重复计数
+/// ⇒ 该族固定 `Carrier::Concealed`（行为与修复前一致）。
+/// 注：`fans.rs` 的番种判定块内**没有任何门清守卫**，故 `一色双龙会/三色双龙会/一色四X` 等不得因
+/// 「我印象里它是门清限定」而写成不可承载（那会造出与 F2 同类的假阴性）。
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Carrier {
+    /// 副露可承载（骨架系 + 明暗皆可的刻子系）
+    Open,
+    /// 副露不可承载（暗刻系：三暗刻 / 四暗刻）
+    Concealed,
+}
+
+/// 副露 `m` 是否恰好提供强制面子 `s`（形状必须一致：顺子↔吃、刻子↔碰/杠）。
+fn meld_carries(m: &Meld, s: &[usize; 3]) -> bool {
+    if is_run3(s) {
+        m.kind == MeldKind::Chi && *s == [m.tile, m.tile + 1, m.tile + 2]
+    } else {
+        (m.kind == MeldKind::Pon || m.kind == MeldKind::Kan) && s[0] == m.tile
+    }
+}
+
 /// 同 best_standard，但可以先钉死若干「强制面子」（清龙、一色四步高、双龙会这类骨架番）。
 /// pair_tile 给定时，将牌也被钉死（双龙会必须是 5）。
+/// `forced` 中**已由副露承载**的面子不再占用暗牌名额、也不进目标牌型（可否承载由 `carrier` 决定）。
+// best_forced 的 8 个参数（比 clippy 阈值多 1）全为原始类型/不可变借用；T54 新增的 `carrier` 是策略位
+// （`Carrier::Open` / `Carrier::Concealed`），拆结构体会牵动 best_standard 与 push_forced_with 两处调用，
+// 而本轮以「行为分毫不变 + 便于复核」为最高优先，故沿用既有 push_forced/rec 的处置方式显式 allow。
+#[allow(clippy::too_many_arguments)]
 pub fn best_forced(
     hand: &Counts,
     melds: &[Meld],
@@ -275,6 +316,7 @@ pub fn best_forced(
     five_gates: bool,
     forced: &[[usize; 3]],
     pair_tile: Option<usize>,
+    carrier: Carrier,
 ) -> Option<(u32, Counts)> {
     for m in melds {
         if !allow_runs && m.kind == MeldKind::Chi {
@@ -294,10 +336,30 @@ pub fn best_forced(
     }
     // 副露 + 强制面子 已经占满 4 副 → 连骨架都放不下，直接不可能
     let used = 4usize.checked_sub(melds.len())?;
-    if forced.len() > used {
+    // T54/F2：先扣除「已由现有副露承载」的强制面子（每个副露最多承载 1 个，每个强制面子最多被 1 个
+    // 副露承载）。被承载的面子已在副露里（不在暗牌里），故既不占用暗牌名额、也不进 `cur`/覆盖计数
+    // ——distance/need 只针对暗牌，扣除后既有搜索口径自然正确。
+    let mut meld_taken = vec![false; melds.len()];
+    let mut hand_forced: Vec<&[usize; 3]> = Vec::new();
+    for s in forced {
+        let mut carried = false;
+        if carrier == Carrier::Open {
+            for (i, m) in melds.iter().enumerate() {
+                if !meld_taken[i] && meld_carries(m, s) {
+                    meld_taken[i] = true;
+                    carried = true;
+                    break;
+                }
+            }
+        }
+        if !carried {
+            hand_forced.push(s);
+        }
+    }
+    if hand_forced.len() > used {
         return None;
     }
-    let left0 = used - forced.len();
+    let left0 = used - hand_forced.len();
     if let Some(p) = pair_tile {
         if !f.ok(p) {
             return None;
@@ -319,7 +381,7 @@ pub fn best_forced(
     let mut best: Option<(u32, Counts)> = None;
     let mut cur = counts();
     let mut cov0 = 0u32;
-    for s in forced {
+    for s in hand_forced.iter() {
         for &t in s.iter() {
             cov0 += gain(hand, &cur, t, 1);
             cur[t] += 1;
@@ -810,7 +872,7 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         if full.len() >= need3 {
             for c in combos(&full, need3) {
                 let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
-                push_forced(
+                push_forced_concealed(
                     &mut out,
                     hand,
                     melds,
@@ -828,7 +890,7 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         if full.len() >= need4 {
             for c in combos(&full, need4) {
                 let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
-                push_forced(
+                push_forced_concealed(
                     &mut out,
                     hand,
                     melds,
@@ -1160,6 +1222,69 @@ fn push_forced(
     pair_tile: Option<usize>,
     max_dist: u32,
 ) {
-    let res = best_forced(hand, melds, Filter::Any, true, false, forced, pair_tile);
+    // 骨架系 + 明暗皆可的刻子系：副露可承载强制面子（T54/F2）
+    push_forced_with(
+        out,
+        hand,
+        melds,
+        name,
+        value,
+        forced,
+        pair_tile,
+        max_dist,
+        Carrier::Open,
+    );
+}
+
+/// 暗刻系（三暗刻 / 四暗刻）专用：`forced` 必须由**暗牌**成形，副露不可承载
+/// （明碰/明杠不是暗刻；暗杠已由 `ankan` 单独扣除，再承载会重复计数）。
+/// 单独包一层而不给 `push_forced` 加第 9 个参数，是为了让另外 20 处调用点**一字不动**
+/// （行为分毫不变 + 便于复核），只有 2 处暗刻调用点改用本函数。
+#[allow(clippy::too_many_arguments)]
+fn push_forced_concealed(
+    out: &mut Vec<Direction>,
+    hand: &Counts,
+    melds: &[Meld],
+    name: String,
+    value: u32,
+    forced: &[[usize; 3]],
+    pair_tile: Option<usize>,
+    max_dist: u32,
+) {
+    push_forced_with(
+        out,
+        hand,
+        melds,
+        name,
+        value,
+        forced,
+        pair_tile,
+        max_dist,
+        Carrier::Concealed,
+    );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_forced_with(
+    out: &mut Vec<Direction>,
+    hand: &Counts,
+    melds: &[Meld],
+    name: String,
+    value: u32,
+    forced: &[[usize; 3]],
+    pair_tile: Option<usize>,
+    max_dist: u32,
+    carrier: Carrier,
+) {
+    let res = best_forced(
+        hand,
+        melds,
+        Filter::Any,
+        true,
+        false,
+        forced,
+        pair_tile,
+        carrier,
+    );
     push_dir(out, hand, name, value, res, "", max_dist);
 }

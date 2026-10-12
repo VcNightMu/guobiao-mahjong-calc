@@ -177,6 +177,16 @@ fn san_an_ke_zero() {
         "四张同牌应可作暗刻源（T52/F5）: {:?}",
         ds4.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
     );
+
+    // T54/F2 反例：明碰不是暗刻，不得被 `Carrier::Open` 当成暗刻源（fans.rs 暗刻统计要求 !open）。
+    // 注：该断言同时锁死一条结构性不变量——三/四暗刻的 forced 由「手内 ≥3 张」的牌生成，而同牌再有
+    // 副露会超过每张 4 张上限（输入校验拒绝），故匹配本就不会命中；即便将来 `full` 取法变化也必须仍不出现。
+    let ds_pon = plan(&parse_hand("222m333m99s5p5p"), &[Meld::pon(0)], 2);
+    assert!(
+        find(&ds_pon, "三暗刻").is_none() && find(&ds_pon, "四暗刻").is_none(),
+        "明碰不得充当暗刻源: {:?}",
+        ds_pon.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -217,6 +227,49 @@ fn da_san_yuan_and_xiao_san_yuan() {
     let ds = plan(&h, &[], 2);
     assert!(find(&ds, "小三元").is_some(), "{:?}", ds);
     assert!(find(&ds, "大三元").is_some(), "{:?}", ds);
+
+    // ---- T54/F2 正例：副露可承载的强制面子（修复前这些方向恒缺）----
+    // 引擎口径依据：和牌分解 = 副露 to_set() ∪ 暗牌分解（calc.rs::winning_decomps），故副露等价于同形面子；
+    // fans.rs 的番种判定块内**无门清守卫** ⇒ 吃可承载顺子面子、碰/明杠/暗杠可承载刻子面子。
+    let cases: [(&str, &str, Vec<Meld>, u32); 5] = [
+        // 大四喜：碰东 + 手内 南/西/北 三刻 + 单张「中」作将
+        ("大四喜", "南南南西西西北北北中", vec![Meld::pon(27)], 88),
+        // 大三元：碰中/碰发 + 手内 白白白 + 5m5m（对子/第 4 面子待补）
+        (
+            "大三元",
+            "白白白东东5m5m",
+            vec![Meld::pon(31), Meld::pon(32)],
+            88,
+        ),
+        // 三同刻：碰1筒 + 手内 111m/111s
+        ("三同刻", "111m111s99p55p", vec![Meld::pon(18)], 16),
+        // 三风刻：碰北 + 手内 南南南/西西西
+        ("三风刻", "南南南西西西99p55p", vec![Meld::pon(30)], 12),
+        // 一色双龙会：4 副明吃（123m×2 + 789m×2）+ 单张 5万作将（引擎实测计番 64，见 T54 报告）
+        (
+            "一色双龙会",
+            "5m",
+            vec![Meld::chi(0), Meld::chi(0), Meld::chi(6), Meld::chi(6)],
+            64,
+        ),
+    ];
+    for (name, hand, melds, value) in cases {
+        let dirs = plan(&parse_hand(hand), &melds, 2);
+        let d =
+            find(&dirs, name).unwrap_or_else(|| panic!("{} 应由副露承载后出现: {:?}", name, dirs));
+        assert_eq!(d.value, value, "{} 番值: {:?}", name, d);
+        assert_eq!(d.distance, 0, "{} 距离: {:?}", name, d);
+    }
+    // ---- T54/F2 形状反例：吃不得承载「刻子型」强制面子 ----
+    // 若 123m 的吃被误当作 111m 刻子，三同刻就会少补 3 张 1万 ⇒ 用 need 中 1万 的张数锁死。
+    let ds_chi = plan(&parse_hand("111s111p99m55m"), &[Meld::chi(0)], 2);
+    let tk = find(&ds_chi, "三同刻").expect("三同刻（111s/111p + 待补 111m）应出现");
+    assert_eq!(
+        tk.need.iter().filter(|&&t| t == 0).count(),
+        3,
+        "吃 123m 不得充当 111m 刻子: {:?}",
+        tk
+    );
 }
 
 #[test]
