@@ -23,7 +23,9 @@
 
 $root = Split-Path $PSScriptRoot -Parent
 $enc  = [System.Text.UTF8Encoding]::new($false, $true)
-$textExt = @('.rs', '.md', '.toml', '.txt', '.ps1', '.js', '.json', '.yml', '.yaml', '.html', '.css', '.lock')
+# .tsv added 2026-10-12 (T34/T36): the diff and bench case tables are TEXT holding CJK tile
+# notation; leaving them out would have skipped them silently as "non-text".
+$textExt = @('.rs', '.md', '.toml', '.txt', '.tsv', '.ps1', '.js', '.json', '.yml', '.yaml', '.html', '.css', '.lock')
 $bad = @()
 $skipped = @{}
 $checked = 0

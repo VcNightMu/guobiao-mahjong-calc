@@ -18,8 +18,10 @@
     Advisory items (WARN by default, FAIL only with -Strict*):
       5 fmt:          cargo fmt --all -- --check        (-SkipFmt / -StrictFmt)
                       NEVER runs cargo fmt (never reformats sources).
-      8 line-ref:     advisory scan of comments under src\ + tests\ for source
-                      line-number references (:NNN / LNNN / the CJK 'di NNN hang' form).
+      8 line-ref:     advisory scan of comments under src\ + tests\ + scripts\ for
+                      line-number references (:NN / LNN / the CJK 'di NN hang' form,
+                         2 to 4 digits). A colon preceded by a digit is ignored so
+                         clock-style HH:MM is not reported.
                       Reports only; never blocking.
 
     Backward compatibility: -StrictClippy is still accepted as a no-op alias (clippy became
@@ -54,7 +56,7 @@ $MsgClippyLenient  = ConvertFrom-B64Utf8 'LUxlbmllbnRDbGlwcHnvvJrmnKzmrKEgezB9IO
 $MsgFmtPending    = ConvertFrom-B64Utf8 '5b6F6KOB5a6a77ya6ZyA5YWI5L+u5aSN5qC85byP5beu5byC77yIezB9IOS4quaWh+S7tiAvIHsxfSDlpITniYfmrrXvvIzmnKzku7vliqHlhpnojIPlm7TlpJbvvIk='
 $DocBaselineName  = ConvertFrom-B64Utf8 'ZG9jc1xCQVNFTElORV/ml6fkuozov5vliLbooYzkuLrln7rlh4YudHh0'
 $LineRefPat = ConvertFrom-B64Utf8 '56ysXHMqWzAtOV17Miw0fVxzKuihjA=='
-$MsgLineRef = ConvertFrom-B64Utf8 'c3JjL3Rlc3RzIOS4iyB7MH0g5aSE5rOo6YeK5ZCr6KGM5Y+35byV55So77yI5bu66K6u5pS55Li65YaF5a655byV55So77yM6KeB5omL5YaMIMKnOS4z77yJ'
+$MsgLineRef = ConvertFrom-B64Utf8 'c3JjL3Rlc3RzL3NjcmlwdHMg5LiLIHswfSDlpITms6jph4rlkKvooYzlj7flvJXnlKjvvIjlu7rorq7mlLnkuLrlhoXlrrnlvJXnlKjvvIzop4HmiYvlhowgwqc5LjPvvIk='
 
 $RepoRoot     = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $GateDataDir  = Join-Path $RepoRoot 'scripts\gate-data'
@@ -393,27 +395,35 @@ if (-not (Test-Path -LiteralPath $DocBaseline)) {
 
 # ---------------------------------------------------------------- 8. line-ref scan (advisory)
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host "[8/8] line-ref scan: comments under src\ + tests\ referencing :NNN / LNNN / line NNN"
-$LineRefPattern = ":[0-9]{3,4}\b|\bL[0-9]{3,4}\b|$LineRefPat"
+Write-Host "[8/8] line-ref scan: comments under src\ + tests\ + scripts\ referencing :NN / LNN / line NN (2-4 digits)"
+$LineRefPattern = "(?<![0-9]):[0-9]{2,4}\b|\bL[0-9]{2,4}\b|$LineRefPat"
 $srcFiles = @()
 $srcRoot = Join-Path $RepoRoot 'src'
 if (Test-Path -LiteralPath $srcRoot) { $srcFiles = @(Get-ChildItem -LiteralPath $srcRoot -Recurse -File -Filter '*.rs') }
 $testsFiles = @()
 $testsRoot = Join-Path $RepoRoot 'tests'
 if (Test-Path -LiteralPath $testsRoot) { $testsFiles = @(Get-ChildItem -LiteralPath $testsRoot -Recurse -File -Filter '*.rs') }
-$scanFiles = @($srcFiles) + @($testsFiles)
+$scriptFiles = @()
+$scriptsRoot = Join-Path $RepoRoot 'scripts'
+if (Test-Path -LiteralPath $scriptsRoot) { $scriptFiles = @(Get-ChildItem -LiteralPath $scriptsRoot -File -Filter '*.ps1') }
+$scanFiles = @($srcFiles) + @($testsFiles) + @($scriptFiles)
 $refHits = New-Object System.Collections.Generic.List[string]
 foreach ($sf in $scanFiles) {
     $rel = $sf.FullName.Substring($RepoRoot.Length + 1).Replace('\', '/')
     $n = 0
+    # .rs files: comments start with '//'. .ps1 files: comments start with '#' (or <# #> blocks),
+    # so scan every line -- the pattern is specific enough for PowerShell sources and Base64
+    # blobs cannot contain ':' at all. The ':' branch carries a (?<![0-9]) lookbehind: without it
+    # a 2-digit pattern also matched clock-style stamps such as 17:20:48 in log/comment text.
+    $isPs1 = $sf.Extension -eq '.ps1'
     foreach ($line in [System.IO.File]::ReadAllLines($sf.FullName)) {
         $n++
-        if ($line -notmatch '//') { continue }
+        if (-not $isPs1) { if ($line -notmatch '//') { continue } }
         if ($line -match $LineRefPattern) { [void]$refHits.Add(("{0}:{1}  {2}" -f $rel, $n, $line.Trim())) }
     }
 }
 if ($refHits.Count -eq 0) {
-    Write-Detail ("basis: no line-number reference in comments of {0} scanned file(s) (src {1} + tests {2})" -f @($scanFiles).Count, @($srcFiles).Count, @($testsFiles).Count)
+    Write-Detail ("basis: no line-number reference in comments of {0} scanned file(s) (src {1} + tests {2} + scripts {3})" -f @($scanFiles).Count, @($srcFiles).Count, @($testsFiles).Count, @($scriptFiles).Count)
     Add-Result 'line-ref scan (advisory)' 'PASS' $sw.Elapsed.TotalSeconds
 } else {
     Write-Detail ($MsgLineRef -f $refHits.Count) 'Yellow'
