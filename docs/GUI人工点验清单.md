@@ -13,8 +13,8 @@ cd F:\AllCodes\guobiao-mahjong-calc
 $env:GBMJ_DEMO=1; .\target\release\gbmj-gui.exe   # 换编号即换夹具；关窗口即退出
 ```
 
-- **二进制新鲜度（已核对）**：`target\release\gbmj-gui.exe` mtime **2026-10-12 14:30:49** ≥ 源码 `src/bin/gbmj_gui.rs` mtime **14:28:01** ⇒ **新鲜，可直接用，无需重建**。
-- **若你之后改过 `src/`**：必须先 `cargo build --release --bin gbmj-gui` 再截图（**陈旧二进制 = 假证据**，本项目已两次踩坑）。
+- **二进制新鲜度（每次自查）**：必须满足 `target\release\gbmj-gui.exe` 的 mtime **≥** 所有 `src/**/*.rs` 的 mtime（`Get-Item` 一看便知）；**不满足就先重建**——陈旧二进制出的是**假证据**（本项目已两次踩坑）。
+- **若你之后改过 `src/`**：必须先 `cargo build --release --bin gbmj-gui --features gui` 再截图（**`--features gui` 不可省**——T31 起 `default = []`；另外**陈旧二进制 = 假证据**，本项目已两次踩坑）。
 - 夹具速查：`1` 门清 ｜ `2` 带副露 ｜ `3` 脚本化点击 ｜ `5` 双碰听 ｜ `6` dirty 提示 ｜ `9` 仅绝张 ｜ `19` 吃累积中态 ｜ `21` 副露>4 守卫 ｜ `22` 张数不符。
 
 ---

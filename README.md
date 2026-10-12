@@ -11,8 +11,10 @@
 ```bash
 cargo test                                          # 单测
 cargo run --bin gbmj -- 123456789m 55p 78p --round 东 --seat 东   # 命令行
-cargo run --release --bin gbmj-gui                  # 图形界面
+cargo run --release --bin gbmj-gui --features gui    # 图形界面（GUI 为可选特性）
 ```
+
+> 注意（T31 起）：`Cargo.toml` 的 `default = []` ⇒ **默认 `cargo build` / `cargo test` 不拉 `eframe`**（更快，也避开 raw-dylib 依赖的构建脚本问题）；**任何 GUI 构建/运行都必须显式 `--features gui`**，否则报 `requires the features: gui`。
 
 > 提示 1：MinGW 工具链在含中文的路径下会链接失败（`ld` 打不开 UTF-8 路径），请把工程放在纯 ASCII 路径下。
 >
@@ -29,7 +31,7 @@ cargo run --release --bin gbmj-gui                  # 图形界面
 ## 图形界面（gbmj-gui）
 
 ```bash
-cargo run --release --bin gbmj-gui
+cargo run --release --bin gbmj-gui --features gui
 ```
 
 三段式布局：
