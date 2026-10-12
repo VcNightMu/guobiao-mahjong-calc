@@ -168,18 +168,21 @@ fn b2_validate_rejects_over4_globally_but_allows_exactly4() {
 fn b2_validate_rejects_count_mismatch() {
     // 14 张、无副露 ⇒ 应为 13
     match validate_counts(&parse_hand("123456789m 55p 78p 9p"), &[]) {
+        // InputError::Count{expected,got} 的枚数校验样本（与番种无关）⇒ 按 v0.2.0 口径保持字面量
         Err(InputError::Count { expected, got }) => assert_eq!((expected, got), (13, 14)),
         other => panic!("应报 Count(13,14)，实际 {:?}", other),
     }
 
     // 1 副碰 + 11 张 ⇒ 应为 10
     match validate_counts(&parse_hand("123456789m 55p"), &[Meld::pon(0)]) {
+        // InputError::Count{expected,got} 的枚数校验样本（与番种无关）⇒ 按 v0.2.0 口径保持字面量
         Err(InputError::Count { expected, got }) => assert_eq!((expected, got), (10, 11)),
         other => panic!("应报 Count(10,11)，实际 {:?}", other),
     }
 
     // 杠按 1 个面子计：1 副杠 ⇒ 应为 10（不是 9）
     match validate_counts(&parse_hand("5p"), &[Meld::kan(18, false)]) {
+        // InputError::Count{expected,got} 的枚数校验样本（与番种无关）⇒ 按 v0.2.0 口径保持字面量
         Err(InputError::Count { expected, got }) => assert_eq!((expected, got), (10, 1)),
         other => panic!("杠应按 1 副面子 ⇒ Count(10,1)，实际 {:?}", other),
     }

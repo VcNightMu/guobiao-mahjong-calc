@@ -1,5 +1,8 @@
 //! 第 5 批（R-08 方向扫描假阳性 + 镜像假阴性 + 同类扩展）的回归与 `--plan` 基线用例
 //!
+//! **刻意保留字面量**（非疏漏）：本文件 `plan(…, 2)` 的 `2` 与 `src/plan.rs` 的 `MAX_DIST = 2`
+//! 同值，但**不改为常量引用**——`MAX_DIST` 一旦变动，快照族必须立刻失败报警（契约护栏）。
+//!
 //! 约定（依 Lead 工作指令）：
 //! - **全部库级断言**（直接调 `gbmj::plan::plan()` 取 `Direction`），**不断言 CLI 文本**。
 //! - 只**新增**，不修改既有 78 条用例（含 `tests/plan.rs` 的 16 条）。
@@ -15,6 +18,20 @@
 use gbmj::model::Meld;
 use gbmj::plan::{plan, Direction};
 use gbmj::tiles::*;
+
+// ==================== 番值常量（逐字对齐 `src/fans.rs` 计番 call site） ====================
+// 每个常量对应 `src/fans.rs` 中一处 `v.push(f("<番名>", <值>))`；**同值不同番必须分开命名**，
+// 禁止引入 `FAN_64` 之类的值合并别名（那样会丢掉番名语义）。
+/// 混一色 6 番 —— `src/fans.rs`: `v.push(f("混一色", 6));`（七对分支 / 标准分支两处）
+const FAN_HUN_YI_SE: u32 = 6;
+/// 清一色 24 番 —— `src/fans.rs`: `v.push(f("清一色", 24));`（七对分支 / 标准分支两处）
+const FAN_QING_YI_SE: u32 = 24;
+/// 清幺九 64 番 —— `src/fans.rs`: `v.push(f("清幺九", 64));`（清幺九分支）
+const FAN_QING_YAO_JIU: u32 = 64;
+/// 字一色 64 番 —— `src/fans.rs`: `v.push(f("字一色", 64));`（七对分支 / 标准分支两处；与清幺九同值不同番）
+const FAN_ZI_YI_SE: u32 = 64;
+/// 混幺九 32 番 —— `src/fans.rs`: `v.push(f("混幺九", 32));`（混幺九分支，紧跟清幺九的 else-if 分支）
+const FAN_HUN_YAO_JIU: u32 = 32;
 
 fn find<'a>(ds: &'a [Direction], kw: &str) -> Option<&'a Direction> {
     ds.iter().find(|d| d.name == kw)
@@ -71,7 +88,8 @@ fn plan_r08_zero_honor_mixed_suit_is_not_zero() {
     assert_eq!(m.distance, 1, "应为 1 张差: {:?}", m);
     assert_eq!(
         (m.value, names(&m.need).as_str(), m.drop.len()),
-        (6, "东,东", 1),
+        // value ⇒ 混一色番值；末位 1 = 换掉 1 张（drop 张数阈值，保持字面量）
+        (FAN_HUN_YI_SE, "东,东", 1),
         "{:?}",
         m
     );
@@ -80,7 +98,8 @@ fn plan_r08_zero_honor_mixed_suit_is_not_zero() {
     let q = get(&ds, "清一色(万门)");
     assert_eq!(
         (q.value, q.distance, names(&q.need).as_str()),
-        (24, 0, "9万"),
+        // value ⇒ 清一色番值；中间 0 = 距离阈值（口径③ 保持字面量）
+        (FAN_QING_YI_SE, 0, "9万"),
         "{:?}",
         q
     );
@@ -96,7 +115,8 @@ fn plan_hunyaojiu_requires_honor() {
 
     // 清幺九是真 0 张差（无字牌正是其特征）
     let q = get(&ds, "清幺九");
-    assert_eq!((q.value, q.distance), (64, 0), "{:?}", q);
+    // value ⇒ 清幺九番值；0 = 距离阈值（口径③ 保持字面量）
+    assert_eq!((q.value, q.distance), (FAN_QING_YAO_JIU, 0), "{:?}", q);
 
     let m = get(&ds, "混幺九");
     assert!(m.distance >= 1, "零字牌手混幺九不得为 0 张差: {:?}", m);
@@ -127,7 +147,8 @@ fn plan_pure_honor_hand_mixed_suit_each_one_away() {
     let z = get(&ds, "字一色");
     assert_eq!(
         (z.value, z.distance, names(&z.need).as_str()),
-        (64, 0, "发"),
+        // value ⇒ 字一色番值（与清幺九同为 64，命名分开）；0 = 距离阈值（口径③）
+        (FAN_ZI_YI_SE, 0, "发"),
         "{:?}",
         z
     );
@@ -145,7 +166,8 @@ fn plan_with_honor_mixed_suit_stays_zero() {
     let m = get(&ds, "混一色(万门)");
     assert_eq!(
         (m.value, m.distance, names(&m.need).as_str(), m.drop.len()),
-        (6, 0, "1万", 0),
+        // value ⇒ 混一色番值；0 = 距离阈值（口径③）；末位 0 = 换掉 0 张（drop 张数阈值）
+        (FAN_HUN_YI_SE, 0, "1万", 0),
         "{:?}",
         m
     );
@@ -153,6 +175,7 @@ fn plan_with_honor_mixed_suit_stays_zero() {
     let q = get(&ds, "清一色(万门)");
     assert_eq!(
         (q.distance, names(&q.drop).as_str()),
+        // 2 = 距离阈值（口径③ 保持字面量；本处只断言 distance，与番值无关）
         (2, "东,东"),
         "{:?}",
         q
@@ -167,7 +190,8 @@ fn plan_hunyaojiu_with_honor_stays_zero() {
     let m = get(&ds, "混幺九");
     assert_eq!(
         (m.value, m.distance, names(&m.need).as_str()),
-        (32, 0, "9条"),
+        // value ⇒ 混幺九番值；0 = 距离阈值（口径③ 保持字面量）
+        (FAN_HUN_YAO_JIU, 0, "9条"),
         "{:?}",
         m
     );
@@ -185,7 +209,8 @@ fn plan_mirror_meld_supplies_honor() {
     let m = get(&ds, "混一色(万门)");
     assert_eq!(
         (m.value, m.distance, names(&m.need).as_str(), m.drop.len()),
-        (6, 0, "西", 0),
+        // value ⇒ 混一色番值；0 = 距离阈值（口径③）；末位 0 = 换掉 0 张（drop 张数阈值）
+        (FAN_HUN_YI_SE, 0, "西", 0),
         "{:?}",
         m
     );
@@ -202,7 +227,8 @@ fn plan_mirror_meld_supplies_suit_tile() {
     let m = get(&ds, "混一色(万门)");
     assert_eq!(
         (m.value, m.distance, names(&m.need).as_str(), m.drop.len()),
-        (6, 0, "3万", 0),
+        // value ⇒ 混一色番值；0 = 距离阈值（口径③）；末位 0 = 换掉 0 张（drop 张数阈值）
+        (FAN_HUN_YI_SE, 0, "3万", 0),
         "{:?}",
         m
     );
@@ -392,6 +418,7 @@ fn assert_targets_feasible(hand: &str, melds: &[Meld], dirs: &[Direction]) {
             let needed = d.need.iter().filter(|&&x| x == t).count() as u8;
             let target = h[t].saturating_sub(dropped).saturating_add(needed);
             assert!(
+                // 4 = 每种牌的物理上限（与 src/plan.rs 的同一不变量同源）⇒ 按 v0.2.0 口径保持字面量，测试单方常量化会造成「测试有常量、src 没有」的不同源
                 target.saturating_add(mpt[t]) <= 4,
                 "方向 {} 目标在 {} 需 {} 张（>4）",
                 d.name,
