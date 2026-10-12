@@ -453,6 +453,45 @@ fn r11_zuhelong_triplet_fan_discriminants() {
         names(w5e)
     );
     assert_eq!(fan_value(w5e, "箭刻"), FAN_JIAN_KE, "{:?}", names(w5e));
+
+    // 对照（同函数 M4）：非字牌明杠 ⇒ `无字` **计入**且值为 1（与下面 M5f 的有字形态互为对照：
+    // 有字 ⇒ 失效 / 无字 ⇒ 计入，**均为按牌面判定**，非硬编码）。
+    assert_eq!(fan_value(w4, "无字"), FAN_WU_ZI, "{:?}", names(w4));
+
+    // M5f：**用户 2026-10-12 裁定实例** —— 原话「组合龙可以有字也可以无字（147258369 一组 +
+    // 发的碰就是组合龙 + 箭刻）」。这里锁的是与 M5e（暗杠 中 + 门清）互补的形态：**明碰 发**
+    // （破门清、无暗杠）。
+    // 15 = 组合龙12 + 箭刻2 + 单钓将1（碰破门清 ⇒ 无门前清/不求人；含字牌 ⇒ `无字` 失效）；
+    // 16 = 同上 + 自摸1。
+    assert_eq!(
+        tile_name(32),
+        "发",
+        "索引 32 必须是「发」（防手滑写成中/白）"
+    );
+    let an5f = analyze(&c, &[Meld::pon(32)], 27, 27);
+    let w5f = by_name(&an5f, "5筒");
+    assert_eq!(
+        (w5f.normal, w5f.tsumo),
+        (
+            FAN_ZUHE_LONG + FAN_JIAN_KE + FAN_DAN_DIAO_JIANG,
+            FAN_ZUHE_LONG + FAN_JIAN_KE + FAN_DAN_DIAO_JIANG + FAN_ZI_MO
+        ),
+        "{:?}",
+        names(w5f)
+    );
+    assert_eq!(fan_value(w5f, "组合龙"), FAN_ZUHE_LONG, "{:?}", names(w5f));
+    assert_eq!(fan_value(w5f, "箭刻"), FAN_JIAN_KE, "{:?}", names(w5f));
+    assert_eq!(
+        fan_value(w5f, "单钓将"),
+        FAN_DAN_DIAO_JIANG,
+        "{:?}",
+        names(w5f)
+    );
+    assert!(
+        !has_fan(w5f, "无字"),
+        "含字牌（发）⇒ 无字失效: {:?}",
+        names(w5f)
+    );
 }
 
 /// R-11 结构边界：`m > 1` 时组合龙不生成（`detect_zuhelong` 的 `m>1` 早退）。
