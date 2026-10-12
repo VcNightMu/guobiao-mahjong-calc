@@ -149,6 +149,66 @@ impl App {
                 self.click_tile(2); // 3万
                 self.click_tile(3); // 4万
             }
+            Ok("16") => {
+                // 覆盖「暗杠成功」路径（MeldMode::AnKan，open=false）与副露标签「暗杠 {}×4」、门清判断
+                // 期望：副露区「暗杠 9筒×4」、手牌区「√ 张数正确」、门清：是、无 hint
+                self.hand = parse_hand("123m456m789m 5s");
+                self.mode = MeldMode::AnKan;
+                self.click_tile(26); // 9筒（used==0 ⇒ +4<=4 通过）
+            }
+            Ok("17") => {
+                // 覆盖守卫「杠 {牌} 会超过 4 张上限」的 AnKan 侧（与 MingKan 共用同一判定语句）
+                // 期望 hint：「杠 1万 会超过 4 张上限」；手牌 13 张「√ 张数正确」
+                self.hand = parse_hand("1m 234m 567m 99s 5588p");
+                self.mode = MeldMode::AnKan;
+                self.click_tile(0); // 1万（used==1 ⇒ 1+4>4）
+            }
+            Ok("18") => {
+                // 覆盖主交互路径「MeldMode::None 成功点牌」：hand+1 / hint.clear() / dirty=true
+                // 期望：手牌 12→13 张、「√ 张数正确」、出四栏结果、无 hint
+                self.hand = parse_hand("123m 456m 789m 123s");
+                self.mode = MeldMode::None;
+                self.click_tile(9); // 1条 → 13 张
+            }
+            Ok("19") => {
+                // 覆盖「吃」的累积中间态与进度标签「吃：{名} {名}（再点 N 张）」
+                // 期望：吃累积提示「吃：1万 5万（再点 1 张）」、无 hint
+                self.hand = parse_hand("123m 456m 789m 123s 5s");
+                self.mode = MeldMode::Chi;
+                self.click_tile(0); // 1万
+                self.click_tile(4); // 5万 ⇒ pending 两张，还差 1 张
+            }
+            Ok("20") => {
+                // 已知瑕疵复现（只登记不修）：吃累积期不 clear hint ⇒ 上一次的形状错误提示会「滞留」到下一次累积
+                // 期望：hint 显示「吃：需同花色三张连续（如 2万3万4万）」，同时吃累积提示显示「吃：1万（再点 2 张）」
+                self.hand = parse_hand("123m 456m 789m 123s 5s");
+                self.mode = MeldMode::Chi;
+                self.click_tile(0); // 1万
+                self.click_tile(2); // 3万
+                self.click_tile(4); // 5万 ⇒ 形状非法：置形状文案并清空 pending
+                self.click_tile(0); // 再点 1万 ⇒ pending=[1万]，而 hint 未被清（滞留）
+            }
+            Ok("21") => {
+                // L1 缺口（已由 L3-C 修复）：副露 5 组（真实 UI 可达：反复碰不同牌；per-tile 限 4 张但不限组数）
+                // 期望（落定后的真实期望文案）：结果区显示「副露最多 4 组（当前 5 组），无法计算」、
+                //   手牌区显示同一明确错误（不再出现「应为 0 张」这类静默饱和值）、
+                //   确认按钮不可点（ready=false，即 expected_hidden()==None）、弱提示「（暗牌需 N 张）」不再出现、不 panic。
+                self.hand = counts();
+                self.melds = vec![
+                    Meld::pon(0),
+                    Meld::pon(1),
+                    Meld::pon(2),
+                    Meld::pon(3),
+                    Meld::pon(4),
+                ];
+            }
+            Ok("22") => {
+                // L2：带副露的张数不符变体（exp=10；demo 10 只覆盖 exp=13）
+                // 期望：「注意：暗牌应为 10 张（13 - 3×1 组副露；杠算 1 个面子），当前 12 张」
+                //      +「暗牌张数不对，无法计算（应为 13 − 3×副露 张）」+「（暗牌需 10 张）」
+                self.hand = parse_hand("123m 456m 789m 123s"); // 12 张（应 10）
+                self.melds = vec![Meld::kan(26, false)]; // 暗杠 9筒
+            }
             _ => {
                 self.hand = parse_hand("555p666p777p 555s 6s");
             }
@@ -170,20 +230,26 @@ impl App {
         n
     }
 
-    fn expected_hidden(&self) -> usize {
-        13usize.saturating_sub(3 * self.melds.len())
+    /// 暗牌应有的张数：13 − 3×副露组数。
+    /// 副露超过 4 组时 13 − 3n 下溢（旧实现用 saturating_sub 静默饱和成 0）⇒ 返回 None，
+    /// 由调用方给出明确错误并让「确认」不可点，绝不把饱和出来的 0 当作正常预期值。
+    fn expected_hidden(&self) -> Option<usize> {
+        13usize.checked_sub(3 * self.melds.len())
     }
 
     fn recompute(&mut self) {
-        if self.hand.iter().map(|&x| x as usize).sum::<usize>() == self.expected_hidden() {
-            self.analysis = Some(analyze(
-                &self.hand,
-                &self.melds,
-                self.round_wind,
-                self.seat_wind,
-            ));
-        } else {
-            self.analysis = None;
+        match self.expected_hidden() {
+            // 只有期望张数存在且暗牌张数吻合时才送进引擎
+            Some(exp) if self.hand.iter().map(|&x| x as usize).sum::<usize>() == exp => {
+                self.analysis = Some(analyze(
+                    &self.hand,
+                    &self.melds,
+                    self.round_wind,
+                    self.seat_wind,
+                ));
+            }
+            // 副露 >4 组（None）或张数不符 ⇒ 不计算，绝不再把 5 组副露送进 analyze
+            _ => self.analysis = None,
         }
     }
 
@@ -272,6 +338,11 @@ impl App {
         }
     }
 
+    /// 副露组数超过 4 时的明确错误文案（不再出现「应为 0 张」这类静默饱和值）
+    fn meld_cap_error(&self) -> String {
+        format!("副露最多 4 组（当前 {} 组），无法计算", self.melds.len())
+    }
+
     // ---------- UI 段 ----------
 
     fn ui_header(&mut self, ui: &mut egui::Ui) {
@@ -351,20 +422,29 @@ impl App {
                         self.dirty = true;
                     }
                 });
-                let exp = self.expected_hidden();
                 let now = total(&self.hand) as usize;
-                if now != exp {
-                    ui.colored_label(
-                        egui::Color32::from_rgb(200, 120, 0),
-                        format!(
-                            "注意：暗牌应为 {} 张（13 - 3×{} 组副露；杠算 1 个面子），当前 {} 张",
-                            exp,
-                            self.melds.len(),
-                            now
-                        ),
-                    );
-                } else {
-                    ui.weak("√ 张数正确");
+                match self.expected_hidden() {
+                    // 副露 >4 组：明确错误，绝不显示「应为 0 张」
+                    None => {
+                        ui.colored_label(
+                            egui::Color32::from_rgb(220, 90, 90),
+                            self.meld_cap_error(),
+                        );
+                    }
+                    Some(exp) if now != exp => {
+                        ui.colored_label(
+                            egui::Color32::from_rgb(200, 120, 0),
+                            format!(
+                                "注意：暗牌应为 {} 张（13 - 3×{} 组副露；杠算 1 个面子），当前 {} 张",
+                                exp,
+                                self.melds.len(),
+                                now
+                            ),
+                        );
+                    }
+                    Some(_) => {
+                        ui.weak("√ 张数正确");
+                    }
                 }
             });
         });
@@ -419,7 +499,11 @@ impl App {
                     }
                 });
                 ui.add_space(6.0);
-                let ready = total(&self.hand) as usize == self.expected_hidden();
+                // 副露 >4 组（None）⇒ ready=false，确认不可点，也不显示「需 0 张」
+                let ready = match self.expected_hidden() {
+                    Some(exp) => total(&self.hand) as usize == exp,
+                    None => false,
+                };
                 let confirm = egui::Button::new(
                     egui::RichText::new("确认")
                         .strong()
@@ -443,8 +527,18 @@ impl App {
                         self.dirty = true;
                     }
                 });
-                if !ready {
-                    ui.weak(format!("（暗牌需 {} 张）", self.expected_hidden()));
+                match self.expected_hidden() {
+                    // 副露 >4 组：明确错误，替代弱提示
+                    None => {
+                        ui.colored_label(
+                            egui::Color32::from_rgb(220, 90, 90),
+                            self.meld_cap_error(),
+                        );
+                    }
+                    Some(exp) if !ready => {
+                        ui.weak(format!("（暗牌需 {} 张）", exp));
+                    }
+                    Some(_) => {}
                 }
                 ui.add_space(6.0);
                 let mq = self.melds.iter().all(|m| match m.kind {
@@ -468,7 +562,12 @@ impl App {
         let an = match &self.analysis {
             Some(a) => a,
             None => {
-                ui.weak("暗牌张数不对，无法计算（应为 13 − 3×副露 张）");
+                // 区分两种「无结果」：副露 >4 组（明确错误）与暗牌张数不符（原弱提示）
+                if self.expected_hidden().is_none() {
+                    ui.colored_label(egui::Color32::from_rgb(220, 90, 90), self.meld_cap_error());
+                } else {
+                    ui.weak("暗牌张数不对，无法计算（应为 13 − 3×副露 张）");
+                }
                 return;
             }
         };

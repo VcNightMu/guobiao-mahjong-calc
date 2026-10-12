@@ -1,9 +1,11 @@
 {
   "version": 1,
-  "capturedAtUtc": "2026-10-12T03:22:08Z",
-  "capturedFromHead": "dc00fea",
-  "count": 150,
+  "capturedAtUtc": "2026-10-12T06:27:12Z",
+  "capturedFromHead": "e620d7a",
+  "count": 152,
   "names": [
+    "analyze_with_five_melds_does_not_panic",
+    "analyze_with_four_melds_still_works",
     "ankan_keeps_menqing",
     "ankou_differs_by_win_method",
     "b2_five_melds_gate_is_cli_level",
