@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "capturedAtUtc": "2026-10-12T06:27:12Z",
-  "capturedFromHead": "e620d7a",
+  "capturedAtUtc": "2026-10-12T06:40:58Z",
+  "capturedFromHead": "a987394",
   "count": 152,
   "names": [
-    "analyze_with_five_melds_does_not_panic",
-    "analyze_with_four_melds_still_works",
+    "analyze_with_five_melds_returns_empty_without_panic",
+    "analyze_with_four_melds_still_produces_targets",
     "ankan_keeps_menqing",
     "ankou_differs_by_win_method",
     "b2_five_melds_gate_is_cli_level",
