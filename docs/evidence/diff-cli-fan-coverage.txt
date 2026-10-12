@@ -1,0 +1,19 @@
+diff-cli fan coverage (stdout-measured, new binary)
+timestamp: 2026-10-12T18:29:07+08:00
+replayed cases: 269
+
+DENOMINATORS (two different denominators - always state which one is used):
+  A = static fan names declared as f("name", value) in src/fans.rs = 73
+  B = runnable fan names = A + 4 dynamically generated names (yi-ban-gao / xi-xiang-feng / lian-liu / lao-shao-fu) = 77
+COVERED (measured against denominator A): 71 / 73
+UNCOVERED (against A): 2 -> 不求人, 一色四同顺
+
+UNCOVERED REASONS:
+  bu-qiu-ren: only exists as a self-draw extra; the CLI prints the point-win fan list only => not reachable via stdout
+  yi-se-si-tong-shun: structurally unreachable in this implementation (report sec.19 / sec.23)
+
+COVERED LIST:
+暗杠, 边张, 大三元, 大四喜, 大于五, 单钓将, 断幺, 和绝张, 花龙, 混幺九, 混一色, 箭刻, 九莲宝灯, 坎张, 连七对, 绿一色, 门风刻, 门前清, 明杠, 碰碰和, 平和, 七对, 七星不靠, 清龙, 清幺九, 清一色, 圈风刻, 全不靠, 全大, 全带五, 全带幺, 全求人, 全双刻, 全小, 全中, 缺一门, 三暗刻, 三风刻, 三杠, 三色三步高, 三色三节高, 三色三同顺, 三色双龙会, 三同刻, 十三幺, 双暗杠, 双暗刻, 双箭刻, 双明杠, 双同刻, 四暗刻, 四杠, 四归一, 推不倒, 无番和, 无字, 五门齐, 小三元, 小四喜, 小于五, 幺九刻, 一明一暗杠, 一色三步高, 一色三节高, 一色三同顺, 一色双龙会, 一色四步高, 一色四节高, 自摸, 字一色, 组合龙
+
+UNCOVERED LIST:
+不求人, 一色四同顺

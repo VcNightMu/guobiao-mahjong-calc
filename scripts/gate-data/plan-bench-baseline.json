@@ -1,0 +1,135 @@
+{
+    "version":  1,
+    "capturedAtUtc":  "2026-10-12T10:29:53Z",
+    "exe":  "target\\release\\gbmj.exe",
+    "exeMtimeUtc":  "2026-10-12T10:29:29Z",
+    "newestSrc":  "fans.rs",
+    "newestSrcMtimeUtc":  "2026-10-12T09:18:13Z",
+    "runs":  5,
+    "guard":  {
+                  "before":  "9/9",
+                  "after":  "9/9"
+              },
+    "cases":  [
+                  {
+                      "id":  "h1-worst-pure-suit",
+                      "args":  "1112345678999m",
+                      "minMs":  159.7,
+                      "medianMs":  160.1,
+                      "maxMs":  165.49,
+                      "outLines":  7,
+                      "rawMs":  [
+                                    160.1,
+                                    161.22,
+                                    159.7,
+                                    159.95,
+                                    165.49
+                                ]
+                  },
+                  {
+                      "id":  "h2-quick",
+                      "args":  "147m258s369p5p",
+                      "minMs":  12.05,
+                      "medianMs":  13.03,
+                      "maxMs":  15.15,
+                      "outLines":  2,
+                      "rawMs":  [
+                                    14.78,
+                                    13.03,
+                                    12.65,
+                                    12.05,
+                                    15.15
+                                ]
+                  },
+                  {
+                      "id":  "h3-mixed-honor",
+                      "args":  "123456789m 11p 白白",
+                      "minMs":  34.13,
+                      "medianMs":  36.17,
+                      "maxMs":  37,
+                      "outLines":  5,
+                      "rawMs":  [
+                                    37,
+                                    36.17,
+                                    36.19,
+                                    34.13,
+                                    34.96
+                                ]
+                  },
+                  {
+                      "id":  "h4-nested",
+                      "args":  "19m 19m 19m 258s 369p 5p",
+                      "minMs":  38.61,
+                      "medianMs":  39.8,
+                      "maxMs":  41.41,
+                      "outLines":  2,
+                      "rawMs":  [
+                                    39.59,
+                                    40.95,
+                                    38.61,
+                                    39.8,
+                                    41.41
+                                ]
+                  },
+                  {
+                      "id":  "g1-pure-6out",
+                      "args":  "1112345678999m",
+                      "minMs":  163.7,
+                      "medianMs":  164.56,
+                      "maxMs":  170.76,
+                      "outLines":  7,
+                      "rawMs":  [
+                                    164.56,
+                                    168.63,
+                                    170.76,
+                                    163.87,
+                                    163.7
+                                ]
+                  },
+                  {
+                      "id":  "g2-pure-9out-a",
+                      "args":  "1122334455667m",
+                      "minMs":  179.03,
+                      "medianMs":  180.25,
+                      "maxMs":  185.62,
+                      "outLines":  10,
+                      "rawMs":  [
+                                    180.4,
+                                    180.21,
+                                    179.03,
+                                    180.25,
+                                    185.62
+                                ]
+                  },
+                  {
+                      "id":  "g3-pure-9out-b",
+                      "args":  "1111222233334m",
+                      "minMs":  138,
+                      "medianMs":  139.55,
+                      "maxMs":  143.39,
+                      "outLines":  10,
+                      "rawMs":  [
+                                    139.55,
+                                    138.49,
+                                    142.02,
+                                    138,
+                                    143.39
+                                ]
+                  },
+                  {
+                      "id":  "g4-pure-12out",
+                      "args":  "1112223334445m",
+                      "minMs":  150.56,
+                      "medianMs":  169.58,
+                      "maxMs":  173.95,
+                      "outLines":  13,
+                      "rawMs":  [
+                                    168.2,
+                                    150.56,
+                                    172.12,
+                                    169.58,
+                                    173.95
+                                ]
+                  }
+              ]
+}
