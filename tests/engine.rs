@@ -118,7 +118,9 @@ fn wu_fan_he_only_by_discard() {
     let w = find(&an, 9 + 6); // 7条
     assert!(has(w, "无番和"), "{:?}", names(w));
     assert_eq!(w.normal, FAN_WU_FAN_HE, "无番和 = 8");
-    assert!(w.tsumo < 8, "自摸引入番，反而不到 8：{}", w.tsumo);
+    // 国标起和番门槛（不足 8 番不可和）；与 FAN_WU_FAN_HE 数值相同但语义不同，禁止互相顶替
+    const MIN_WIN_FAN: u32 = 8;
+    assert!(w.tsumo < MIN_WIN_FAN, "自摸引入番，反而不到 8：{}", w.tsumo);
     assert!(w.can_win());
 }
 
@@ -145,7 +147,9 @@ fn da_san_yuan() {
     let an = analyze(&c, &[], 27, 27);
     let w = find(&an, 4); // 5万
     assert!(has(w, "大三元"), "{:?}", names(w));
-    assert!(w.normal >= 88);
+    // 大三元（88 番）— 出处：src/fans.rs 的 v.push(f(大三元, 88))
+    const FAN_DA_SAN_YUAN: u32 = 88;
+    assert!(w.normal >= FAN_DA_SAN_YUAN);
 }
 
 #[test]

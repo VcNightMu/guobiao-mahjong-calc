@@ -62,6 +62,9 @@ const FAN_SI_GUI_YI: u32 = 2; // 四归一（2 番）  — 出处：src/fans.rs 
 const FAN_WU_MEN_QI: u32 = 6; // 五门齐（6 番）  — 出处：src/fans.rs 的 f("五门齐", 6)
 const FAN_WU_ZI: u32 = 1; // 无字（1 番）    — 出处：src/fans.rs 的 f("无字", 1)
 const FAN_YAO_JIU_KE: u32 = 1; // 幺九刻（1 番）  — 出处：src/fans.rs 的 f("幺九刻", 1)
+const FAN_QUAN_BU_KAO: u32 = 12; // 全不靠（12 番） — 出处：src/fans.rs 的 Special::BuKao 分支 f("全不靠", 12)
+const FAN_ZUHE_LONG: u32 = 12; // 组合龙（12 番） — 出处：src/fans.rs 的 f("组合龙", 12)（两处）
+const FAN_QI_XING_BU_KAO: u32 = 24; // 七星不靠（24 番）— 出处：src/fans.rs 的 Special::SevenStars 分支 f("七星不靠", 24)
 
 // ==================== 花色整手番 ====================
 
@@ -241,12 +244,12 @@ fn r07b4_quan_bu_kao() {
     let an = analyze(&h, &[], 27, 27);
     let w9 = by_name(&an, "9筒");
     assert!(
-        has(w9, "全不靠") && val(w9, "全不靠") == 12,
+        has(w9, "全不靠") && val(w9, "全不靠") == FAN_QUAN_BU_KAO,
         "{:?}",
         names(w9)
     );
     assert!(
-        has(w9, "组合龙") && val(w9, "组合龙") == 12,
+        has(w9, "组合龙") && val(w9, "组合龙") == FAN_ZUHE_LONG,
         "全不靠+组合龙 可并列: {:?}",
         names(w9)
     );
@@ -263,7 +266,7 @@ fn r07b4_qi_xing_bu_kao() {
     for t in ["3筒", "6筒", "9筒"] {
         let w = by_name(&an, t);
         assert!(
-            has(w, "七星不靠") && val(w, "七星不靠") == 24,
+            has(w, "七星不靠") && val(w, "七星不靠") == FAN_QI_XING_BU_KAO,
             "{}: {:?}",
             t,
             names(w)

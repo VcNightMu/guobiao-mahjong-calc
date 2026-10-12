@@ -342,11 +342,15 @@ fn r07b3_observation_yi_se_san_tong_shun_unreachable() {
     let an = analyze(&h, &[], 27, 27);
     let w = by_name(&an, "9筒");
     assert!(
-        has(w, "一色三节高") && val(w, "一色三节高") == 24,
+        has(w, "一色三节高") && val(w, "一色三节高") == FAN_YI_SE_SAN_JIE_GAO,
         "{:?}",
         names(w)
     );
-    assert!(has(w, "三暗刻") && val(w, "三暗刻") == 16, "{:?}", names(w));
+    assert!(
+        has(w, "三暗刻") && val(w, "三暗刻") == FAN_SAN_AN_KE,
+        "{:?}",
+        names(w)
+    );
     assert!(
         !has(w, "一色三同顺"),
         "当前实现下 `一色三同顺` 不应出现（刻子分解更优）；若已改为可达，请更新本观察并回报: {:?}",
