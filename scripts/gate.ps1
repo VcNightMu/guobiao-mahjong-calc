@@ -18,8 +18,8 @@
     Advisory items (WARN by default, FAIL only with -Strict*):
       5 fmt:          cargo fmt --all -- --check        (-SkipFmt / -StrictFmt)
                       NEVER runs cargo fmt (never reformats sources).
-      8 line-ref:     advisory scan of comments under src\ for source line-number
-                      references (:NNN / LNNN / the CJK 'di NNN hang' form).
+      8 line-ref:     advisory scan of comments under src\ + tests\ for source
+                      line-number references (:NNN / LNNN / the CJK 'di NNN hang' form).
                       Reports only; never blocking.
 
     Backward compatibility: -StrictClippy is still accepted as a no-op alias (clippy became
@@ -54,7 +54,7 @@ $MsgClippyLenient  = ConvertFrom-B64Utf8 'LUxlbmllbnRDbGlwcHnvvJrmnKzmrKEgezB9IO
 $MsgFmtPending    = ConvertFrom-B64Utf8 '5b6F6KOB5a6a77ya6ZyA5YWI5L+u5aSN5qC85byP5beu5byC77yIezB9IOS4quaWh+S7tiAvIHsxfSDlpITniYfmrrXvvIzmnKzku7vliqHlhpnojIPlm7TlpJbvvIk='
 $DocBaselineName  = ConvertFrom-B64Utf8 'ZG9jc1xCQVNFTElORV/ml6fkuozov5vliLbooYzkuLrln7rlh4YudHh0'
 $LineRefPat = ConvertFrom-B64Utf8 '56ysXHMqWzAtOV17Miw0fVxzKuihjA=='
-$MsgLineRef = ConvertFrom-B64Utf8 'c3JjIOS4iyB7MH0g5aSE5rOo6YeK5ZCr6KGM5Y+35byV55So77yI5bu66K6u5pS55Li65YaF5a655byV55So77yM6KeB5omL5YaMIMKnOS4z77yJ'
+$MsgLineRef = ConvertFrom-B64Utf8 'c3JjL3Rlc3RzIOS4iyB7MH0g5aSE5rOo6YeK5ZCr6KGM5Y+35byV55So77yI5bu66K6u5pS55Li65YaF5a655byV55So77yM6KeB5omL5YaMIMKnOS4z77yJ'
 
 $RepoRoot     = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $GateDataDir  = Join-Path $RepoRoot 'scripts\gate-data'
@@ -393,13 +393,17 @@ if (-not (Test-Path -LiteralPath $DocBaseline)) {
 
 # ---------------------------------------------------------------- 8. line-ref scan (advisory)
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host "[8/8] line-ref scan: comments under src\ referencing :NNN / LNNN / line NNN"
+Write-Host "[8/8] line-ref scan: comments under src\ + tests\ referencing :NNN / LNNN / line NNN"
 $LineRefPattern = ":[0-9]{3,4}\b|\bL[0-9]{3,4}\b|$LineRefPat"
-$srcRoot = Join-Path $RepoRoot 'src'
 $srcFiles = @()
+$srcRoot = Join-Path $RepoRoot 'src'
 if (Test-Path -LiteralPath $srcRoot) { $srcFiles = @(Get-ChildItem -LiteralPath $srcRoot -Recurse -File -Filter '*.rs') }
+$testsFiles = @()
+$testsRoot = Join-Path $RepoRoot 'tests'
+if (Test-Path -LiteralPath $testsRoot) { $testsFiles = @(Get-ChildItem -LiteralPath $testsRoot -Recurse -File -Filter '*.rs') }
+$scanFiles = @($srcFiles) + @($testsFiles)
 $refHits = New-Object System.Collections.Generic.List[string]
-foreach ($sf in $srcFiles) {
+foreach ($sf in $scanFiles) {
     $rel = $sf.FullName.Substring($RepoRoot.Length + 1).Replace('\', '/')
     $n = 0
     foreach ($line in [System.IO.File]::ReadAllLines($sf.FullName)) {
@@ -409,7 +413,7 @@ foreach ($sf in $srcFiles) {
     }
 }
 if ($refHits.Count -eq 0) {
-    Write-Detail ("basis: no line-number reference in comments of {0} src file(s)" -f @($srcFiles).Count)
+    Write-Detail ("basis: no line-number reference in comments of {0} scanned file(s) (src {1} + tests {2})" -f @($scanFiles).Count, @($srcFiles).Count, @($testsFiles).Count)
     Add-Result 'line-ref scan (advisory)' 'PASS' $sw.Elapsed.TotalSeconds
 } else {
     Write-Detail ($MsgLineRef -f $refHits.Count) 'Yellow'
