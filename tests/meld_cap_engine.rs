@@ -55,3 +55,31 @@ fn analyze_with_four_melds_still_produces_targets() {
     let a = analyze(&hand, &melds, 0, 0);
     assert_eq!(a.structural_waits, vec![0], "4 组副露时 1万 应仍是结构听牌");
 }
+
+/// ③ S1 收口（**行为锁**，非「曾复现缺陷」）：**「2 张暗牌 + 5 组副露」必须得到空结果**。
+/// 事实澄清（L2 负向自证）：**去掉** `winning_decomps` 的 `m > 4` 早返回后，本用例**仍然通过**
+/// （连暗牌为对子 `1m 1m` 时亦然）⇒「m=5 时 `need` 饱和为 0 会产出 5 面子非法分解」属
+/// **未证实的理论路径**（`decompose_standard(c, 0)` 本身不产出分解）。本用例把「空结果」钉住，
+/// 防止将来该函数行为变化时静默产出非法分解。
+#[test]
+fn analyze_with_five_melds_and_two_tiles_is_empty() {
+    let hand = parse_hand("1m 2m"); // 2 张暗牌（正是 m=5 时饱和式曾放行的张数）
+    let melds = vec![
+        Meld::pon(0),
+        Meld::pon(1),
+        Meld::pon(2),
+        Meld::pon(3),
+        Meld::pon(4),
+    ];
+    let a = analyze(&hand, &melds, 0, 0);
+    assert!(
+        a.structural_waits.is_empty(),
+        "5 组副露 + 2 张暗牌不得产出结构听牌（防 5 面子非法分解），实际 {:?}",
+        a.structural_waits
+    );
+    assert!(
+        a.waits.is_empty(),
+        "5 组副露 + 2 张暗牌不得产出和牌张行，实际 {} 行",
+        a.waits.len()
+    );
+}

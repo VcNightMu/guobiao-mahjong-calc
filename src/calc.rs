@@ -161,6 +161,15 @@ pub fn build_all(c: &Counts, melds: &[Meld]) -> Counts {
 /// 给定（含和牌张的）暗牌与副露，返回所有和牌解释
 pub fn winning_decomps(c: &Counts, melds: &[Meld]) -> Vec<Decomp> {
     let m = melds.len();
+    // 入口不变量（S1 收口）：副露面子数 > 4 属非法输入。这里**不 panic**，而是**直接返回空分解**：
+    // ① 上层 `analyze` 由此得到空结果 —— 与既有「5 副副露不 panic、返回空」的引擎特征化一致
+    //    （`tests/meld_cap_engine.rs`，用户确认保留；**不得**改成 `#[should_panic]`）；
+    // ② **杜绝** `need = 4.saturating_sub(m)` 在 m=5 时饱和为 0、进而造出「5 个面子」的非法分解
+    //    （例如「2 张暗牌 + 5 组副露」曾可能命中 `total(c) == need*3+2`）。
+    // 库边界另由 `gbmj::model::validate_counts` 统一拒绝（见 `InputError::TooManyMelds`）。
+    if m > 4 {
+        return Vec::new();
+    }
     let need = 4usize.saturating_sub(m);
     let mut out = Vec::new();
 

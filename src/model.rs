@@ -91,6 +91,8 @@ pub enum InputError {
     Count { expected: u32, got: u32 },
     /// 某张牌全局（暗牌 + 副露 + 杠）超过 4 张
     Over4(usize, u8),
+    /// 副露面子数超过 4（杠也算一副）
+    TooManyMelds { count: usize },
 }
 
 impl std::fmt::Display for InputError {
@@ -104,6 +106,11 @@ impl std::fmt::Display for InputError {
             InputError::Over4(t, n) => {
                 write!(f, "{} 共 {} 张，超过每种牌 4 张上限", tile_name(*t), n)
             }
+            InputError::TooManyMelds { count } => write!(
+                f,
+                "副露面子数不能超过 4 副（当前 {} 副；杠也算一副）",
+                count
+            ),
         }
     }
 }
@@ -111,6 +118,9 @@ impl std::fmt::Display for InputError {
 /// C7：全局计数（暗牌 + 副露；杠按 4 张计，由 Meld::tiles() 展开）先查超 4；
 /// C6：再查暗牌张数 = 13 - 3×副露面子数（面子可以是杠，四杠合法）。
 pub fn validate_counts(c: &Counts, melds: &[Meld]) -> Result<(), InputError> {
+    if melds.len() > 4 {
+        return Err(InputError::TooManyMelds { count: melds.len() });
+    }
     let mut all = *c;
     for m in melds {
         for t in m.tiles() {

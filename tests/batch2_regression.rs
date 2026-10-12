@@ -198,8 +198,8 @@ fn b2_validate_checks_over4_before_count() {
     }
 }
 
-/// 记录分工（防将来误改）：`>4 副副露` 的拒绝在 **CLI 层**（`melds.len() > 4`），
-/// `validate_counts` 只负责「全局 ≤4」与「13−3n」；5 副时 expected 饱和为 0。
+/// 本批起：5 副（> 4）在库级即被拒绝，不再出现饱和文案。
+/// `validate_counts` 除「全局 ≤4」与「13−3n」外，还先拒「副露面子数 > 4」。
 #[test]
 fn b2_five_melds_gate_is_cli_level() {
     let melds: Vec<Meld> = vec![
@@ -209,8 +209,21 @@ fn b2_five_melds_gate_is_cli_level() {
         Meld::pon(3),
         Meld::pon(4),
     ];
+    match validate_counts(&parse_hand(""), &melds) {
+        Err(e @ InputError::TooManyMelds { .. }) => {
+            assert!(
+                !e.to_string().contains("应为 0"),
+                "库级 >4 副拒绝不得再产出饱和为 0 的张数文案，实际：{}",
+                e
+            );
+        }
+        other => panic!("5 副副露应在库级报 TooManyMelds，实际 {:?}", other),
+    }
+
+    // 对照（边界）：4 副副露 + 1 张暗牌 = 13 − 3×4 ⇒ 恰好 1 张，应接受
+    let melds4: Vec<Meld> = vec![Meld::pon(0), Meld::pon(1), Meld::pon(2), Meld::pon(3)];
     assert!(
-        validate_counts(&parse_hand(""), &melds).is_ok(),
-        "5 副副露的拒绝由 CLI 层 melds.len()>4 承担（本断言记录该分工）"
+        validate_counts(&parse_hand("5p"), &melds4).is_ok(),
+        "4 副副露 + 1 张暗牌应接受（边界）"
     );
 }
