@@ -206,9 +206,22 @@ pub fn analyze(
     let menqing = !breaks_menqing(melds);
 
     // 第一遍：结构听牌集
+    // T16：副露/杠已占张数（幻影听牌判定用；杠 4 / 碰 3 / 吃 各 1）。
+    let mut meld_used = [0u8; NUM_TILES];
+    for md in melds {
+        for t in md.tiles() {
+            meld_used[t] = meld_used[t].saturating_add(1);
+        }
+    }
     let mut structural = Vec::new();
     for t in 0..34usize {
-        if concealed[t] >= 4 {
+        // 幻影听牌：暗牌 + 副露已占 >= 4 ⇒ 再和这一张就是同牌 5 张，物理不可能。
+        // 数学事实：任何和牌分解都是完整 14 张的一个划分，故「该分解中 t 的张数」恒等于
+        // concealed[t] + 副露中 t 的张数 + 1（刚和的那张）。所以「所有分解都违反
+        // 已占+需求>4」等价于 concealed[t] + 副露(t) + 1 > 4，即 concealed[t] + 副露(t) >= 4；
+        // 判定与分解无关，无需逐分解计算需求。组合龙把将算 2 张的情形也自动覆盖
+        // （那正是 副露(t) + concealed(t) + 1 = 5 > 4）。
+        if concealed[t].saturating_add(meld_used[t]) >= 4 {
             continue;
         }
         let mut c = *concealed;
