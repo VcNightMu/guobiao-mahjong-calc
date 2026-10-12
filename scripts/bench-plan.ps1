@@ -19,6 +19,22 @@
     6. `scripts\gate-data\plan-bench-baseline.json` is written only with -UpdateBaseline;
        a normal run reads it and prints median deltas.
 
+  Timing stability notes (measured 2026-10-12, release build, shared Windows dev box,
+  n = 8 independent windows, T51 report):
+    a. `min` is the most reproducible statistic here. Worst case `1112345678999m`: min was
+       162.3-166.4 ms in 7 of 8 windows (one perturbed window: 196.1 ms), while the median
+       moved 165.1-209.2 ms (up to ~26%) because concurrent builds/tests perturb windows.
+    b. -Runs 9 did NOT stabilise the median on this box: 9-run windows spread wider
+       (168.1-209.2 ms) than 5-run windows (165.1-183.9 ms); a longer window has more
+       chances to catch a load spike. Keep -Runs 5 as the default and compare `min` across
+       windows; use -Runs 9 only when a distribution is wanted.
+    c. Small-cost cases (< ~20 ms; `147m258s369p5p` ~13-15 ms) are dominated by process
+       start-up noise (raw spread ~13-18 ms, +-20%): read `min`, not the median.
+    d. `outlines` is a coarse proxy. Three proxies were measured (direction count,
+       structural waits x directions, forced-skeleton direction count) and NONE ordered
+       the samples monotonically with time; two hands with the same direction count
+       (10) differed by ~45 ms. Do not read a complexity bound into these numbers.
+
   Usage:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\bench-plan.ps1
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\bench-plan.ps1 -Runs 7
@@ -205,7 +221,8 @@ foreach ($r in $results) {
 # scale proxy note: the timing is a property of the hand shape; the printed output-line
 # count is only a proxy and is NOT guaranteed to correlate monotonically with time.
 Write-Host ""
-Write-Host "note: 'outlines' is a coarse proxy for scale; the data below may be non-monotonic."
+Write-Host "note: 'outlines' is a coarse proxy; measured proxies (direction count, waits x directions,"
+Write-Host "      forced-skeleton direction count) were NOT monotone with time -- compare 'min', not the median."
 
 $bench = [pscustomobject]@{
     version   = 1
@@ -242,7 +259,13 @@ if ($UpdateBaseline) {
             $o = @($old.cases | Where-Object { $_.id -eq $r.Id })
             if ($o.Count -gt 0 -and [double]$o[0].medianMs -gt 0) {
                 $d = (([double]$r.Median - [double]$o[0].medianMs) / [double]$o[0].medianMs) * 100.0
-                Write-Host ("  {0,-28} base={1,8:N2} now={2,8:N2} delta={3,7:N1}%" -f $r.Id, [double]$o[0].medianMs, [double]$r.Median, $d)
+                Write-Host ("  {0,-28} median base={1,8:N2} now={2,8:N2} delta={3,7:N1}%" -f $r.Id, [double]$o[0].medianMs, [double]$r.Median, $d)
+                # the header advises comparing `min`; print it on the same entry so the guidance
+                # and the read-only output use one and the same statistic.
+                if ([double]$o[0].minMs -gt 0) {
+                    $dm = (([double]$r.Min - [double]$o[0].minMs) / [double]$o[0].minMs) * 100.0
+                    Write-Host ("  {0,-28}    min base={1,8:N2} now={2,8:N2} delta={3,7:N1}%" -f '', [double]$o[0].minMs, [double]$r.Min, $dm)
+                }
             } else {
                 Write-Host ("  {0,-28} (no baseline entry)" -f $r.Id)
             }

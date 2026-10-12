@@ -267,3 +267,78 @@ crafted-小四喜	crafted-for-coverage#番名=小四喜	same	东东东南南南�
 crafted-混幺九	crafted-for-coverage#番名=混幺九	same	111m999m111s999s东
 crafted-三同刻	crafted-for-coverage#番名=三同刻	same	222m222s222p55m55s
 crafted-双箭刻	crafted-for-coverage#番名=双箭刻	same	中中中发发发123m456m9s
+round-seat-ee	crafted-for-coverage#wind=dong;round=东;seat=东	same	147m258s369p东东东5p|--round|东|--seat|东
+round-seat-es	crafted-for-coverage#wind=dong;round=东;seat=南	same	147m258s369p东东东5p|--round|东|--seat|南
+round-seat-ew	crafted-for-coverage#wind=dong;round=东;seat=西	same	147m258s369p东东东5p|--round|东|--seat|西
+round-seat-en	crafted-for-coverage#wind=dong;round=东;seat=北	same	147m258s369p东东东5p|--round|东|--seat|北
+round-seat-se	crafted-for-coverage#wind=dong;round=南;seat=东	same	147m258s369p东东东5p|--round|南|--seat|东
+round-seat-ss	crafted-for-coverage#wind=dong;round=南;seat=南	same	147m258s369p东东东5p|--round|南|--seat|南
+round-seat-sw	crafted-for-coverage#wind=dong;round=南;seat=西	same	147m258s369p东东东5p|--round|南|--seat|西
+round-seat-sn	crafted-for-coverage#wind=dong;round=南;seat=北	same	147m258s369p东东东5p|--round|南|--seat|北
+round-seat-we	crafted-for-coverage#wind=dong;round=西;seat=东	same	147m258s369p东东东5p|--round|西|--seat|东
+round-seat-ws	crafted-for-coverage#wind=dong;round=西;seat=南	same	147m258s369p东东东5p|--round|西|--seat|南
+round-seat-ww	crafted-for-coverage#wind=dong;round=西;seat=西	same	147m258s369p东东东5p|--round|西|--seat|西
+round-seat-wn	crafted-for-coverage#wind=dong;round=西;seat=北	same	147m258s369p东东东5p|--round|西|--seat|北
+round-seat-ne	crafted-for-coverage#wind=dong;round=北;seat=东	same	147m258s369p东东东5p|--round|北|--seat|东
+round-seat-ns	crafted-for-coverage#wind=dong;round=北;seat=南	same	147m258s369p东东东5p|--round|北|--seat|南
+round-seat-nw	crafted-for-coverage#wind=dong;round=北;seat=西	same	147m258s369p东东东5p|--round|北|--seat|西
+round-seat-nn	crafted-for-coverage#wind=dong;round=北;seat=北	same	147m258s369p东东东5p|--round|北|--seat|北
+round-seat-s-ee	crafted-for-coverage#wind=南;round=东;seat=东	same	147m258s369p南南南5p|--round|东|--seat|东
+round-seat-s-es	crafted-for-coverage#wind=南;round=东;seat=南	same	147m258s369p南南南5p|--round|东|--seat|南
+round-seat-s-ss	crafted-for-coverage#wind=南;round=南;seat=南	same	147m258s369p南南南5p|--round|南|--seat|南
+round-seat-s-nw	crafted-for-coverage#wind=南;round=北;seat=西	same	147m258s369p南南南5p|--round|北|--seat|西
+round-seat-w-ee	crafted-for-coverage#wind=西;round=东;seat=东	same	147m258s369p西西西5p|--round|东|--seat|东
+round-seat-w-es	crafted-for-coverage#wind=西;round=东;seat=南	same	147m258s369p西西西5p|--round|东|--seat|南
+round-seat-w-ss	crafted-for-coverage#wind=西;round=南;seat=南	same	147m258s369p西西西5p|--round|南|--seat|南
+round-seat-w-nw	crafted-for-coverage#wind=西;round=北;seat=西	same	147m258s369p西西西5p|--round|北|--seat|西
+round-seat-n-ee	crafted-for-coverage#wind=北;round=东;seat=东	same	147m258s369p北北北5p|--round|东|--seat|东
+round-seat-n-es	crafted-for-coverage#wind=北;round=东;seat=南	same	147m258s369p北北北5p|--round|东|--seat|南
+round-seat-n-ss	crafted-for-coverage#wind=北;round=南;seat=南	same	147m258s369p北北北5p|--round|南|--seat|南
+round-seat-n-nw	crafted-for-coverage#wind=北;round=北;seat=西	same	147m258s369p北北北5p|--round|北|--seat|西
+round-seat-twowind-ee	crafted-for-coverage#two-wind;round=东;seat=东	same	147m258s369p东东东南南|--round|东|--seat|东
+round-seat-twowind-sn	crafted-for-coverage#two-wind;round=南;seat=北	same	147m258s369p东东东南南|--round|南|--seat|北
+round-seat-twowind-ws	crafted-for-coverage#two-wind;round=西;seat=南	same	147m258s369p南南南西西|--round|西|--seat|南
+illegal-round-zhong	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|中
+illegal-round-fa	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|发
+illegal-round-bai	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|白
+illegal-round-two	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|东南
+illegal-round-digit	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|1
+illegal-round-latin	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|dong
+illegal-round-empty	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|
+illegal-seat-zhong	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--seat|中
+illegal-seat-bai	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--seat|白
+illegal-seat-two	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--seat|东南
+illegal-seat-latin	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--seat|x
+illegal-seat-empty	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--seat|
+illegal-pon-noval	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--pon
+illegal-chi-noval	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--chi
+illegal-kan-noval	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--kan
+illegal-ankan-noval	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--ankan
+illegal-pon-honor-bad	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--pon|1z
+illegal-chi-honor	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--chi|1z
+illegal-pon-zero	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--pon|0m
+illegal-chi-two	crafted-for-coverage#illegal-input	diff:R1-chi-shape-arg-validation	123m456s789p东东东5p|--chi|12m
+illegal-chi-five	crafted-for-coverage#illegal-input	diff:R1-chi-shape-arg-validation	123m456s789p东东东5p|--chi|12345m
+illegal-kan-two	crafted-for-coverage#illegal-input	diff:R4-meld-needs-exactly-one-tile	123m456s789p东东东5p|--kan|12m
+illegal-ankan-five	crafted-for-coverage#illegal-input	diff:R4-meld-needs-exactly-one-tile	123m456s789p东东东5p|--ankan|12345m
+illegal-chi-merge	crafted-for-coverage#illegal-input	diff:R4-no-loose-tiles-after-meld-option	123m456s789p东东东5p|--chi|123m|456m
+illegal-pon-dupe	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--pon|5p|--pon|5p
+illegal-pon-triple	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--pon|5p|--pon|5p|--pon|5p
+illegal-kan-dupe	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--kan|5m|--kan|5m
+illegal-pon-honor-dupe	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--pon|东|--pon|东
+illegal-flag-unknown	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--foo|1m
+illegal-plan-badround	crafted-for-coverage#illegal-input	same	123m456s789p东东东5p|--round|中|--plan
+illegal-pon-loose	crafted-for-coverage#illegal-input	diff:R4-no-loose-tiles-after-meld-option	123m456s789p东东东5p|--pon|5p|5p
+illegal-chi-z-extra	crafted-for-coverage#illegal-input	diff:R4-no-loose-tiles-after-meld-option	123m456s789p东东东5p|--pon|1m|2m|3m
+illegal-hand-14	crafted-for-coverage#hand 14 tiles	same	123m456s789p东东东55p
+illegal-hand-10-nomeld	crafted-for-coverage#hand 10 tiles no meld	same	123m456s789p
+illegal-hand-empty	crafted-for-coverage#empty hand	same	
+illegal-hand-six	crafted-for-coverage#more than 4 of one tile	same	111111m456s789p
+illegal-hand-junk	crafted-for-coverage#non-tile hand	same	abc
+illegal-hand-zero-tile	crafted-for-coverage#tile index 0	same	0m123456789s
+illegal-plan-14	crafted-for-coverage#14 tiles + plan	same	123m456s789p东东东55p|--plan
+f1-sanse-sanbugao-d2-removed	T53/F1-反控: 三色三步高 d=2 已收为只 d=1 ⇒ 旧有新无	diff:F1-san-se-san-bu-gao-only-d1	123m|456s|789p|11m|22s|--plan
+f1-sanse-sanbugao-d1-kept	T53/F1-正控: d=1 仍必须出现	same	123m234s345p11m22s|--plan
+f5-sananke-quad-4tiles	T53/F5-正控: 4 张同牌充当暗刻源 ⇒ 新增三暗刻行	diff:F5-quad-now-counted-as-anke	1111m222m333m99s5p|--plan
+f5-sianke-quad-4tiles	T53/F5-正控: 同前 ⇒ 新增四暗刻行	diff:F5-quad-now-counted-as-anke	1111m222m333m444m|--plan
+f5-negative-no-quad	T53/F5-阴性对照: 无 4 张同牌 ⇒ 旧新逐字一致	same	111m222m333m99s5p5p|--plan

@@ -18,10 +18,11 @@
     Advisory items (WARN by default, FAIL only with -Strict*):
       5 fmt:          cargo fmt --all -- --check        (-SkipFmt / -StrictFmt)
                       NEVER runs cargo fmt (never reformats sources).
-      8 line-ref:     advisory scan of comments under src\ + tests\ + scripts\ for
+      8 line-ref:     advisory scan of comments under src\ + tests\ + scripts\ (recursive) for
                       line-number references (:NN / LNN / the CJK 'di NN hang' form,
                          2 to 4 digits). A colon preceded by a digit is ignored so
-                         clock-style HH:MM is not reported.
+                         clock-style HH:MM is not reported, and a colon inside a
+                         scheme://host:port URL is ignored as well.
                       Reports only; never blocking.
 
     Backward compatibility: -StrictClippy is still accepted as a no-op alias (clippy became
@@ -396,7 +397,7 @@ if (-not (Test-Path -LiteralPath $DocBaseline)) {
 # ---------------------------------------------------------------- 8. line-ref scan (advisory)
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Host "[8/8] line-ref scan: comments under src\ + tests\ + scripts\ referencing :NN / LNN / line NN (2-4 digits)"
-$LineRefPattern = "(?<![0-9]):[0-9]{2,4}\b|\bL[0-9]{2,4}\b|$LineRefPat"
+$LineRefPattern = "(?<![A-Za-z][A-Za-z0-9+.\-]{0,15}://[^\s]{0,30})(?<![0-9]):[0-9]{2,4}\b|\bL[0-9]{2,4}\b|$LineRefPat"
 $srcFiles = @()
 $srcRoot = Join-Path $RepoRoot 'src'
 if (Test-Path -LiteralPath $srcRoot) { $srcFiles = @(Get-ChildItem -LiteralPath $srcRoot -Recurse -File -Filter '*.rs') }
@@ -405,7 +406,7 @@ $testsRoot = Join-Path $RepoRoot 'tests'
 if (Test-Path -LiteralPath $testsRoot) { $testsFiles = @(Get-ChildItem -LiteralPath $testsRoot -Recurse -File -Filter '*.rs') }
 $scriptFiles = @()
 $scriptsRoot = Join-Path $RepoRoot 'scripts'
-if (Test-Path -LiteralPath $scriptsRoot) { $scriptFiles = @(Get-ChildItem -LiteralPath $scriptsRoot -File -Filter '*.ps1') }
+if (Test-Path -LiteralPath $scriptsRoot) { $scriptFiles = @(Get-ChildItem -LiteralPath $scriptsRoot -Recurse -File -Filter '*.ps1') }
 $scanFiles = @($srcFiles) + @($testsFiles) + @($scriptFiles)
 $refHits = New-Object System.Collections.Generic.List[string]
 foreach ($sf in $scanFiles) {
@@ -413,8 +414,11 @@ foreach ($sf in $scanFiles) {
     $n = 0
     # .rs files: comments start with '//'. .ps1 files: comments start with '#' (or <# #> blocks),
     # so scan every line -- the pattern is specific enough for PowerShell sources and Base64
-    # blobs cannot contain ':' at all. The ':' branch carries a (?<![0-9]) lookbehind: without it
-    # a 2-digit pattern also matched clock-style stamps such as 17:20:48 in log/comment text.
+    # blobs cannot contain ':' at all. The ':' branch carries two negative lookbehinds: without
+    # (?<![0-9]) a 2-digit pattern also matched clock-style stamps such as 17:20:48; the
+    # scheme://host{0,30} form excludes URL ports (e.g. https://a:8443) while still reporting
+    # path:NN references written without a space after a '//' comment marker.
+    # scripts\ is scanned recursively; with no nested *.ps1 today the basis count is unchanged.
     $isPs1 = $sf.Extension -eq '.ps1'
     foreach ($line in [System.IO.File]::ReadAllLines($sf.FullName)) {
         $n++

@@ -17,7 +17,12 @@
                   expectation = "same"   -> outputs MUST be identical
                                 "diff:R" -> a difference is EXPECTED (R = recorded reason)
                   blank lines and lines starting with '#' are ignored
-      -OutDir     directory for evidence outputs (created if missing)
+      -OutDir     directory for FINAL evidence outputs only (created if missing).
+                  Per-case temporary files (.tmp-*.out/.err) live in a UNIQUE sub-directory
+                  of the system temp dir ([System.IO.Path]::GetTempPath()), named
+                  "diff-cli-<pid>-<random>", and that directory is removed on exit
+                  (normal end and terminating errors). -OutDir therefore never shows
+                  transient .tmp-* files, so `git status` cannot mistake them for residue.
       -TimeoutSec per-case wall clock budget (informational; default 60)
       -FailOnUnexpected  exit 1 when any "same" case differs (default ON)
 
@@ -55,7 +60,7 @@
       1 = at least one unexpected difference, or an expected-diff case that was identical
       2 = bad parameters / unreadable inputs
 
-    Owner: tester (L2). Task: T34 / task-30.
+    Owner: tester (L2). Task: T34 / task-30; temp-dir migration + coverage expansion: T48 / task-41.
 #>
 [CmdletBinding()]
 param(
@@ -83,6 +88,19 @@ foreach ($p in @($OldExe, $NewExe, $CasesFile)) {
     if (-not (Test-Path -LiteralPath $p)) { Fail-Param ("path not found: " + $p) }
 }
 if (-not (Test-Path -LiteralPath $OutDir)) { New-Item -ItemType Directory -Force -Path $OutDir | Out-Null }
+
+# Per-case temp files go to a unique directory under the system temp path, never to -OutDir.
+$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('diff-cli-' + $PID + '-' + ([System.Guid]::NewGuid().ToString('N').Substring(0, 8)))
+New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+
+# Terminating errors (e.g. an unhandled cmdlet failure) must still clean the temp directory.
+trap {
+    if ($script:tempRoot -and (Test-Path -LiteralPath $script:tempRoot)) {
+        Remove-Item -LiteralPath $script:tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host ("[diff-cli] ERROR: " + $_.Exception.Message) -ForegroundColor Red
+    exit 2
+}
 
 $zhPos = ConvertFrom-B64Utf8 '5omA5Zyo5L2N572u'
 $zhUse = ConvertFrom-B64Utf8 '5L2/55So'
@@ -116,8 +134,8 @@ function Get-Sha([string]$text) {
 }
 
 function Invoke-Case([string]$exe, [string[]]$argv, [string]$tag) {
-    $outFile = Join-Path $OutDir (".tmp-" + $tag + ".out")
-    $errFile = Join-Path $OutDir (".tmp-" + $tag + ".err")
+    $outFile = Join-Path $tempRoot (".tmp-" + $tag + ".out")
+    $errFile = Join-Path $tempRoot (".tmp-" + $tag + ".err")
     foreach ($f in @($outFile, $errFile)) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }
     $exit = -1
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -231,6 +249,11 @@ foreach ($s in $slow) { [void]$lines.Add('  ' + $s.id + ' old=' + $s.msOld + 'ms
 Write-Host ("[diff-cli] zero-diff=" + $zero + " expected-diff=" + $expectedDiff + " UNEXPECTED=" + $unexpected + " verdict-mismatch=" + $mismatch) -ForegroundColor Cyan
 Write-Host ("[diff-cli] results: " + $resultPath) -ForegroundColor Cyan
 Write-Host ("[diff-cli] summary: " + $summaryPath) -ForegroundColor Cyan
+
+$strayTmp = @(Get-ChildItem -LiteralPath $OutDir -Force -Filter '.tmp-*' -ErrorAction SilentlyContinue)
+Write-Host ("[diff-cli] temp dir used: " + $tempRoot + "  (stray .tmp-* in -OutDir: " + $strayTmp.Count + ")") -ForegroundColor Cyan
+if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
+Write-Host ("[diff-cli] temp dir removed: " + (-not (Test-Path -LiteralPath $tempRoot)))
 
 if ($unexpected -gt 0 -or $mismatch -gt 0) { exit 1 }
 exit 0
