@@ -1,4 +1,5 @@
 use gbmj::calc::analyze;
+use gbmj::fans::Fan;
 use gbmj::model::{validate_counts, Meld};
 use gbmj::plan::MAX_DIST;
 use gbmj::tiles::*;
@@ -49,9 +50,25 @@ fn help() {
            --seat  南     门风\n\
          扫描:\n\
            --plan        未听牌方向扫描（离各番种还差几张，最多 {MAX_DIST} 张）\n\
+         诊断:\n\
+           --dump-tables 逐张打印 点和/自摸/绝张/自摸绝张 四张番表（验证用；格式变更需同步差分脚本）\n\
          \n\
          例: gbmj 123456789m 11p 白白 --round 东 --seat 南"
     );
+}
+
+/// `--dump-tables` 专用：把一张番表按「固定标签 + `Vec<Fan>` 原序」逐行打印。
+/// **这是验证用诊断输出**：段标签与行格式是差分脚本（`scripts\diff-cli.ps1`）的取数依据，
+/// 变更格式必须同步差分脚本与 `tests\cli_args.rs` 的断言。
+fn dump_fan_table(label: &str, fans: &[Fan]) {
+    if fans.is_empty() {
+        println!("   [{label}] (empty)");
+        return;
+    }
+    println!("   [{label}] count={}", fans.len());
+    for f in fans {
+        println!("     {} {}", f.name, f.value);
+    }
 }
 
 fn main() {
@@ -66,6 +83,7 @@ fn main() {
     let mut round = 27usize;
     let mut seat = 27usize;
     let mut plan_mode = false;
+    let mut dump_tables = false;
     let mut round_set = false;
     let mut seat_set = false;
     let mut meld_seen = false;
@@ -143,6 +161,9 @@ fn main() {
             }
             "--plan" => {
                 plan_mode = true;
+            }
+            "--dump-tables" => {
+                dump_tables = true;
             }
             "--seat" => {
                 i += 1;
@@ -234,6 +255,12 @@ fn main() {
 
     if an.structural_waits.is_empty() {
         println!("未听牌（无和牌型）");
+        if dump_tables {
+            // 无结构听牌 ⇒ 四张番表均为空；仍打印固定头，便于差分脚本逐字节定位。
+            println!();
+            println!("=== 番表诊断（--dump-tables） ===");
+            println!("(无结构听牌，四张番表均为空)");
+        }
         return;
     }
 
@@ -299,5 +326,35 @@ fn main() {
             .map(|f| format!("{}{}", f.name, f.value))
             .collect();
         println!("{}: {}", tile_name(w.tile), names.join(" "));
+    }
+
+    if dump_tables {
+        // --dump-tables（T68/T60）：CLI 默认只打印 fans（点和），而自摸/绝张三张表此前从未被差分覆盖。
+        // 这里对每个结构听牌张按固定段标签暴露四张表；四栏数值沿用上表「can_last=false ⇒ —」口径。
+        // **格式稳定性契约**：段标签/行格式变更必须同步 scripts\diff-cli.ps1 与 tests\cli_args.rs。
+        println!();
+        println!("=== 番表诊断（--dump-tables） ===");
+        for w in an.waits.iter() {
+            println!(
+                "-- {} | 点和={} 自摸={} 点和绝张={} 自摸绝张={}",
+                tile_name(w.tile),
+                w.normal,
+                w.tsumo,
+                if w.can_last {
+                    w.last.to_string()
+                } else {
+                    "—".to_string()
+                },
+                if w.can_last {
+                    w.tsumo_last.to_string()
+                } else {
+                    "—".to_string()
+                },
+            );
+            dump_fan_table("fans", &w.fans);
+            dump_fan_table("fans_tsumo", &w.fans_tsumo);
+            dump_fan_table("fans_last", &w.fans_last);
+            dump_fan_table("fans_tsumo_last", &w.fans_tsumo_last);
+        }
     }
 }

@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "capturedAtUtc": "2026-10-12T09:12:49Z",
-  "capturedFromHead": "555d936",
-  "count": 159,
+  "capturedAtUtc": "2026-10-12T13:12:17Z",
+  "capturedFromHead": "b28c555",
+  "count": 160,
   "names": [
     "analyze_with_five_melds_and_two_tiles_is_empty",
     "analyze_with_five_melds_returns_empty_without_panic",
@@ -49,6 +49,7 @@
     "phantom_ankan_occupied_tile_is_dropped",
     "phantom_chi_occupied_tile_is_dropped",
     "phantom_pong_occupied_tile_is_dropped",
+    "plan_direction_invariants_over_corpus",
     "plan_golden_baseline_a",
     "plan_golden_baseline_honor_and_mirrors",
     "plan_golden_baseline_unrelated_patterns",

@@ -32,6 +32,29 @@ fn chi_legal_still_succeeds() {
     let (code, out, err) = run(&["123456789m", "1s", "--chi", "7p"]);
     assert_eq!(code, 0, "合法吃不得被拒；stderr={err}");
     assert!(out.contains("副露 1 副"), "应正常输出；实得 {out}");
+
+    // T68/T60：`--dump-tables` 诊断开关必须被识别，且暴露默认不打印的三张番表（自摸/绝张/自摸绝张）。
+    let (code_d, out_d, err_d) = run(&["123456789m", "1s", "--chi", "7p", "--dump-tables"]);
+    assert_eq!(code_d, 0, "--dump-tables 必须被识别；stderr={err_d}");
+    assert!(
+        out_d.contains("=== 番表诊断（--dump-tables） ==="),
+        "应打印固定诊断头；实得 {out_d}"
+    );
+    for label in ["[fans]", "[fans_tsumo]", "[fans_last]", "[fans_tsumo_last]"] {
+        assert!(
+            out_d.contains(label),
+            "诊断输出应含段标签 {label}；实得 {out_d}"
+        );
+    }
+    // 默认输出必须逐字不变：开关只允许在末尾**追加**诊断段（去掉追加段即默认输出）。
+    assert!(
+        out_d.starts_with(&out),
+        "开关只允许追加、不得改动默认输出；dump={out_d} default={out}"
+    );
+    assert!(
+        !out.contains("番表诊断"),
+        "不带开关时默认输出不得出现诊断段；实得 {out}"
+    );
 }
 
 /// 防误杀 2：三张连续的合法写法（`--chi 234m`）也必须 exit 0。
