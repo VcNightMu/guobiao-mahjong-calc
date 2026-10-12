@@ -357,7 +357,7 @@ f2-open-06-三色三同顺	crafted-for-coverage#f2-open=三色三同顺;meld=chi
 f2-open-07-一色三节高	crafted-for-coverage#f2-open=一色三节高;meld=pon-1m	diff:F2-open-meld-carrier	222m333m11p22s|--pon|1m|--plan
 f2-open-08-三色三节高	crafted-for-coverage#f2-open=三色三节高;meld=pon-1m	diff:F2-open-meld-carrier	222s333p555m9s|--pon|1m|--plan
 f2-open-09-一色四同顺	crafted-for-coverage#f2-open=一色四同顺;meld=chi-123m-x2	diff:F2-open-meld-carrier	123m123m1p|--chi|123m|--chi|123m|--plan
-f2-open-10-一色四节高	crafted-for-coverage#f2-open=一色四节高;meld=pon-1m+pon-2m	same	333m444m1p|--pon|1m|--pon|2m|--plan
+f2-open-10-一色四节高	crafted-for-coverage#f2-open=一色四节高;meld=pon-1m+pon-2m; T75/T75-family: behaviour changed with the guard removal	diff:F2-T75-family	333m444m1p|--pon|1m|--pon|2m|--plan
 f2-open-11-一色四步高	crafted-for-coverage#f2-open=一色四步高;meld=chi-123m+chi-234m	diff:F2-open-meld-carrier	345m456m1p|--chi|123m|--chi|234m|--plan
 f2-open-12-一色双龙会	crafted-for-coverage#f2-open=一色双龙会;meld=chi-123m-x2+chi-789m-x2	diff:F2-open-meld-carrier	5m|--chi|123m|--chi|123m|--chi|789m|--chi|789m|--plan
 f2-open-13-三色双龙会	crafted-for-coverage#f2-open=三色双龙会;meld=chi-123m+chi-789m	diff:F2-open-meld-carrier	123s789s1p|--chi|123m|--chi|789m|--plan
@@ -372,3 +372,33 @@ f2-neg2-chi-not-triplet	crafted-for-coverage#f2-negative: chi must not act as a 
 f2-neg3-menqing-pon-source	crafted-for-coverage#f2-negative: menqing spot check (pon meld)	same	147m258s369p5p|--pon|5p|--plan
 f2-neg4-ankan-source	crafted-for-coverage#f2-negative: ankan source for triplet fans	same	111m222m333m99s5p|--ankan|1m|--plan
 f2-neg5-no-meld-control	crafted-for-coverage#f2-negative: same hand without any meld (control)	same	111m222m333m99s5p|--plan
+
+f2-kan-dasixi-mingkan	crafted-for-coverage#f2-open=大四喜;meld=kan-dong	diff:F2-carrier-forms	南南南西西西北北北中|--kan|东|--plan
+f2-kan-dasanyuan-mingkan2	crafted-for-coverage#f2-open=大三元;meld=kan-zhong+kan-fa	diff:F2-carrier-forms	白白白东东5m5m|--kan|中|--kan|发|--plan
+f2-kan-santongke-mingkan	crafted-for-coverage#f2-open=三同刻;meld=kan-1p	diff:F2-carrier-forms	111m111s99p55p|--kan|1p|--plan
+f2-kan-sanfengke-mingkan	crafted-for-coverage#f2-open=三风刻;meld=kan-bei	diff:F2-carrier-forms	南南南西西西99p55p|--kan|北|--plan
+f2-kan-shuangjianke-mingkan	crafted-for-coverage#f2-open=双箭刻;meld=kan-zhong	diff:F2-carrier-forms	发发发111m99s55p|--kan|中|--plan
+f2-kan-yisesanjiegao-mingkan	crafted-for-coverage#f2-open=一色三节高;meld=kan-1m	diff:F2-carrier-forms	222m333m11p22s|--kan|1m|--plan
+f2-kan-yisesijiegao-mingkan1	crafted-for-coverage#f2-open=一色四节高;meld=kan-1m single-carrier control	diff:F2-carrier-forms	222m333m444m1p|--kan|1m|--plan
+f2-kan-xiaosixi-mingkan	crafted-for-coverage#f2-open=小四喜;meld=kan-dong	diff:F2-carrier-forms	南南南西西西北北5m5m|--kan|东|--plan
+f2-ankan-santongke	crafted-for-coverage#f2-open=三同刻;meld=ankan-1p	diff:F2-carrier-forms	111m111s99p55p|--ankan|1p|--plan
+f2-ankan-sanfengke	crafted-for-coverage#f2-open=三风刻;meld=ankan-bei	diff:F2-carrier-forms	南南南西西西99p55p|--ankan|北|--plan
+f2-neg-kan-not-run-qinglong	crafted-for-coverage#f2-negative: kan must not carry a run; qinglong absent	same	456m789m11p22s|--kan|1m|--plan
+f2-neg-kan-not-run-hualong	crafted-for-coverage#f2-negative: kan must not carry a run; hualong absent	same	456s789p11m22p|--kan|1m|--plan
+f2-conc-sananke-ankan1	crafted-for-coverage#f2-concealed=三暗刻;meld=ankan-3s	diff:F2-carrier-forms	111m222m99p55p|--ankan|3s|--plan
+f2-conc-sianke-ankan1	crafted-for-coverage#f2-concealed=四暗刻;meld=ankan-4p	diff:F2-carrier-forms	111m222s333p5p|--ankan|4p|--plan
+f2-conc-2ankan	crafted-for-coverage#f2-concealed=三暗刻+四暗刻;meld=ankan-3s+ankan-4s; T75/T75-family: behaviour changed with the guard removal	diff:F2-T75-family	111m222m9p|--ankan|3s|--ankan|4s|--plan
+f2-neg-mingkan-not-concealed	crafted-for-coverage#f2-negative: open kan must not act as a concealed triplet	diff:F2-carrier-forms	111m222m99p55p|--kan|3s|--plan
+f2-neg-pon-not-concealed2	crafted-for-coverage#f2-negative: open pon must not act as a concealed triplet	diff:F2-carrier-forms	111m222m99p55p|--pon|3s|--plan
+f2-multi-qinglong-2chi	crafted-for-coverage#f2-multi=清龙;meld=chi-123m+chi-456m	diff:F2-carrier-forms	789m11p22s|--chi|123m|--chi|456m|--plan
+f2-multi-sansesantongshun-3meld	crafted-for-coverage#f2-multi=三色三同顺;meld=chi-123m+chi-123s+chi-789p	diff:F2-carrier-forms	123p1m|--chi|123m|--chi|123s|--chi|789p|--plan
+f2-multi-yisesitongshun-3chi	crafted-for-coverage#f2-multi=一色四同顺;meld=chi-123m x3	diff:F2-carrier-forms	123m1p|--chi|123m|--chi|123m|--chi|123m|--plan
+f2-multi-yisesijiegao-2pon-FINDING	crafted-for-coverage#FINDING: 一色四节高 dropped when two carrier melds hold 111m/222m; T75 fixed: two carrier melds now honoured; relabelled from defect anchor to fixed anchor	diff:F2-multi-carrier-fixed	333m444m1p|--pon|1m|--pon|2m|--plan
+f2-rs-sanfengke-bei-seatxi	crafted-for-coverage#f2-rs=三风刻;meld=pon-bei;round=north;seat=west	diff:F2-carrier-forms	南南南西西西99p55p|--pon|北|--round|北|--seat|西|--plan
+f2-rs-sanfengke-east	crafted-for-coverage#f2-rs=三风刻;meld=pon-bei;round=east;seat=east	diff:F2-carrier-forms	南南南西西西99p55p|--pon|北|--round|东|--seat|东|--plan
+f2-rs-dasixi-southnorth	crafted-for-coverage#f2-rs=大四喜;meld=pon-dong;round=south;seat=north	diff:F2-carrier-forms	南南南西西西北北北中|--pon|东|--round|南|--seat|北|--plan
+f2-rs-dasixi-west-south	crafted-for-coverage#f2-rs=大四喜;meld=pon-dong;round=west;seat=south	diff:F2-carrier-forms	南南南西西西北北北中|--pon|东|--round|西|--seat|南|--plan
+f2-rs-sanfengke-kan-bei	crafted-for-coverage#f2-rs=三风刻;meld=kan-bei;round=west;seat=west	diff:F2-carrier-forms	南南南西西西99p55p|--kan|北|--round|西|--seat|西|--plan
+f2-rs-xiaosixi-north-east	crafted-for-coverage#f2-rs=小四喜;meld=pon-dong;round=north;seat=east	diff:F2-carrier-forms	南南南西西西北北5m5m|--pon|东|--round|北|--seat|东|--plan
+f7-3ankan-5567p	crafted-for-coverage#F7-concealed-kans=3;hand=5567p	diff:F7-concealed-kans	5567p|--ankan|1m|--ankan|9m|--ankan|1s|--plan
+f7-4ankan-5p	crafted-for-coverage#F7-concealed-kans=4;hand=5p	diff:F7-concealed-kans	5p|--ankan|1m|--ankan|9m|--ankan|1s|--ankan|9s|--plan

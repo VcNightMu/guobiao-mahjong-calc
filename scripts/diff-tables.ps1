@@ -13,12 +13,15 @@
       section title, a space, the switch name in parentheses, a space, three equals signs.
 
     Caliber and known limitation (recorded honestly)
-      The legacy baseline build predates the diagnostic switch. When the old side produces no
-      banner, the case is reported as EXPECTED-legacy-lacks-switch, because the four tables
-      simply cannot be obtained from that build. A genuine old-versus-new probe differential
-      therefore needs two builds that BOTH contain the switch. The recommended usage today is
-      the same-binary determinism run, whose per-case section digests double as the reference
-      snapshot for later runs (results file written into the evidence directory).
+      Classification is three-way:
+        * BOTH sides print the banner  -> compare the banner section only.
+        * NEITHER side prints it       -> compare the WHOLE output (stdout + stderr + exit code);
+                                          this is the normal case for plan-scan arguments.
+        * exactly ONE side prints it   -> EXPECTED-legacy-lacks-switch, because that build cannot
+                                          emit the four tables at all (older build without the switch).
+      A genuine old-versus-new probe differential therefore needs two builds that BOTH contain the
+      switch. The recommended usage is a same-binary determinism run (its per-case digests double
+      as a reference snapshot) plus a cross-binary run of two switch-bearing commits.
 
     Parameters (no hard-coded paths)
       -OldExe -NewExe -CasesFile -OutDir [-FailOnUnexpected]
@@ -112,7 +115,9 @@ function Invoke-One([string]$exe, [string[]]$argv, [string]$tag) {
     foreach ($f in @($outFile, $errFile)) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }
     return [pscustomobject]@{
         exit      = $exit
+        stdout    = $stdout
         stderr    = $stderr
+        whole     = ($stdout + "`n" + $stderr)
         hasBanner = ($stdout -match [regex]::Escape($banner))
         section   = (Get-Section $stdout)
     }
@@ -139,35 +144,41 @@ $stamp = Get-Date -Format 'yyyy-MM-ddTHH:mm:sszzz'
 Write-Host ('[diff-tables] cases=' + $cases.Count + ' mode=' + $(if ($sameBinary) { 'same-binary-determinism' } else { 'cross-binary' }) + ' old=' + $oldInfo.FullName + ' new=' + $newInfo.FullName) -ForegroundColor Cyan
 
 $rows = New-Object System.Collections.ArrayList
-$zero = 0; $expectedLegacy = 0; $unexpected = 0; $mismatch = 0
+$zero = 0; $zeroWhole = 0; $expectedLegacy = 0; $unexpected = 0; $mismatch = 0
 $idx = 0
 foreach ($c in $cases) {
     $idx++
     $a = Invoke-One $OldExe $c.argv ('o' + $idx)
     $b = Invoke-One $NewExe $c.argv ('n' + $idx)
     $verdict = 'same'
-    if ($sameBinary) {
+    $scope = 'section'
+    if ($a.hasBanner -and $b.hasBanner) {
         $identical = (($a.section -ceq $b.section) -and ($a.exit -eq $b.exit))
         if (-not $identical) { $verdict = 'UNEXPECTED' }
+    } elseif ($a.hasBanner -or $b.hasBanner) {
+        # One side cannot emit the diagnostic banner at all (older build without the switch).
+        $verdict = 'EXPECTED-legacy-lacks-switch'
+        $scope = 'legacy'
     } else {
-        if (-not $a.hasBanner) {
-            $verdict = 'EXPECTED-legacy-lacks-switch'
-        } else {
-            $identical = (($a.section -ceq $b.section) -and ($a.exit -eq $b.exit))
-            if (-not $identical) { $verdict = 'UNEXPECTED' }
-        }
+        # Neither side opens a diagnostic section (typical for plan-scan cases): fall back to a
+        # whole-output comparison (stdout + stderr + exit code) instead of mislabelling legacy.
+        $scope = 'whole'
+        $identical = (($a.whole -ceq $b.whole) -and ($a.exit -eq $b.exit))
+        if ($identical) { $verdict = 'same-whole' } else { $verdict = 'UNEXPECTED' }
     }
     switch ($verdict) {
         'same' { $zero++ }
+        'same-whole' { $zeroWhole++ }
         'EXPECTED-legacy-lacks-switch' { $expectedLegacy++ }
         'UNEXPECTED' { $unexpected++ }
         default { $mismatch++ }
     }
     [void]$rows.Add([pscustomobject]@{
-            id = $c.id; src = $c.src; verdict = $verdict
+            id = $c.id; src = $c.src; verdict = $verdict; scope = $scope
             exitOld = $a.exit; exitNew = $b.exit
             bannerOld = $a.hasBanner; bannerNew = $b.hasBanner
             sectionShaOld = (Get-Sha $a.section); sectionShaNew = (Get-Sha $b.section)
+            wholeShaOld = (Get-Sha $a.whole); wholeShaNew = (Get-Sha $b.whole)
         })
     if ($verdict -eq 'UNEXPECTED') {
         Write-Host ('  [' + $verdict + '] ' + $c.id + '  exit ' + $a.exit + '/' + $b.exit) -ForegroundColor Yellow
@@ -176,9 +187,9 @@ foreach ($c in $cases) {
 
 $resultPath = Join-Path $OutDir 'diff-tables-results.tsv'
 $sb = New-Object System.Text.StringBuilder
-[void]$sb.AppendLine(('id', 'source', 'verdict', 'exitOld', 'exitNew', 'bannerOld', 'bannerNew', 'sectionShaOld', 'sectionShaNew') -join "`t")
+[void]$sb.AppendLine(('id', 'source', 'verdict', 'scope', 'exitOld', 'exitNew', 'bannerOld', 'bannerNew', 'sectionShaOld', 'sectionShaNew', 'wholeShaOld', 'wholeShaNew') -join "`t")
 foreach ($r in $rows) {
-    [void]$sb.AppendLine(($r.id, $r.src, $r.verdict, $r.exitOld, $r.exitNew, $r.bannerOld, $r.bannerNew, $r.sectionShaOld, $r.sectionShaNew) -join "`t")
+    [void]$sb.AppendLine(($r.id, $r.src, $r.verdict, $r.scope, $r.exitOld, $r.exitNew, $r.bannerOld, $r.bannerNew, $r.sectionShaOld, $r.sectionShaNew, $r.wholeShaOld, $r.wholeShaNew) -join "`t")
 }
 [System.IO.File]::WriteAllText($resultPath, $sb.ToString(), [System.Text.UTF8Encoding]::new($false))
 
@@ -194,16 +205,17 @@ $lines = New-Object System.Collections.ArrayList
 [void]$lines.Add('case file            : ' + (Resolve-Path -LiteralPath $CasesFile).Path)
 [void]$lines.Add('switch appended      : ' + $switchName)
 [void]$lines.Add('cases total          : ' + $cases.Count)
-[void]$lines.Add('zero-diff            : ' + $zero)
-[void]$lines.Add('expected-legacy      : ' + $expectedLegacy + '   (old side has no banner: its four tables are unobtainable from that build)')
+[void]$lines.Add('zero-diff (section)  : ' + $zero)
+[void]$lines.Add('zero-diff (whole)    : ' + $zeroWhole + '   (neither side opens a diagnostic section, e.g. plan-scan cases)')
+[void]$lines.Add('expected-legacy      : ' + $expectedLegacy + '   (exactly one side has no banner: that build cannot emit the four tables at all)')
 [void]$lines.Add('UNEXPECTED-diff      : ' + $unexpected)
 [void]$lines.Add('verdict-mismatch     : ' + $mismatch)
-[void]$lines.Add('compared scope       : the section that follows the diagnostic banner only (default output is covered by diff-cli.ps1)')
+[void]$lines.Add('compared scope       : section scope when BOTH sides print the banner; whole-output (stdout + stderr + exit) when NEITHER does; one-sided banner is reported as expected-legacy')
 [void]$lines.Add('result table         : ' + $resultPath)
 [System.IO.File]::WriteAllText($summaryPath, (($lines -join "`r`n") + "`r`n"), [System.Text.UTF8Encoding]::new($false))
 
 $stray = @(Get-ChildItem -LiteralPath $OutDir -Force -Filter '.tmp-*' -ErrorAction SilentlyContinue).Count
-Write-Host ('[diff-tables] zero-diff=' + $zero + ' expected-legacy=' + $expectedLegacy + ' UNEXPECTED=' + $unexpected + ' mismatch=' + $mismatch + '  (stray temp files in -OutDir: ' + $stray + ')') -ForegroundColor Cyan
+Write-Host ('[diff-tables] zero-diff(section)=' + $zero + ' zero-diff(whole)=' + $zeroWhole + ' expected-legacy=' + $expectedLegacy + ' UNEXPECTED=' + $unexpected + ' mismatch=' + $mismatch + '  (stray temp files in -OutDir: ' + $stray + ')') -ForegroundColor Cyan
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Write-Host ('[diff-tables] results: ' + $resultPath) -ForegroundColor Cyan
 Write-Host ('[diff-tables] summary: ' + $summaryPath) -ForegroundColor Cyan

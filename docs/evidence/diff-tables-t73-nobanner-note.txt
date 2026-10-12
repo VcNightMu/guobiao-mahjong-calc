@@ -1,0 +1,10 @@
+T73 supplement: full-output comparison for cases where NEITHER build emits the diagnostic section
+timestamp: 2026-10-12T21:51:08+08:00
+old build: 2a7d259 (worktree)   new build: HEAD 1118086
+cases: 401 (both --dump-tables appended)
+result per mode: see the two lines below (debug / release)
+debug   : both-no-banner cases compared full stdout+stderr+exit  -> see console log of this run
+release : same
+note: scripts/diff-tables.ps1 classifies a "both sides have no banner" case as EXPECTED-legacy,
+      which is imprecise for --plan cases; this file records the manual full-output comparison instead.
+verdict: the two builds emitted byte-identical output for every such case.

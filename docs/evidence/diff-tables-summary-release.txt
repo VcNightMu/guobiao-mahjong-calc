@@ -1,0 +1,17 @@
+diff-tables summary
+timestamp            : 2026-10-12T22:15:51+08:00
+mode                 : cross-binary
+old binary           : C:\Users\Administrator\AppData\Local\Temp\t80b\target\release\gbmj.exe
+old binary sha256    : C6FE908E43D87A893102E093AE87EF65839A6F65D473271BDDF403D01D4EF9F6
+new binary           : F:\AllCodes\guobiao-mahjong-calc\target\release\gbmj.exe
+new binary sha256    : 357F9A338637BB4AB159A34439D5C64664CA6E4BD0C774DDF40EB4F83E086EBB
+case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
+switch appended      : --dump-tables
+cases total          : 403
+zero-diff (section)  : 211
+zero-diff (whole)    : 187   (neither side opens a diagnostic section, e.g. plan-scan cases)
+expected-legacy      : 0   (exactly one side has no banner: that build cannot emit the four tables at all)
+UNEXPECTED-diff      : 5
+verdict-mismatch     : 0
+compared scope       : section scope when BOTH sides print the banner; whole-output (stdout + stderr + exit) when NEITHER does; one-sided banner is reported as expected-legacy
+result table         : C:\Users\ADMINI~1\AppData\Local\Temp\t80r2\diff-tables-results.tsv
