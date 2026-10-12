@@ -78,6 +78,14 @@
 | `demo-20-stale-hint.png` | `GBMJ_DEMO=20` | **§二十五** | **陈旧 hint 滞留（只登记不修）**：形状错误文案与 `吃：1万（再点 2 张）` 同时出现 |
 | `demo-21-meld-cap.png` | `GBMJ_DEMO=21` | **§二十五** | 副露 5 组：`副露最多 4 组（当前 5 组），无法计算` 出现**三处**；不 panic、无「应为 0 张」 |
 | `demo-22-hidden-count-with-meld.png` | `GBMJ_DEMO=22` | **§二十五** | 带副露张数不符变体：`注意：暗牌应为 10 张（13 - 3×1 组副露；杠算 1 个面子），当前 12 张` + `（暗牌需 10 张）` + `暗牌张数不对，无法计算（应为 13 − 3×副露 张）` |
+| `probe4.png` / `probe4-truth.txt` | 测试方生成（真值 `code=1817`） | **§二十六**（T24 代跑） | 读图探针：L3 读出 `1817` + 左红/右下蓝 ⇒ 读图链路有效 |
+| `t24-h0-no-hover.png` / `t24-h0b-control-after.png` | T24 代跑（`GBMJ_DEMO=11`，无悬停） | **§二十六** | **悬停阴性对照**：无提示框（其它悬停图与之比对） |
+| `t24-h1-hover-full-tile.png` | T24 代跑（悬停满格 `1万`） | **§二十六** | 实测 tooltip **`已用满 4 张`**（L3 逐字 + 像素 +1256 B） |
+| `t24-h2-hover-hand-tile.png` | T24 代跑（悬停落点为「暗杠」按钮） | **§二十六** | **未出现 tooltip**（仅按钮悬停高亮）⇒ 说明该处无 `on_hover_text` |
+| `t24-h3-hover-confirm.png` / `t24-h4-hover-mode-btn.png` | T24 代跑（悬停「确认」/模式按钮） | **§二十六** | **sha 同基线、无变化** ⇒ 该两处无 tooltip（与代码仅两处 `on_hover_text` 吻合） |
+| `t24-h5-hand-candidate1/2/3.png` | T24 代跑（悬停手牌区 3 处） | **§二十六** | candidate1/2 实测 tooltip **`点击移除一张`**（含悬停高亮框）；candidate3 无 |
+| `t24-m1-synth-click-hover-only.png` / `t24-m2-synth-click-confirm-{before,after}.png` | T24 代跑（**合成点击无效**留证） | **§二十六** | 证明 `PostMessage` 无效、`mouse_event` 仅产生**悬停态**变化（**不构成激活**）⇒ 该项**仍需人工** |
+| `t24-r1-resize-800x600.png` / `t24-r2-resize-1280x900.png` | T24 代跑（`SetWindowPos`） | **§二十六** | 两档尺寸布局正常、无裁切/重叠、文字可读（L3 双图确认） |
 
 **泛指表述的对应**：报告 §22 正文有「6 张 demo1..6」「全部 10 图」这类**泛指**写法 ⇒ 对应本目录
 `demo-01`~`demo-06` 与 `demo-01`~`demo-10` 的**全套**；其中 `demo-02/03/05` **仅被 §22 泛指覆盖**（无单列结论，已在表中如实标注）；
