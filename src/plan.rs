@@ -879,6 +879,26 @@ pub fn plan(hand: &Counts, melds: &[Meld], max_dist: u32) -> Vec<Direction> {
         .count();
     // >= 3：四张同牌同样能提供一副暗刻（余张由 drop/need 处理）——`== 3` 会漏掉这类手（T52/F5）。
     let full: Vec<usize> = (0..NUM_TILES).filter(|&t| hand[t] >= 3).collect();
+    // T93/F10：暗刻系的**第 2 档**（引擎 `双暗刻` 2 番）。此前只有 k=3 / k=4 两支硬编码 ⇒ 2 副暗杠的手
+    // （`need3 = 1` 但 `full` 只有 2 个刻子）两支都不成立 ⇒ 整族漏报。本档与 k=3 / k=4 同构：
+    // `need2` 为还需由暗牌补出的刻子数，`forced` 由 `full` 组合得到（`combos(full, 0) == [[]]`）。
+    // **只新增这一档，既有 k=3（三暗刻）/ k=4（四暗刻）两支一字不动。**
+    let need2 = 2usize.saturating_sub(ankan);
+    if full.len() >= need2 {
+        for c in combos(&full, need2) {
+            let forced: Vec<[usize; 3]> = c.iter().map(|&t| [t, t, t]).collect();
+            push_forced_concealed(
+                &mut out,
+                hand,
+                melds,
+                "双暗刻".into(),
+                2,
+                &forced,
+                None,
+                max_dist,
+            );
+        }
+    }
     // T79/F7a：`ankan == 3` 时 `need3 == 0`，`combos(full, 0)` 返回 `[[]]`（见 `combos` 的 k==0 分支）
     // ⇒ `forced = []` 同样能生成正确方向（差 0～max_dist、need 为手内该补的牌），故守卫放宽为 `<= 3`。
     // 仅 `ankan == 4` 仍跳过：那时引擎按 if/else 记 四暗刻 而非 三暗刻（`fans.rs` 暗刻统计 4 ⇒ 四暗刻）。

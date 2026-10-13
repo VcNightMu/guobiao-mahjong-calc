@@ -197,6 +197,11 @@ fn san_an_ke_zero() {
         .unwrap_or_else(|| panic!("暗杠 + 2 暗刻 应仍有三暗刻（T74）: {:?}", ds_kan));
     assert_eq!(san.value, 16, "{:?}", san);
     assert_eq!(san.distance, 0, "{:?}", san);
+    // T93/F10：同一手（1 副暗杠 + 2 暗刻）也应给出更低一档的 `双暗刻` 2 番，且差 0。
+    let dbl = find(&ds_kan, "双暗刻")
+        .unwrap_or_else(|| panic!("暗杠 + 2 暗刻 应同时给出 双暗刻（T93/F10）: {:?}", ds_kan));
+    assert_eq!(dbl.value, 2, "{:?}", dbl);
+    assert_eq!(dbl.distance, 0, "{:?}", dbl);
 
     // T79/F7a：`ankan == 3`（need3 = 0）时方向**仍应生成**——`combos(full, 0)` 返回 `[[]]` ⇒ `forced = []`，
     // 方向给出「差0 + 该补的将牌」。修复前 `if ankan < 3` 把整块跳过 ⇒ 恒缺。
@@ -219,6 +224,49 @@ fn san_an_ke_zero() {
         s3.need.iter().filter(|&&t| t == 22).count(),
         1,
         "need 应为 1 张 5筒: {s3:?}"
+    );
+
+    // T93/F10 复现面①：2 副暗杠 + 2 副明杠（1m/9m 暗杠 + 1s/9s 明杠，手牌仅 5p）。
+    // 修复前暗刻系两支都不成立（need3 = 1 但 full 只有 2 个刻子）⇒ 整族漏报；修复后应给出
+    // `双暗刻` 2 番、差 0。
+    let h2 = parse_hand("5p");
+    assert_eq!(total(&h2), 1, "1 张暗牌 + 4 副杠");
+    let ds2 = plan(
+        &h2,
+        &[
+            Meld::kan(0, false),
+            Meld::kan(8, false),
+            Meld::kan(9, true),
+            Meld::kan(17, true),
+        ],
+        2,
+    );
+    let dbl2 = find(&ds2, "双暗刻")
+        .unwrap_or_else(|| panic!("2 副暗杠应给出 双暗刻（T93/F10）: {:?}", ds2));
+    assert_eq!(dbl2.value, 2, "{:?}", dbl2);
+    assert_eq!(dbl2.distance, 0, "{:?}", dbl2);
+
+    // T93/F10 复现面②：3 副暗杠 + 1 副明杠（2m/3m/4m 暗杠 + 6m 明杠，手牌仅 9s）。
+    // 修复前只给高番的 `三暗刻`，低一档的 `双暗刻` 被整族漏掉；修复后两档应并存。
+    let h6 = parse_hand("9s");
+    let ds6 = plan(
+        &h6,
+        &[
+            Meld::kan(1, false),
+            Meld::kan(2, false),
+            Meld::kan(3, false),
+            Meld::kan(5, true),
+        ],
+        2,
+    );
+    let dbl6 = find(&ds6, "双暗刻")
+        .unwrap_or_else(|| panic!("3 副暗杠应同时给出 双暗刻（T93/F10）: {:?}", ds6));
+    assert_eq!(dbl6.value, 2, "{:?}", dbl6);
+    assert_eq!(dbl6.distance, 0, "{:?}", dbl6);
+    assert!(
+        find(&ds6, "三暗刻").is_some(),
+        "3 副暗杠仍应有三暗刻（只增不改）: {:?}",
+        ds6.iter().map(|d| d.name.as_str()).collect::<Vec<_>>()
     );
 }
 

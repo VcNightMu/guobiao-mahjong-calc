@@ -344,7 +344,9 @@ Write-Host "[7/8] functional baseline: main + diagnostic-switch baselines vs tar
 $DiagBaseline = Join-Path $RepoRoot 'docs\BASELINE_diag-switches.txt'
 $baselineSpecs = @(
     [pscustomobject]@{ Label = 'main'; Path = $DocBaseline; Expected = 9 },
-    [pscustomobject]@{ Label = 'diag'; Path = $DiagBaseline; Expected = 4 }
+    # 7 sections: cross / dump-tables-only / 3ankan-1kan / 4ankan / and the ankan-count
+    # scoring rule set (1ankan+3kan / 2ankan+2kan / 3ankan+1kan mix).
+    [pscustomobject]@{ Label = 'diag'; Path = $DiagBaseline; Expected = 7 }
 )
 if (-not (Test-Path -LiteralPath $ExePath)) {
     Write-Detail ("basis: exe not found: {0}" -f $ExePath) 'Red'
