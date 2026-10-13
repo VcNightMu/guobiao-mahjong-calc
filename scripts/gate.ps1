@@ -336,61 +336,81 @@ if (-not (Test-Path -LiteralPath $Utf8Script)) {
     else { Add-Result 'utf8 gate (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds }
 }
 
-# ---------------------------------------------------------------- 7. functional baseline 9/9
+# ---------------------------------------------------------------- 7. functional baseline: 1 main + N diagnostic-switch baselines
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Write-Host ("[7/8] functional baseline: {0} vs target\debug\gbmj.exe" -f $DocBaselineName)
-if (-not (Test-Path -LiteralPath $DocBaseline)) {
-    Write-Detail ("basis: docs baseline not found: {0}" -f $DocBaseline) 'Red'
-    Add-Result 'functional baseline (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds
-} elseif (-not (Test-Path -LiteralPath $ExePath)) {
+Write-Host "[7/8] functional baseline: main + diagnostic-switch baselines vs target\debug\gbmj.exe"
+# Second data file: diagnostic switches (--plan / --dump-tables) frozen as a gold standard.
+# ASCII filename by design (manual rev.11: gate.ps1 must stay strictly pure ASCII); file content is UTF-8.
+$DiagBaseline = Join-Path $RepoRoot 'docs\BASELINE_diag-switches.txt'
+$baselineSpecs = @(
+    [pscustomobject]@{ Label = 'main'; Path = $DocBaseline; Expected = 9 },
+    [pscustomobject]@{ Label = 'diag'; Path = $DiagBaseline; Expected = 4 }
+)
+if (-not (Test-Path -LiteralPath $ExePath)) {
     Write-Detail ("basis: exe not found: {0}" -f $ExePath) 'Red'
     Add-Result 'functional baseline (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds
 } else {
-    $raw = [System.IO.File]::ReadAllText($DocBaseline)
-    $raw = $raw.TrimStart([char]0xFEFF)
-    $textLines = [regex]::Split($raw, "\r\n|\n|\r")
-    $cases = New-Object System.Collections.Generic.List[object]
-    $cur = $null
-    foreach ($line in $textLines) {
-        if ($line -match '^=====\s*(\S+)\s*:\s*gbmj\s*(.*)$') {
-            if ($null -ne $cur) { [void]$cases.Add($cur) }
-            $cur = [pscustomobject]@{ Id = $Matches[1]; Args = $Matches[2].Trim(); Lines = (New-Object System.Collections.Generic.List[string]) }
-        } elseif ($null -ne $cur) {
-            [void]$cur.Lines.Add($line)
+    $allPass = $true
+    $totPass = 0
+    $totCase = 0
+    $sumParts = New-Object System.Collections.Generic.List[string]
+    foreach ($spec in $baselineSpecs) {
+        if (-not (Test-Path -LiteralPath $spec.Path)) {
+            Write-Detail ("basis: docs baseline not found: {0}" -f $spec.Path) 'Red'
+            $allPass = $false
+            [void]$sumParts.Add(("{0}: missing" -f $spec.Label))
+            continue
         }
-    }
-    if ($null -ne $cur) { [void]$cases.Add($cur) }
-    $caseCount = 0
-    $passCount = 0
-    foreach ($c in $cases) {
-        $caseCount++
-        $exp = Normalize-Lines $c.Lines.ToArray()
-        if ($c.Args -eq '') { $actual = @(& $ExePath 2>&1) }
-        else { $argArr = @($c.Args -split '\s+'); $actual = @(& $ExePath @argArr 2>&1) }
-        $act = Normalize-Lines $actual
-        $same = ($exp.Count -eq $act.Count)
-        $diffIdx = -1
-        if ($same) {
-            for ($i = 0; $i -lt $exp.Count; $i++) {
-                if ($exp[$i] -cne $act[$i]) { $same = $false; $diffIdx = $i; break }
+        $raw = [System.IO.File]::ReadAllText($spec.Path)
+        $raw = $raw.TrimStart([char]0xFEFF)
+        $textLines = [regex]::Split($raw, "\r\n|\n|\r")
+        $cases = New-Object System.Collections.Generic.List[object]
+        $cur = $null
+        foreach ($line in $textLines) {
+            if ($line -match '^=====\s*(\S+)\s*:\s*gbmj\s*(.*)$') {
+                if ($null -ne $cur) { [void]$cases.Add($cur) }
+                $cur = [pscustomobject]@{ Id = $Matches[1]; Args = $Matches[2].Trim(); Lines = (New-Object System.Collections.Generic.List[string]) }
+            } elseif ($null -ne $cur) {
+                [void]$cur.Lines.Add($line)
             }
-        } else {
-            $diffIdx = [Math]::Min($exp.Count, $act.Count)
         }
-        if ($same) {
-            $passCount++
-            Write-Host ("       [PASS] {0} : gbmj {1}" -f $c.Id, $c.Args) -ForegroundColor Green
-        } else {
-            Write-Host ("       [FAIL] {0} : gbmj {1} (expected {2} lines, actual {3} lines, first diff at line {4})" -f $c.Id, $c.Args, $exp.Count, $act.Count, ($diffIdx + 1)) -ForegroundColor Red
-            $e = '(missing)'; $a = '(missing)'
-            if ($diffIdx -lt $exp.Count) { $e = $exp[$diffIdx] }
-            if ($diffIdx -lt $act.Count) { $a = $act[$diffIdx] }
-            Write-Host ("         expected: {0}" -f $e) -ForegroundColor Red
-            Write-Host ("         actual  : {0}" -f $a) -ForegroundColor Red
+        if ($null -ne $cur) { [void]$cases.Add($cur) }
+        $caseCount = 0
+        $passCount = 0
+        foreach ($c in $cases) {
+            $caseCount++
+            $exp = Normalize-Lines $c.Lines.ToArray()
+            if ($c.Args -eq '') { $actual = @(& $ExePath 2>&1) }
+            else { $argArr = @($c.Args -split '\s+'); $actual = @(& $ExePath @argArr 2>&1) }
+            $act = Normalize-Lines $actual
+            $same = ($exp.Count -eq $act.Count)
+            $diffIdx = -1
+            if ($same) {
+                for ($i = 0; $i -lt $exp.Count; $i++) {
+                    if ($exp[$i] -cne $act[$i]) { $same = $false; $diffIdx = $i; break }
+                }
+            } else {
+                $diffIdx = [Math]::Min($exp.Count, $act.Count)
+            }
+            if ($same) {
+                $passCount++
+                Write-Host ("       [PASS] {0} : {1} : gbmj {2}" -f $spec.Label, $c.Id, $c.Args) -ForegroundColor Green
+            } else {
+                Write-Host ("       [FAIL] {0} : {1} : gbmj {2} (expected {3} lines, actual {4} lines, first diff at line {5})" -f $spec.Label, $c.Id, $c.Args, $exp.Count, $act.Count, ($diffIdx + 1)) -ForegroundColor Red
+                $e = '(missing)'; $a = '(missing)'
+                if ($diffIdx -lt $exp.Count) { $e = $exp[$diffIdx] }
+                if ($diffIdx -lt $act.Count) { $a = $act[$diffIdx] }
+                Write-Host ("         expected: {0}" -f $e) -ForegroundColor Red
+                Write-Host ("         actual  : {0}" -f $a) -ForegroundColor Red
+            }
         }
+        [void]$sumParts.Add(("{0}/{1} {2}" -f $passCount, $caseCount, $spec.Label))
+        $totPass += $passCount
+        $totCase += $caseCount
+        if ($caseCount -ne $spec.Expected -or $passCount -ne $spec.Expected) { $allPass = $false }
     }
-    Write-Detail ("basis: cases = {0}; pass = {1}; fail = {2} (requirement: 9/9 line-exact, LF-normalized, trailing blank lines ignored)" -f $caseCount, $passCount, ($caseCount - $passCount))
-    if ($caseCount -eq 9 -and $passCount -eq 9) { Add-Result 'functional baseline (blocking)' 'PASS' $sw.Elapsed.TotalSeconds }
+    Write-Detail ("basis: {0} = {1}/{2} (requirement: per-section line-exact, LF-normalized, trailing blank lines ignored)" -f ($sumParts -join ' + '), $totPass, $totCase)
+    if ($allPass) { Add-Result 'functional baseline (blocking)' 'PASS' $sw.Elapsed.TotalSeconds }
     else { Add-Result 'functional baseline (blocking)' 'FAIL' $sw.Elapsed.TotalSeconds }
 }
 
