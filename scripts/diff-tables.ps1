@@ -12,16 +12,43 @@
       The decoded banner is the three-equals sign, a space, the four-character Chinese
       section title, a space, the switch name in parentheses, a space, three equals signs.
 
-    Caliber and known limitation (recorded honestly)
-      Classification is three-way:
+    Noise stripping (same rule as diff-cli.ps1)
+      Per-case stdout/stderr are redirected to files in a unique temp directory, so PowerShell
+      never formats a native stderr stream into an ErrorRecord at capture time; the wrapper lines
+      that PS still writes into the redirected stderr file are stripped before hashing. Without
+      that second line of defence wholeSha/sectionSha would embed the CALL SITE line number of
+      this script, so adding a comment would silently change the stored fingerprints.
+
+    Caliber (expectation column is the source of truth)
+      Scope selection is unchanged (three-way):
         * BOTH sides print the banner  -> compare the banner section only.
         * NEITHER side prints it       -> compare the WHOLE output (stdout + stderr + exit code);
                                           this is the normal case for plan-scan arguments.
         * exactly ONE side prints it   -> EXPECTED-legacy-lacks-switch, because that build cannot
                                           emit the four tables at all (older build without the switch).
+      Within the section scope AND the whole scope the verdict now also reads the cases
+      expectation column (same as diff-cli.ps1):
+        * expectation "same" and outputs differ -> UNEXPECTED (never relaxed; still exit 1).
+        * expectation "diff:<reason>" and outputs differ -> expected-section-diff /
+          expected-whole-diff, and the reason string is carried into the result table and the
+          per-reason grouping in the summary.
       A genuine old-versus-new probe differential therefore needs two builds that BOTH contain the
       switch. The recommended usage is a same-binary determinism run (its per-case digests double
       as a reference snapshot) plus a cross-binary run of two switch-bearing commits.
+
+    Known limitation (accepted by the Lead on 2026-10-13; keep this documented)
+      A case whose expectation is "diff:<reason>" is reported as same / same-whole when the current
+      binary pair no longer differs (both sides already carry the fix). That is deliberate: the
+      diff: reasons are registered against a specific PRE-FIX build, and the pair changes between
+      tasks, so forcing a mismatch would turn this tool red for every other pair and make it
+      unusable. Cost: a fix that is later reverted is NOT detected here (it shows up only as same).
+      A case whose expectation is "same" is NEVER relaxed: any difference is still UNEXPECTED.
+
+    Reason-column caliber
+      The reason string carried into the result table echoes the cases expectation column, i.e. the
+      reason registered against the PRE-FIX build. It is not guaranteed to describe the actual
+      difference for the binary pair in use (an older build that already contains the switch can
+      still differ for an unrelated fan-family reason).
 
     Parameters (no hard-coded paths)
       -OldExe -NewExe -CasesFile -OutDir [-FailOnUnexpected]
@@ -54,6 +81,31 @@ $ErrorActionPreference = 'Stop'
 $switchName = '--dump-tables'
 $banner = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('PT09IOeVquihqOiviuaWre+8iC0tZHVtcC10YWJsZXPvvIkgPT09'))
 
+function ConvertFrom-B64Utf8 {
+    param([string]$Value)
+    return [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Value))
+}
+
+# Same noise-strip rule as diff-cli.ps1 (T65/T57). Pure ASCII: the three localised patterns are
+# Base64(UTF-8) so that no CJK byte can ever break the parser. Decoded values:
+#   5omA5Zyo5L2N572u -> localised "at position/line" banner
+#   5L2/55So          -> localised "using/invoking"
+#   6LCD55So          -> localised "invoking"
+$zhPos = ConvertFrom-B64Utf8 '5omA5Zyo5L2N572u'
+$zhUse = ConvertFrom-B64Utf8 '5L2/55So'
+$zhInv = ConvertFrom-B64Utf8 '6LCD55So'
+$noisePatterns = @(
+    ('^\s*\+?\s*' + $zhPos),
+    ('^\s*' + $zhUse + '.+?' + $zhInv),
+    '^\s*At line:\d+ char:\d+\s*$',
+    '^\s*\+\s*CategoryInfo',
+    '^\s*\+\s*FullyQualifiedErrorId',
+    'NativeCommandError',
+    '^\s*At .*\.ps1:\d+ char:\d+\s*$',
+    '^\s*\+\s*&',
+    '^\s*\+\s*~+\s*$'
+)
+
 function Fail-Param([string]$msg) {
     Write-Host ('[diff-tables] ERROR: ' + $msg) -ForegroundColor Red
     exit 2
@@ -76,8 +128,21 @@ trap {
 }
 
 function Get-Text([string]$path) {
+    # Same caliber as diff-cli.ps1: stdout/stderr are already redirected to files (no PS
+    # ErrorRecord formatting on capture), AND the wrapper lines that PowerShell still writes into
+    # the redirected stderr file are stripped. Without this second line of defence the digests
+    # would embed the CALL SITE line number of THIS script, so adding a comment would change
+    # wholeSha/sectionSha (evidence/fingerprint pollution, observed as 124 changed rows).
     if (-not (Test-Path -LiteralPath $path)) { return '' }
-    return ([System.IO.File]::ReadAllText($path, [System.Text.UTF8Encoding]::new($false)) -replace "`r`n", "`n")
+    $raw = [System.IO.File]::ReadAllText($path, [System.Text.UTF8Encoding]::new($false))
+    $raw = $raw -replace "`r`n", "`n"
+    $kept = New-Object System.Collections.Generic.List[string]
+    foreach ($line in ($raw -split "`n")) {
+        $isNoise = $false
+        foreach ($np in $noisePatterns) { if ($line -match $np) { $isNoise = $true; break } }
+        if (-not $isNoise) { [void]$kept.Add($line) }
+    }
+    return ($kept -join "`n")
 }
 
 function Get-Section([string]$text) {
@@ -144,7 +209,9 @@ $stamp = Get-Date -Format 'yyyy-MM-ddTHH:mm:sszzz'
 Write-Host ('[diff-tables] cases=' + $cases.Count + ' mode=' + $(if ($sameBinary) { 'same-binary-determinism' } else { 'cross-binary' }) + ' old=' + $oldInfo.FullName + ' new=' + $newInfo.FullName) -ForegroundColor Cyan
 
 $rows = New-Object System.Collections.ArrayList
-$zero = 0; $zeroWhole = 0; $expectedLegacy = 0; $unexpected = 0; $mismatch = 0
+$zero = 0; $zeroWhole = 0; $expectedLegacy = 0; $expectedSection = 0; $expectedWhole = 0
+$unexpected = 0; $mismatch = 0
+$reasons = @{}
 $idx = 0
 foreach ($c in $cases) {
     $idx++
@@ -152,9 +219,14 @@ foreach ($c in $cases) {
     $b = Invoke-One $NewExe $c.argv ('n' + $idx)
     $verdict = 'same'
     $scope = 'section'
+    $reason = ''
+    $isExpected = ($c.expect -ne 'same')
     if ($a.hasBanner -and $b.hasBanner) {
         $identical = (($a.section -ceq $b.section) -and ($a.exit -eq $b.exit))
-        if (-not $identical) { $verdict = 'UNEXPECTED' }
+        if (-not $identical) {
+            if ($isExpected) { $verdict = 'expected-section-diff'; $reason = $c.expect }
+            else { $verdict = 'UNEXPECTED' }
+        }
     } elseif ($a.hasBanner -or $b.hasBanner) {
         # One side cannot emit the diagnostic banner at all (older build without the switch).
         $verdict = 'EXPECTED-legacy-lacks-switch'
@@ -164,17 +236,25 @@ foreach ($c in $cases) {
         # whole-output comparison (stdout + stderr + exit code) instead of mislabelling legacy.
         $scope = 'whole'
         $identical = (($a.whole -ceq $b.whole) -and ($a.exit -eq $b.exit))
-        if ($identical) { $verdict = 'same-whole' } else { $verdict = 'UNEXPECTED' }
+        if ($identical) { $verdict = 'same-whole' }
+        elseif ($isExpected) { $verdict = 'expected-whole-diff'; $reason = $c.expect }
+        else { $verdict = 'UNEXPECTED' }
     }
     switch ($verdict) {
         'same' { $zero++ }
         'same-whole' { $zeroWhole++ }
         'EXPECTED-legacy-lacks-switch' { $expectedLegacy++ }
+        'expected-section-diff' { $expectedSection++ }
+        'expected-whole-diff' { $expectedWhole++ }
         'UNEXPECTED' { $unexpected++ }
         default { $mismatch++ }
     }
+    if ($reason -ne '') {
+        if ($reasons.ContainsKey($reason)) { $reasons[$reason] = $reasons[$reason] + 1 }
+        else { $reasons[$reason] = 1 }
+    }
     [void]$rows.Add([pscustomobject]@{
-            id = $c.id; src = $c.src; verdict = $verdict; scope = $scope
+            id = $c.id; src = $c.src; expect = $c.expect; verdict = $verdict; scope = $scope; reason = $reason
             exitOld = $a.exit; exitNew = $b.exit
             bannerOld = $a.hasBanner; bannerNew = $b.hasBanner
             sectionShaOld = (Get-Sha $a.section); sectionShaNew = (Get-Sha $b.section)
@@ -187,9 +267,9 @@ foreach ($c in $cases) {
 
 $resultPath = Join-Path $OutDir 'diff-tables-results.tsv'
 $sb = New-Object System.Text.StringBuilder
-[void]$sb.AppendLine(('id', 'source', 'verdict', 'scope', 'exitOld', 'exitNew', 'bannerOld', 'bannerNew', 'sectionShaOld', 'sectionShaNew', 'wholeShaOld', 'wholeShaNew') -join "`t")
+[void]$sb.AppendLine(('id', 'source', 'expectation', 'verdict', 'scope', 'reason', 'exitOld', 'exitNew', 'bannerOld', 'bannerNew', 'sectionShaOld', 'sectionShaNew', 'wholeShaOld', 'wholeShaNew') -join "`t")
 foreach ($r in $rows) {
-    [void]$sb.AppendLine(($r.id, $r.src, $r.verdict, $r.scope, $r.exitOld, $r.exitNew, $r.bannerOld, $r.bannerNew, $r.sectionShaOld, $r.sectionShaNew, $r.wholeShaOld, $r.wholeShaNew) -join "`t")
+    [void]$sb.AppendLine(($r.id, $r.src, $r.expect, $r.verdict, $r.scope, $r.reason, $r.exitOld, $r.exitNew, $r.bannerOld, $r.bannerNew, $r.sectionShaOld, $r.sectionShaNew, $r.wholeShaOld, $r.wholeShaNew) -join "`t")
 }
 [System.IO.File]::WriteAllText($resultPath, $sb.ToString(), [System.Text.UTF8Encoding]::new($false))
 
@@ -207,15 +287,23 @@ $lines = New-Object System.Collections.ArrayList
 [void]$lines.Add('cases total          : ' + $cases.Count)
 [void]$lines.Add('zero-diff (section)  : ' + $zero)
 [void]$lines.Add('zero-diff (whole)    : ' + $zeroWhole + '   (neither side opens a diagnostic section, e.g. plan-scan cases)')
+[void]$lines.Add('expected-section-diff: ' + $expectedSection + '   (both sides print the banner, section differs, case expectation is diff:<reason>)')
+[void]$lines.Add('expected-whole-diff  : ' + $expectedWhole + '   (neither side prints the banner, whole output differs, case expectation is diff:<reason>)')
+[void]$lines.Add('expected-total       : ' + ($expectedSection + $expectedWhole) + '   (section ' + $expectedSection + ' + whole ' + $expectedWhole + ')')
 [void]$lines.Add('expected-legacy      : ' + $expectedLegacy + '   (exactly one side has no banner: that build cannot emit the four tables at all)')
-[void]$lines.Add('UNEXPECTED-diff      : ' + $unexpected)
+[void]$lines.Add('UNEXPECTED-diff      : ' + $unexpected + '   (outputs differ while the case expectation is same: never relaxed)')
 [void]$lines.Add('verdict-mismatch     : ' + $mismatch)
+[void]$lines.Add('expected by reason:')
+foreach ($k in ($reasons.Keys | Sort-Object)) { [void]$lines.Add('  ' + $k + ' = ' + $reasons[$k]) }
 [void]$lines.Add('compared scope       : section scope when BOTH sides print the banner; whole-output (stdout + stderr + exit) when NEITHER does; one-sided banner is reported as expected-legacy')
+[void]$lines.Add('expectation column   : source of truth for diff: cases in BOTH the section and the whole scope; same cases stay strict (any difference is UNEXPECTED)')
+[void]$lines.Add('known limitation     : a diff:<reason> case that does NOT differ under THIS binary pair is reported as same/same-whole and raises no mismatch (reasons are registered against a pre-fix build and the pair changes between tasks); a same case is never relaxed, but a later-reverted fix is not detected here')
+[void]$lines.Add('reason column caliber: reason echoes the cases expectation column (registered against a pre-fix build) and is not guaranteed to describe the actual difference for the binary pair in use')
 [void]$lines.Add('result table         : ' + $resultPath)
 [System.IO.File]::WriteAllText($summaryPath, (($lines -join "`r`n") + "`r`n"), [System.Text.UTF8Encoding]::new($false))
 
 $stray = @(Get-ChildItem -LiteralPath $OutDir -Force -Filter '.tmp-*' -ErrorAction SilentlyContinue).Count
-Write-Host ('[diff-tables] zero-diff(section)=' + $zero + ' zero-diff(whole)=' + $zeroWhole + ' expected-legacy=' + $expectedLegacy + ' UNEXPECTED=' + $unexpected + ' mismatch=' + $mismatch + '  (stray temp files in -OutDir: ' + $stray + ')') -ForegroundColor Cyan
+Write-Host ('[diff-tables] zero-diff(section)=' + $zero + ' zero-diff(whole)=' + $zeroWhole + ' expected-section-diff=' + $expectedSection + ' expected-whole-diff=' + $expectedWhole + ' expected-total=' + ($expectedSection + $expectedWhole) + ' expected-legacy=' + $expectedLegacy + ' UNEXPECTED=' + $unexpected + ' mismatch=' + $mismatch + '  (stray temp files in -OutDir: ' + $stray + ')') -ForegroundColor Cyan
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Write-Host ('[diff-tables] results: ' + $resultPath) -ForegroundColor Cyan
 Write-Host ('[diff-tables] summary: ' + $summaryPath) -ForegroundColor Cyan
