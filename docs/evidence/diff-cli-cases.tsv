@@ -247,7 +247,7 @@ fan-组合龙	tests/batch1_regression.rs:60#番名=组合龙	same	111m|234s|45s|
 plan-01	plan-hand-set#T30	same	123456789m|11p|白白|--plan
 plan-02	plan-hand-set#T30	same	147m258s369p5p|--plan
 plan-03	plan-hand-set#T30	same	19m|19m|19m|258s|369p|5p|--plan
-plan-04	plan-hand-set#T30	same	1112345678999m|--plan
+plan-04	plan-hand-set#T30	diff:F10-shuang-anke-added	1112345678999m|--plan
 plan-05	plan-hand-set#T30	same	123m|456m|789m|123s|5s|--plan
 plan-06	plan-hand-set#T30	same	1m|234m|567m|99s|5588p|--plan
 plan-07	plan-hand-set#T30	same	1111m|234m|567m|99s|5p|--plan
@@ -338,10 +338,10 @@ illegal-hand-junk	crafted-for-coverage#non-tile hand	same	abc
 illegal-hand-zero-tile	crafted-for-coverage#tile index 0	same	0m123456789s
 illegal-plan-14	crafted-for-coverage#14 tiles + plan	same	123m456s789p东东东55p|--plan
 f1-sanse-sanbugao-d2-removed	T53/F1-反控: 三色三步高 d=2 已收为只 d=1 ⇒ 旧有新无	diff:F1-san-se-san-bu-gao-only-d1	123m|456s|789p|11m|22s|--plan
-f1-sanse-sanbugao-d1-kept	T53/F1-正控: d=1 仍必须出现	same	123m234s345p11m22s|--plan
+f1-sanse-sanbugao-d1-kept	T53/F1-正控: d=1 仍必须出现	diff:F10-shuang-anke-added	123m234s345p11m22s|--plan
 f5-sananke-quad-4tiles	T53/F5-正控: 4 张同牌充当暗刻源 ⇒ 新增三暗刻行	diff:F5-quad-now-counted-as-anke	1111m222m333m99s5p|--plan
 f5-sianke-quad-4tiles	T53/F5-正控: 同前 ⇒ 新增四暗刻行	diff:F5-quad-now-counted-as-anke	1111m222m333m444m|--plan
-f5-negative-no-quad	T53/F5-阴性对照: 无 4 张同牌 ⇒ 旧新逐字一致	same	111m222m333m99s5p5p|--plan
+f5-negative-no-quad	T53/F5-阴性对照: 无 4 张同牌 ⇒ 旧新逐字一致	diff:F10-shuang-anke-added	111m222m333m99s5p5p|--plan
 f2-dasixi-pon-dong	T55/F2-正例: 明碰东 承载强制面子 ⇒ 大四喜应出现	diff:F2-meld-carrier-open-runs-and-triplets	南南南西西西北北北中|--pon|东|--plan
 f2-dasanyuan-pon-zhong-fa	T55/F2-正例: 大三元	diff:F2-meld-carrier-open-runs-and-triplets	白白白东东5m5m|--pon|中|--pon|发|--plan
 f2-santongke-pon-1p	T55/F2-正例: 三同刻	diff:F2-meld-carrier-open-runs-and-triplets	111m111s99p55p|--pon|1p|--plan
@@ -368,11 +368,10 @@ f2-open-17-大三元	crafted-for-coverage#f2-open=大三元;meld=pon-zhong+pon-f
 f2-open-18-小三元	crafted-for-coverage#f2-open=小三元;meld=pon-zhong	diff:F2-open-meld-carrier	发发发白白111m22s|--pon|中|--plan
 f2-open-19-大四喜	crafted-for-coverage#f2-open=大四喜;meld=pon-dong	diff:F2-open-meld-carrier	南南南西西西北北北中|--pon|东|--plan
 f2-open-20-小四喜	crafted-for-coverage#f2-open=小四喜;meld=pon-dong	diff:F2-open-meld-carrier	南南南西西西北北5m5m|--pon|东|--plan
-f2-neg2-chi-not-triplet	crafted-for-coverage#f2-negative: chi must not act as a triplet face	same	111s111p99m55m|--chi|123m|--plan
+f2-neg2-chi-not-triplet	crafted-for-coverage#f2-negative: chi must not act as a triplet face	diff:F10-shuang-anke-added	111s111p99m55m|--chi|123m|--plan
 f2-neg3-menqing-pon-source	crafted-for-coverage#f2-negative: menqing spot check (pon meld)	same	147m258s369p5p|--pon|5p|--plan
 f2-neg4-ankan-source	crafted-for-coverage#f2-negative: ankan source for triplet fans	same	111m222m333m99s5p|--ankan|1m|--plan
 f2-neg5-no-meld-control	crafted-for-coverage#f2-negative: same hand without any meld (control)	same	111m222m333m99s5p|--plan
-
 f2-kan-dasixi-mingkan	crafted-for-coverage#f2-open=大四喜;meld=kan-dong	diff:F2-carrier-forms	南南南西西西北北北中|--kan|东|--plan
 f2-kan-dasanyuan-mingkan2	crafted-for-coverage#f2-open=大三元;meld=kan-zhong+kan-fa	diff:F2-carrier-forms	白白白东东5m5m|--kan|中|--kan|发|--plan
 f2-kan-santongke-mingkan	crafted-for-coverage#f2-open=三同刻;meld=kan-1p	diff:F2-carrier-forms	111m111s99p55p|--kan|1p|--plan
