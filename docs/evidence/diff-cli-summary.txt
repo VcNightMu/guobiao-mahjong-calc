@@ -1,5 +1,5 @@
 diff-cli summary
-timestamp            : 2026-10-12T23:12:52+08:00
+timestamp            : 2026-10-13T21:34:07+08:00
 old binary           : C:\Users\Administrator\AppData\Local\Temp\t83\oldref\debug\gbmj.exe
 old binary mtime     : 2026-10-12T23:08:20
 old binary sha256    : B08C9A2A6F4060BF4BF37E3C188DB13CCA99383A556D681540878E83F5CB7258
@@ -7,18 +7,18 @@ new binary           : C:\Users\Administrator\AppData\Local\Temp\t83\new\debug\g
 new binary mtime     : 2026-10-12T23:02:57
 new binary sha256    : 8828769B51C3F10363B33C7848031412DE161C5D262600B3FAFDCDB34A8F4053
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
-cases total          : 454
-zero-diff            : 383
-expected-diff        : 71
+cases total          : 461
+zero-diff            : 387
+expected-diff        : 74
 UNEXPECTED-diff      : 0
 verdict-mismatch     : 0   (expected-diff case that was identical)
 
 top-5 slowest cases (max of old/new ms):
-  plan-10 old=3435ms new=3382ms
-  plan-04 old=3134ms new=3105ms
-  f5-sianke-quad-4tiles old=2370ms new=2485ms
-  plan-05 old=1320ms new=1380ms
-  plan-08 old=1274ms new=1157ms
+  plan-10 old=2985ms new=3011ms
+  plan-04 old=2704ms new=2747ms
+  f5-sianke-quad-4tiles old=2125ms new=2129ms
+  plan-05 old=1183ms new=1314ms
+  plan-08 old=1002ms new=1013ms
 
 noise-strip rule     : stdout/stderr redirected to files; lines matching the localised at-position banner, the localised invoking banner, "At line", "+ CategoryInfo", "+ FullyQualifiedErrorId" or "NativeCommandError" are removed (Base64-encoded zh patterns inside the script)
 result table         : docs\evidence\diff-cli-results.tsv

@@ -453,3 +453,10 @@ rs-3wind-ne	crafted-for-coverage#T83-meld=pon-bei;three-wind;round=北;seat=东	
 rs-3wind-ns	crafted-for-coverage#T83-meld=pon-bei;three-wind;round=北;seat=南	same	南南南西西西99p55p|--pon|北|--round|北|--seat|南
 rs-3wind-nw	crafted-for-coverage#T83-meld=pon-bei;three-wind;round=北;seat=西	same	南南南西西西99p55p|--pon|北|--round|北|--seat|西
 rs-3wind-nn	crafted-for-coverage#T83-meld=pon-bei;three-wind;round=北;seat=北	same	南南南西西西99p55p|--pon|北|--round|北|--seat|北
+plan-dump-cross-four-kans	crafted-for-coverage#T86-cross=plan+dump-tables;4kans	diff:T60-dump-tables-usage-added	5p|--kan|2m|--kan|3m|--kan|4m|--kan|5m|--plan|--dump-tables
+kontest-open-kan	crafted-for-coverage#T86-kontest=open;kan	same	222m333m11p22s|--kan|1m
+kontest-open-pon	crafted-for-coverage#T86-kontest=open;pon	same	222m333m11p22s|--pon|1m
+kontest-conc-kan	crafted-for-coverage#T86-kontest=conc;ankan	same	222m333m11p22s|--ankan|1m
+kontest-conc-tsumo	crafted-for-coverage#T86-kontest=conc;concealed	same	111m222m333m11p22s
+f7-4ankan-dong	crafted-for-coverage#T86-4ankan=concealed-dong	diff:F7-concealed-kans	东|--ankan|1m|--ankan|9m|--ankan|1s|--ankan|9s|--plan
+plan-four-kans-yisesijiegao	crafted-for-coverage#T86-plan;4kans;yisesijiegao	diff:F2-open-meld-carrier	5p|--kan|2m|--kan|3m|--kan|4m|--kan|5m|--plan
