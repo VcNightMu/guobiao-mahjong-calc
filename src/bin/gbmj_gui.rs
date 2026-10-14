@@ -7,6 +7,7 @@
 use eframe::egui;
 use gbmj::calc::{analyze, Analysis};
 use gbmj::model::Meld;
+use gbmj::plan::MAX_DIST;
 use gbmj::tiles::{counts, parse_hand, tile_name, total, Counts, NUM_TILES};
 
 const WIN_THRESHOLD: u32 = 8;
@@ -29,6 +30,8 @@ struct App {
     seat_wind: usize,
     hint: String,
     analysis: Option<Analysis>,
+    /// T102：未听牌时的「缺什么换什么」方向列表（听牌时为空 Vec，不计算、不显示）。
+    plan: Vec<gbmj::plan::Direction>,
     dirty: bool,
 }
 
@@ -43,6 +46,7 @@ impl Default for App {
             seat_wind: 27,
             hint: String::new(),
             analysis: None,
+            plan: Vec::new(),
             dirty: true,
         }
     }
@@ -58,7 +62,9 @@ impl App {
         app
     }
 
-    /// 载入示例。GBMJ_DEMO=1 门清示例；=2 带副露示例；=3 脚本化点击（自检副露按钮复位）
+    /// 载入示例。GBMJ_DEMO=1 门清示例；=2 带副露示例；=3 脚本化点击（自检副露按钮复位）；
+    /// =24 **未听牌**示例（应显示「缺什么换什么（最多 2 张）」方向列表）；
+    /// =25 **听牌**对照示例（只显示「结构听牌 N 种」+ 四栏，**不得**显示方向列表）。
     fn load_sample(&mut self) {
         self.hand = counts();
         self.melds.clear();
@@ -218,6 +224,15 @@ impl App {
                 self.click_tile(0); // 吃：1万 ⇒ 产生 pending_chi=[0] 与进度 hint
                 self.remove_meld(0); // 与 UI「×」同一条代码路径
             }
+            Ok("24") => {
+                // T102：未听牌示例 ⇒ 应显示方向列表。引擎判定「未听牌（无和牌型）」；
+                // CLI `--plan` 给出 1 条：清龙(万门) 16番 差1张 补: 2条 5条 换掉: 7条。
+                self.hand = parse_hand("123456789m 1357s");
+            }
+            Ok("25") => {
+                // T102：听牌对照示例 ⇒ 应只显示「结构听牌 2 种：6筒 9筒」+ 四栏，不得出现方向列表。
+                self.hand = parse_hand("123456789m 55p 78p");
+            }
             _ => {
                 self.hand = parse_hand("555p666p777p 555s 6s");
             }
@@ -256,9 +271,20 @@ impl App {
                     self.round_wind,
                     self.seat_wind,
                 ));
+                // T102：用户口径「未听牌时显示列表，听牌时显示和牌番不显示列表」
+                // ⇒ 仅当没有任何结构成和张（未听牌）时才计算方向；听牌时留空、不显示。
+                self.plan = match &self.analysis {
+                    Some(a) if a.structural_waits.is_empty() => {
+                        gbmj::plan::plan(&self.hand, &self.melds, MAX_DIST)
+                    }
+                    _ => Vec::new(),
+                };
             }
             // 副露 >4 组（None）或张数不符 ⇒ 不计算，绝不再把 5 组副露送进 analyze
-            _ => self.analysis = None,
+            _ => {
+                self.analysis = None;
+                self.plan = Vec::new();
+            }
         }
     }
 
@@ -593,6 +619,29 @@ impl App {
         };
         if an.structural_waits.is_empty() {
             ui.weak("当前不是听牌型（无任何结构成和张）");
+            ui.add_space(6.0);
+            // T102：未听牌 ⇒ 列「缺什么换什么」方向（语义与 CLI --plan 逐项一致）。
+            // 顺序沿用 plan() 的返回顺序（差张升序、番值降序），此处不再排序。
+            ui.strong(format!("缺什么换什么（最多 {MAX_DIST} 张）"));
+            if self.plan.is_empty() {
+                ui.weak(format!("没有 {MAX_DIST} 张以内能凑到的番种方向"));
+            } else {
+                for d in &self.plan {
+                    ui.horizontal(|ui| {
+                        ui.add_sized(
+                            [104.0, 20.0],
+                            egui::Label::new(egui::RichText::new(d.name.clone()).strong()),
+                        );
+                        ui.label(format!("{}番", d.value));
+                        ui.label(format!("差{}张", d.distance));
+                        ui.label(format!("补: {:<16}", d.need_str()));
+                        ui.label(format!("换掉: {}", d.drop_str()));
+                        if !d.covered_by.is_empty() {
+                            ui.label(format!("【已被 {} 覆盖】", d.covered_by.join("、")));
+                        }
+                    });
+                }
+            }
             return;
         }
         ui.weak(format!(
