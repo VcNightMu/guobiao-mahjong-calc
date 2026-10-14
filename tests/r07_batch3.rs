@@ -51,16 +51,15 @@ fn run(c: &Case) {
             n,
             names(w)
         );
-        if v > 0 {
-            assert_eq!(
-                val(w, n),
-                v,
-                "[{}] {} 番值不符（实际 {:?}）",
-                c.label,
-                n,
-                names(w)
-            );
-        }
+        // T111 修 4：原 `if v > 0` 会让期望值 0 静默跳过等值断言 ⇒ 去掉守卫，让 0 也参与比较。
+        assert_eq!(
+            val(w, n),
+            v,
+            "[{}] {} 番值不符（实际 {:?}）",
+            c.label,
+            n,
+            names(w)
+        );
     }
     for &(n, t) in c.repeat {
         let got = w.fans.iter().filter(|f| f.name == n).count();

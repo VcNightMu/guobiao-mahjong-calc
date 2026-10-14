@@ -155,8 +155,12 @@
 //!
 //! 不在不变量内：`covered_by`（R-13 覆盖标注）只做标注，不改 `distance/need/drop/value`。
 //!
-//! 约定（与 `tests/plan_regression.rs` 同）：`plan(..., 2)` 的字面量 `2` 是契约护栏，
-//! `MAX_DIST` 一旦变动，本文件的 `distance <= 2` 断言必须立刻失败报警。
+//! 约定（与 `tests/plan_regression.rs` 同）：`plan(..., 2)` 的字面量 `2` 是契约护栏，但
+//! ⚠️ **本文件对 `MAX_DIST` 的变动是不敏感的**——这是**设计**：快照钉的是 `plan()` 的算法，
+//! 不是 CLI 的边界。`MAX_DIST` 自身的契约由**门禁第 7 步的诊断金标准**守护
+//! （`docs/BASELINE_diag-switches.txt` 的 6 段 `--plan` 段捕获「最多 2 张」标题与内容）：
+//! 2026-10-14 变异实测 —— `MAX_DIST 2→3` ⇒ `cargo test` **160 passed / 0 failed（抓不到）**、
+//! **门禁第 7 步 6 段 FAIL**（首个差异在第 1 行）。
 
 use gbmj::model::Meld;
 use gbmj::plan::{plan, Direction};

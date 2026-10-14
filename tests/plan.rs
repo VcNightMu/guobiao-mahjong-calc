@@ -3,8 +3,11 @@ use gbmj::plan::{plan, Direction};
 use gbmj::tiles::*;
 
 // 说明（**刻意**，非疏漏）：本文件内 `plan(…, 2)` 的 `2` 是**契约护栏**用的字面量，与
-// `src/plan.rs` 的 `MAX_DIST = 2` 同值却**不改为常量引用**——那个常量一旦被改动，
-// 这里的快照断言必须立刻失败报警，而不是静默跟随。
+// `src/plan.rs` 的 `MAX_DIST = 2` 同值却**不改为常量引用**。⚠️ 因此**本文件对 `MAX_DIST`
+// 的变动是不敏感的**——这是**设计**：快照钉的是 `plan()` 的算法，不是 CLI 的边界。
+// `MAX_DIST` 自身的契约由**门禁第 7 步的诊断金标准**守护（`docs/BASELINE_diag-switches.txt`
+// 的 6 段 `--plan` 段会捕获「最多 2 张」标题与内容）：2026-10-14 变异实测 —— `MAX_DIST 2→3`
+// ⇒ `cargo test` **160 passed / 0 failed（抓不到）**、**门禁第 7 步 6 段 FAIL**（首个差异在第 1 行）。
 
 fn find<'a>(ds: &'a [Direction], kw: &str) -> Option<&'a Direction> {
     ds.iter().find(|d| d.name.contains(kw))
@@ -105,7 +108,8 @@ fn qing_long_zero() {
     assert_eq!(total(&h), 13);
     let ds = plan(&h, &[], 2);
     let d = find(&ds, "清龙(万门)").expect("应有清龙(万门)");
-    assert!(d.distance <= 2, "{:?}", d);
+    // T111 修 2：与同族 `hua_long_zero` / `zuhe_long_zero` 同强度（函数名与注释都写「差 0」）。
+    assert_eq!(d.distance, 0, "{:?}", d);
 }
 
 #[test]
@@ -418,7 +422,8 @@ fn da_san_yuan_and_xiao_san_yuan() {
         let d = find(&dirs, name)
             .unwrap_or_else(|| panic!("{} 应由杠承载后出现（T74）: {:?}", name, dirs));
         assert_eq!(d.value, value, "{} 番值: {:?}", name, d);
-        assert!(d.distance <= 2, "{} 距离: {:?}", name, d);
+        // T111 修 3：与同批副露正例同强度（杠承载后的正例应为「差 0 张」）。
+        assert_eq!(d.distance, 0, "{} 距离: {:?}", name, d);
     }
     // ---- T74 反例：杠不得承载「顺子型」强制面子 ----
     // 两手的 1万/9万 已被杠占满 4 张 ⇒ 顺子 123m / 789m 物理不可达，清龙必须不出现；

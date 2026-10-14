@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "capturedAtUtc": "2026-10-12T13:12:17Z",
-  "capturedFromHead": "b28c555",
+  "capturedAtUtc": "2026-10-14T10:22:07Z",
+  "capturedFromHead": "446b8b3",
   "count": 160,
   "names": [
     "analyze_with_five_melds_and_two_tiles_is_empty",
@@ -21,6 +21,7 @@
     "b2_validate_rejects_over4_globally_but_allows_exactly4",
     "bare_tile_after_meld_option_is_reported_as_meld_error",
     "bi_ran_menqing_tsumo_is_just_one",
+    "bian_zhang_can_be_last_tile",
     "borderline_three_occupied_then_waiting_that_tile_is_kept",
     "bu_chai_yi_qinglong",
     "chi_crossing_into_honors_is_rejected",
@@ -38,7 +39,6 @@
     "juezhang_no_wufanhe_on_last_path",
     "juezhang_non_menqing_can_last_true",
     "lian_liu_survives_isolated_run",
-    "liang_mian_can_be_last_tile",
     "meld_occupancy_edge_case_gate_baseline_t1_14a",
     "melds_block_menqing_patterns",
     "menqing_shows_qianmenqing_in_detail",

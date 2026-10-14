@@ -1,7 +1,11 @@
 //! 第 5 批（R-08 方向扫描假阳性 + 镜像假阴性 + 同类扩展）的回归与 `--plan` 基线用例
 //!
 //! **刻意保留字面量**（非疏漏）：本文件 `plan(…, 2)` 的 `2` 与 `src/plan.rs` 的 `MAX_DIST = 2`
-//! 同值，但**不改为常量引用**——`MAX_DIST` 一旦变动，快照族必须立刻失败报警（契约护栏）。
+//! 同值，但**不改为常量引用**。⚠️ 因此**本文件对 `MAX_DIST` 的变动是不敏感的**——这是**设计**：
+//! 快照钉的是 `plan()` 的算法，不是 CLI 的边界。`MAX_DIST` 自身的契约由**门禁第 7 步的诊断
+//! 金标准**守护（`docs/BASELINE_diag-switches.txt` 的 6 段 `--plan` 段捕获「最多 2 张」标题与
+//! 内容）：2026-10-14 变异实测 —— `MAX_DIST 2→3` ⇒ `cargo test` **160 passed / 0 failed（抓不到）**、
+//! **门禁第 7 步 6 段 FAIL**（首个差异在第 1 行）。
 //!
 //! 约定（依 Lead 工作指令）：
 //! - **全部库级断言**（直接调 `gbmj::plan::plan()` 取 `Direction`），**不断言 CLI 文本**。
@@ -454,9 +458,15 @@ fn plan_targets_never_exceed_four_copies_without_melds() {
     let ds = plan(&parse_hand(hand), &[], 2);
     assert_targets_feasible(hand, &[], &ds);
     for d in &ds {
+        // T111 修 1：原断言 `!names(&d.need).contains("1万 1万")` 是**恒真死断言**——`names()` 用
+        // `.join(",")` 产出 `1万,1万`（无空格），该 needle 永不命中。改为按语义计数：本手暗牌已有
+        // 4 张 1万 ⇒ 目标中 1万 的净增量必须 ≤ 0（`4 - drop + need <= 4` ⇔ `need1 <= drop1`），
+        // 这正是「不得给出需 >4 张 1万 的目标」的真实条件。
+        let need1 = d.need.iter().filter(|&&t| t == 0).count();
+        let drop1 = d.drop.iter().filter(|&&t| t == 0).count();
         assert!(
-            !names(&d.need).contains("1万 1万"),
-            "不得给出需 6 张 1万 的目标：{:?}",
+            need1 <= drop1,
+            "不得给出 1万 净增 >0（即目标需 >4 张 1万）的方向：{:?}",
             d
         );
     }

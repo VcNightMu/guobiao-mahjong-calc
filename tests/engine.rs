@@ -518,10 +518,25 @@ fn shuang_peng_cannot_be_last_tile() {
 }
 
 #[test]
-fn liang_mian_can_be_last_tile() {
+fn bian_zhang_can_be_last_tile() {
+    // T112：原名 `liang_mian_can_be_last_tile` 与本注释「边张听」不符（`12m` 是边张听 3万）⇒ 改名。
     // 边张听：暗牌里没有 3万，绝张成立
     let c = parse_hand("147m258s369p12m55p");
     let an = analyze(&c, &[], 27, 27);
     let w = find(&an, 2); // 3万
     assert!(w.can_last, "暗牌无 3万，绝张应成立");
+    // T112：与同文件 `menqing_tsumo_is_buqiu_ren` 用例同形的差值断言——
+    // 绝张相对基准再多 4 番（和绝张），自摸绝张相对自摸亦 +4。
+    assert_eq!(
+        w.last - w.normal,
+        FAN_HE_JUE_ZHANG,
+        "绝张相对基准应 +4: {:?}",
+        w
+    );
+    assert_eq!(
+        w.tsumo_last - w.tsumo,
+        FAN_HE_JUE_ZHANG,
+        "自摸绝张相对自摸应 +4: {:?}",
+        w
+    );
 }

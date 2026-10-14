@@ -512,10 +512,9 @@ fn r11_zuhelong_requires_at_most_one_meld() {
     assert_eq!(total(&c2), 7, "2 副露 ⇒ 暗牌 7 张");
     let melds2 = vec![Meld::kan(18, false), Meld::kan(17, true)]; // 暗杠1筒 + 明杠9条
     let an2 = analyze(&c2, &melds2, 27, 27);
-    assert!(
-        an2.waits.iter().all(|w| !has_fan(w, "组合龙")),
-        "m>1 不应生成组合龙"
-    );
+    // T112：原 `all(|w| !has_fan(w, "组合龙"))` 在**空集合上恒真**，而紧随的 `is_empty()` 严格更强
+    //（本文件 `r11_zuhelong_requires_at_most_one_meld` 的文档注释自己就把这种形态点名为「空洞断言」）
+    // ⇒ 删除该 4 行，只留 `is_empty()` 一条独立证据。
     assert!(
         an2.waits.is_empty(),
         "m=2 时该手应无和牌型（实测未听牌）: {:?}",
