@@ -1,25 +1,29 @@
 diff-tables summary
-timestamp            : 2026-10-13T22:17:59+08:00
+timestamp            : 2026-10-14T14:19:22+08:00
 mode                 : cross-binary
 old binary           : C:\Users\Administrator\AppData\Local\Temp\t89\oldrel-2a7d259\release\gbmj.exe
 old binary sha256    : 2E5A6E2DF6447C43E582982F002A0A7AC8D48D4E06E5DDE80FD7850138A1AA48
 new binary           : F:\AllCodes\guobiao-mahjong-calc\target\release\gbmj.exe
-new binary sha256    : 7236F894B0BA124F2FDBBED7A08DFF62F63846AAB23183214619786D995B9AAD
+new binary sha256    : A3CEA42AEBBE13F36B925C2CB238C16F36E9DCCA7248F38AA4EC13B0AD4CB291
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
 switch appended      : --dump-tables
 cases total          : 461
 zero-diff (section)  : 263
-zero-diff (whole)    : 188   (neither side opens a diagnostic section, e.g. plan-scan cases)
+zero-diff (whole)    : 152   (neither side opens a diagnostic section, e.g. plan-scan cases)
 expected-section-diff: 2   (both sides print the banner, section differs, case expectation is diff:<reason>)
-expected-whole-diff  : 8   (neither side prints the banner, whole output differs, case expectation is diff:<reason>)
-expected-total       : 10   (section 2 + whole 8)
+expected-whole-diff  : 44   (neither side prints the banner, whole output differs, case expectation is diff:<reason>)
+expected-total       : 46   (section 2 + whole 44)
 expected-legacy      : 0   (exactly one side has no banner: that build cannot emit the four tables at all)
 UNEXPECTED-diff      : 0   (outputs differ while the case expectation is same: never relaxed)
 verdict-mismatch     : 0
 expected by reason:
+  diff:F10-shuang-anke-added = 4
+  diff:F2-carrier-forms = 19
+  diff:F2-meld-carrier-open-runs-and-triplets = 3
   diff:F2-multi-carrier-fixed = 1
-  diff:F2-open-meld-carrier = 1
+  diff:F2-open-meld-carrier = 9
   diff:F2-T75-family = 2
+  diff:F5-quad-now-counted-as-anke = 2
   diff:F7-concealed-kans = 3
   diff:F8-nine-gates-menqing = 2
   diff:T60-dump-tables-usage-added = 1
@@ -27,4 +31,4 @@ compared scope       : section scope when BOTH sides print the banner; whole-out
 expectation column   : source of truth for diff: cases in BOTH the section and the whole scope; same cases stay strict (any difference is UNEXPECTED)
 known limitation     : a diff:<reason> case that does NOT differ under THIS binary pair is reported as same/same-whole and raises no mismatch (reasons are registered against a pre-fix build and the pair changes between tasks); a same case is never relaxed, but a later-reverted fix is not detected here
 reason column caliber: reason echoes the cases expectation column (registered against a pre-fix build) and is not guaranteed to describe the actual difference for the binary pair in use
-result table         : C:\Users\ADMINI~1\AppData\Local\Temp\t91\rel\diff-tables-results.tsv
+result table         : C:\Users\ADMINI~1\AppData\Local\Temp\t108\rel-out\diff-tables-results.tsv

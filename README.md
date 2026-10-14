@@ -2,9 +2,11 @@
 
 国标麻将（中国麻将竞赛规则）算番器。
 
-当前阶段：**听牌算番** —— 输入手牌 + 副露 + 圈风门风，算出听牌张，以及每种和法下的番数。
+当前阶段：**听牌算番 + 未听牌方向扫描** —— 输入手牌 + 副露 + 圈风门风，算出听牌张、每种和法下的番数；未听牌时给出「离某个番种还差几张、要补什么、要换掉什么」的方向（CLI `--plan` 与 GUI 结果区同一套逻辑）。
 
 **技术栈**：Rust。引擎（`gbmj` 库 + 命令行 `gbmj`）与界面分离；界面为原生窗口 `gbmj-gui`（egui / eframe）。
+
+**一键质量门禁**：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\gate.ps1`（8 步：构建零警告 / 测试清单锁 / 测试结果 / clippy `-D warnings` / `fmt --check` / UTF-8 编码门禁 / 主动能基线 9/9 逐字 / 行号引用回扫），期望 **`PASS 8 / WARN 0 / FAIL 0`**（当前测试 **160 passed / 0 failed**）。
 
 ## 构建与运行
 
@@ -26,7 +28,12 @@ cargo run --release --bin gbmj-gui --features gui    # 图形界面（GUI 为可
 > winget install BrechtSanders.WinLibs.POSIX.UCRT
 > ```
 >
-> 确保它的 `bin`（含 64 位 `dlltool.exe`）在 PATH 中。
+> 确保它的 `bin`（含 64 位 `dlltool.exe`）在 **PATH 最前**。本机实测：PATH 首位若是 `C:\MinGW\bin\dlltool.exe`（binutils 2.28），GUI 构建必失败；把 WinLibs 的 `mingw64\bin` 前置即成功。取法：
+>
+> ```powershell
+> $wl = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Recurse -Filter dlltool.exe | Select-Object -First 1
+> $env:PATH = $wl.Directory.FullName + ';' + $env:PATH
+> ```
 
 ## 图形界面（gbmj-gui）
 
@@ -38,7 +45,10 @@ cargo run --release --bin gbmj-gui --features gui
 
 1. **顶部**：左「副露区」（吃 / 碰 / 明杠 / 暗杠 四种录入模式，先选类型再点牌库；带删除）、右「手牌区」（点击可移除，带张数校验）。
 2. **中部**：34 张牌库（每张显示 `已用/4`，满 4 张置灰）；右侧圈风 / 门风选择 + 门清提示。
-3. **下部**：听牌结果——每张结构听牌张横排四栏（点和 / 自摸 / 点和绝张 / 自摸绝张），≥ 8 番红色高亮，下方附番种明细。
+3. **下部**：结果区 ——
+   - **听牌**：每张结构听牌张横排四栏（点和 / 自摸 / 点和绝张 / 自摸绝张），≥ 8 番红色高亮，下方附番种明细；
+   - **未听牌**：显示「**缺什么换什么（最多 2 张）**」方向列表（番名 / 番数 / 差几张 / 补什么 / 换掉什么 / 覆盖标注），与命令行 `--plan` **逐项口径一致**。
+   - 即：**听牌时只给和牌番表，未听牌时才给换牌方向**。
 
 ## 命令行
 
@@ -107,7 +117,10 @@ gbmj <手牌> [副露...] --plan
 | `tests/batch1_regression.rs` | 第 1 批（计番）缺陷回归用例 |
 | `tests/batch2_regression.rs` | 第 2 批（输入校验 / 参数）回归用例 |
 | `scripts/check-utf8.ps1` | 全仓 UTF-8 门禁（本地执行） |
-| `docs/` | 项目文档、开发/测试方案、评估报告、接手简报，以及 `BASELINE_旧二进制行为基准.txt`（行为基准） |
+| `scripts/gate.ps1` | **一键质量门禁（8 步，见文首）**；`-UpdateBaseline` 可更新测试清单锁 |
+| `scripts/diff-cli.ps1` / `scripts/diff-tables.ps1` | 双构建差分：CLI 全量用例 / `--dump-tables` 四张番表 |
+| `scripts/bench-plan.ps1` | `--plan` 计时基准（release 为准；陈旧二进制直接 exit 2） |
+| `docs/` | 项目文档、开发/测试方案、评估报告、接手简报，以及 `BASELINE_旧二进制行为基准.txt`（主动能 9 组逐字基准）与 `BASELINE_diag-switches.txt`（诊断开关金标准 7 段） |
 | `听牌算番方案-v0.1.md` | 早期方案稿（JS 时代的文档） |
 | `界面格式-v0.1.md` | 界面规格（同期 HTML 示意 `mockup.html` 与预览脚本 `preview-serve.js` 属 JS 时代遗留，已由 `gbmj-gui` 取代，**T25 按用户裁定删除**） |
 
@@ -123,5 +136,7 @@ gbmj <手牌> [副露...] --plan
 - [x] 全不靠三花色约束：已论证**不可能违约**——每门受 147/258/369 列限制最多 3 张，两门最多 6 张 + 7 张字牌 = 13 < 14，故 14 张的合法全不靠必然三花色齐全（见 `src/decompose.rs` 的 `is_bu_kao`），无需额外校验
 - [x] 输入校验与参数健壮性：非法牌数 / 同一张超 4 张 / 非法字符 / 未识别参数 / 重复风位一律报错退出（退出码 2），`--plan` 同样校验
 - [x] 图形界面 `gbmj-gui`：牌库点选 / 副露录入 / 圈门风 / 四栏结果（原生窗口，egui）
-- [ ] 界面打磨：布局留白、牌面图形化（当前用文字牌名）
-- [ ] 未听牌靠张向听
+- [x] **未听牌靠张向听**：CLI `--plan` + **GUI 结果区「缺什么换什么（最多 2 张）」**（未听牌显示、听牌只显示和牌番表）
+- [x] **质量门禁与差分证据**：`scripts/gate.ps1` 8 步（含主动能 9/9 逐字 + 诊断开关金标准 7 段）；`diff-cli` 461 例 / `diff-tables` 两档；测试 **160 passed / 0 failed**（清单锁 160）
+- [ ] ~~界面打磨：布局留白、牌面图形化（当前用文字牌名）~~ ⇒ **用户裁定不立项**（不做视觉打磨）
+- [ ] ~~GUI 差分 / 32 对全量枚举~~ ⇒ **用户裁定不立项**；GUI 交互类**人工点验**（清单见 `docs/GUI人工点验清单.md`）

@@ -403,7 +403,8 @@ fn collect_standard(ctx: &WinCtx) -> Vec<Fan> {
             if !s.is_triplet() {
                 return false;
             }
-            let is_conc = !s.open || (s.is_kan && !s.open);
+            // T106/P2-1：恒等化简 —— `X || (Y && X) ≡ X`（此处 X = `!s.open`）⇒ 零行为变化。
+            let is_conc = !s.open;
             if !is_conc {
                 return false;
             }

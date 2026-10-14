@@ -64,7 +64,9 @@ impl App {
 
     /// 载入示例。GBMJ_DEMO=1 门清示例；=2 带副露示例；=3 脚本化点击（自检副露按钮复位）；
     /// =24 **未听牌**示例（应显示「缺什么换什么（最多 2 张）」方向列表）；
-    /// =25 **听牌**对照示例（只显示「结构听牌 N 种」+ 四栏，**不得**显示方向列表）。
+    /// =25 **听牌**对照示例（只显示「结构听牌 N 种」+ 四栏，**不得**显示方向列表）；
+    /// =26 **5 组副露 + 已修改（dirty）** 示例（复用 =21 的 5 组副露，再置 dirty=true）⇒
+    ///   结果区应显示「副露最多 4 组（当前 5 组），无法计算」（T106 修 1 的可视化验证）。
     fn load_sample(&mut self) {
         self.hand = counts();
         self.melds.clear();
@@ -194,8 +196,13 @@ impl App {
                 self.click_tile(4); // 5万 ⇒ 形状非法：置形状文案并清空 pending
                 self.click_tile(0); // 再点 1万 ⇒ pending=[1万]，而 hint 未被清（滞留）
             }
-            Ok("21") => {
+            Ok("21") | Ok("26") => {
                 // L1 缺口（已由 L3-C 修复）：副露 5 组（真实 UI 可达：反复碰不同牌；per-tile 限 4 张但不限组数）
+                // T107：`GBMJ_DEMO=26` **复用本臂的 5 组副露状态**，并在函数末尾把 `dirty` 置 true
+                //   （见 `self.dirty = matches!(…)`）⇒ 用于**眼见**验证 T106 修 1：
+                //   改前该场景（dirty=true 且副露 5 组）只显示「已修改，点【确认】重新计算」，
+                //   改后应显示「副露最多 4 组（当前 5 组），无法计算」。
+                //   与 =21 的唯一差别就是 dirty（=21 为 false ⇒ 改前/改后都显示同一条明确错误）。
                 // 期望（落定后的真实期望文案）：结果区显示「副露最多 4 组（当前 5 组），无法计算」、
                 //   手牌区显示同一明确错误（不再出现「应为 0 张」这类静默饱和值）、
                 //   确认按钮不可点（ready=false，即 expected_hidden()==None）、弱提示「（暗牌需 N 张）」不再出现、不 panic。
@@ -238,7 +245,9 @@ impl App {
             }
         }
         self.recompute();
-        self.dirty = std::env::var("GBMJ_DEMO").as_deref() == Ok("6");
+        // T107：原为 `== Ok("6")`；改用 `matches!` 后**其余 demo 的 dirty 语义完全不变**，
+        // 只为 =26 追加「已修改」态（=26 另有 5 组副露，见上）。
+        self.dirty = matches!(std::env::var("GBMJ_DEMO").as_deref(), Ok("6") | Ok("26"));
     }
 
     /// 某张牌已被占用的张数（手牌 + 副露）
@@ -419,7 +428,7 @@ impl App {
                         format!(
                             "吃：{}（再点 {} 张）",
                             names.join(" "),
-                            3 - self.pending_chi.len()
+                            3usize.saturating_sub(self.pending_chi.len())
                         ),
                     );
                 }
@@ -598,6 +607,12 @@ impl App {
 
     fn ui_results(&mut self, ui: &mut egui::Ui) {
         ui.strong("听牌 / 和牌计算");
+        // T106/P1-3：副露 >4 组是**明确错误**（此时【确认】按钮 ready=false、不可点）⇒ 必须优先于
+        // 「已修改」提示，否则结果区永远只显示"已修改…"，看不到 meld_cap_error 文案。
+        if self.expected_hidden().is_none() {
+            ui.colored_label(egui::Color32::from_rgb(220, 90, 90), self.meld_cap_error());
+            return;
+        }
         if self.dirty {
             ui.colored_label(
                 egui::Color32::from_rgb(200, 140, 0),
@@ -608,12 +623,9 @@ impl App {
         let an = match &self.analysis {
             Some(a) => a,
             None => {
-                // 区分两种「无结果」：副露 >4 组（明确错误）与暗牌张数不符（原弱提示）
-                if self.expected_hidden().is_none() {
-                    ui.colored_label(egui::Color32::from_rgb(220, 90, 90), self.meld_cap_error());
-                } else {
-                    ui.weak("暗牌张数不对，无法计算（应为 13 − 3×副露 张）");
-                }
+                // T107：原「副露 >4 组」判断已提到 `ui_results` 开头（外层提前 return）⇒ 内层恒假，
+                // 此处只剩「暗牌张数不符」一种情形（weak 文案逐字保留）。
+                ui.weak("暗牌张数不对，无法计算（应为 13 − 3×副露 张）");
                 return;
             }
         };

@@ -1,25 +1,29 @@
 diff-tables summary
-timestamp            : 2026-10-13T22:19:25+08:00
+timestamp            : 2026-10-14T14:18:19+08:00
 mode                 : cross-binary
 old binary           : C:\Users\Administrator\AppData\Local\Temp\t89\old-2a7d259\debug\gbmj.exe
 old binary sha256    : BFA7942D3FA5FAD7DCEE066B481CB331199604E3F07A41961C767B14EB109631
-new binary           : F:\AllCodes\guobiao-mahjong-calc\target\debug\gbmj.exe
-new binary sha256    : D135F94FC70265985C7F69215F5192C219038C9EF77911E393447764C9FA13D2
+new binary           : C:\Users\Administrator\AppData\Local\Temp\t108\new\debug\gbmj.exe
+new binary sha256    : D34BD41C08697E466F5ED91A1709DFEA2952B756C65753B1A3ED52628885BAD6
 case file            : F:\AllCodes\guobiao-mahjong-calc\docs\evidence\diff-cli-cases.tsv
 switch appended      : --dump-tables
 cases total          : 461
 zero-diff (section)  : 263
-zero-diff (whole)    : 188   (neither side opens a diagnostic section, e.g. plan-scan cases)
+zero-diff (whole)    : 152   (neither side opens a diagnostic section, e.g. plan-scan cases)
 expected-section-diff: 2   (both sides print the banner, section differs, case expectation is diff:<reason>)
-expected-whole-diff  : 8   (neither side prints the banner, whole output differs, case expectation is diff:<reason>)
-expected-total       : 10   (section 2 + whole 8)
+expected-whole-diff  : 44   (neither side prints the banner, whole output differs, case expectation is diff:<reason>)
+expected-total       : 46   (section 2 + whole 44)
 expected-legacy      : 0   (exactly one side has no banner: that build cannot emit the four tables at all)
 UNEXPECTED-diff      : 0   (outputs differ while the case expectation is same: never relaxed)
 verdict-mismatch     : 0
 expected by reason:
+  diff:F10-shuang-anke-added = 4
+  diff:F2-carrier-forms = 19
+  diff:F2-meld-carrier-open-runs-and-triplets = 3
   diff:F2-multi-carrier-fixed = 1
-  diff:F2-open-meld-carrier = 1
+  diff:F2-open-meld-carrier = 9
   diff:F2-T75-family = 2
+  diff:F5-quad-now-counted-as-anke = 2
   diff:F7-concealed-kans = 3
   diff:F8-nine-gates-menqing = 2
   diff:T60-dump-tables-usage-added = 1
